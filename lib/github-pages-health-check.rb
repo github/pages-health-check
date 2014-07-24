@@ -105,6 +105,7 @@ class GitHubPages
       raise DeprecatedIP if a_record? && old_ip_address?
       raise InvalidARecord if valid_domain? && a_record? && !should_be_a_record?
       raise InvalidCNAME if valid_domain? && !apex_domain? && !pointed_to_github_user_domain?
+      true
     end
     alias_method :valid!, :check!
 
