@@ -119,5 +119,13 @@ class GitHubPages
     def inspect
       "#<GitHubPages::HealthCheck @domain=\"#{domain}\" valid?=#{valid?}>"
     end
+
+    def to_s
+      output = ""
+      to_hash.each do |key,value|
+        output << "#{key}: #{value}\n"
+      end
+      output
+    end
   end
 end
