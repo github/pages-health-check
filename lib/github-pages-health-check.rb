@@ -8,7 +8,7 @@ class GitHubPages
   class HealthCheck
     class DeprecatedIP < StandardError; end
     class InvalidARecord < StandardError; end
-    class IdnvalidCNAME < StandardError; end
+    class InvalidCNAME < StandardError; end
 
     attr_accessor :domain
 
@@ -106,6 +106,7 @@ class GitHubPages
       raise InvalidARecord if valid_domain? && a_record? && !should_be_a_record?
       raise InvalidCNAME if valid_domain? && !apex_domain? && !pointed_to_github_user_domain?
     end
+    alias_method :valid!, :check!
 
     def valid?
       check!
