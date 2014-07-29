@@ -121,11 +121,9 @@ class GitHubPages
     end
 
     def to_s
-      output = ""
-      to_hash.each do |key,value|
-        output << "#{key}: #{value}\n"
-      end
-      output
+      to_hash.inject(Array.new) do |all, pair|
+        all.push pair.join(": ")
+      end.join("\n")
     end
   end
 end
