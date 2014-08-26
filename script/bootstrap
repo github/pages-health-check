@@ -2,4 +2,8 @@
 
 set -ex
 
+if [ -f .ruby-version ] ; then
+  export RBENV_VERSION=$(cat .ruby-version)
+fi
+
 bundle install --path vendor/gems --binstubs --local --standalone --clean "$@"
