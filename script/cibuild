@@ -3,5 +3,5 @@
 set -ex
 
 script/bootstrap
-bundle exec rspec
+bundle exec bin/rspec
 script/check-cloudflare-ips
