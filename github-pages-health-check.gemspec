@@ -13,7 +13,8 @@ Gem::Specification.new do |s|
   s.license               = "MIT"
   s.files                 = [
     "lib/github-pages-health-check.rb",
-    "lib/github-pages-health-check/version.rb"
+    "lib/github-pages-health-check/version.rb",
+    "lib/github-pages-health-check/cloudflare.rb"
   ]
 
   s.add_dependency("net-dns", "~> 0.6")
