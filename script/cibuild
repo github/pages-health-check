@@ -3,3 +3,4 @@
 set -ex
 
 bundle exec rspec
+script/check-cloudflare-ips

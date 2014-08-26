@@ -1,0 +1,14 @@
+#!/bin/bash -e
+#/ Usage script/update-cloudflare-ips
+#/ updates config/cloudflare-ips.txt
+
+source=https://www.cloudflare.com/ips-v4
+dest=config/cloudflare-ips.txt
+
+echo '====>' Downloading $source
+curl --silent --fail $source | tee $dest
+echo # cover for a missing newline
+
+echo '====>' git add $dest
+git diff -w $dest
+git add --verbose $dest
