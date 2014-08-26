@@ -2,4 +2,4 @@
 
 set -ex
 
-bundle install
+bundle install --path vendor/gems --binstubs --local --standalone --clean "$@"

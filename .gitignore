@@ -1,3 +1,5 @@
-*.gem
+/*.gem
 *.lock
 .bundle
+vendor/gems
+/bin
