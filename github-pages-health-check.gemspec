@@ -5,8 +5,8 @@ Gem::Specification.new do |s|
 
   s.name                  = "github-pages-health-check"
   s.version               = GitHubPages::HealthCheck::VERSION
-  s.summary               = ""
-  s.description           = ""
+  s.summary               = "Checks your GitHub Pages site for commons DNS configuration issues"
+  s.description           = "Checks your GitHub Pages site for commons DNS configuration issues."
   s.authors               = "GitHub, Inc."
   s.email                 = "support@github.com"
   s.homepage              = "https://github.com/github/github-pages-health-check"
@@ -14,7 +14,9 @@ Gem::Specification.new do |s|
   s.files                 = [
     "lib/github-pages-health-check.rb",
     "lib/github-pages-health-check/version.rb",
-    "lib/github-pages-health-check/cloudflare.rb"
+    "lib/github-pages-health-check/cloudflare.rb",
+    "config/cloudflare-ips.txt",
+    "LICENSE.md"
   ]
 
   s.add_dependency("net-dns", "~> 0.6")
