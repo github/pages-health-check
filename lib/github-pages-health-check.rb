@@ -2,7 +2,9 @@ require 'net/dns'
 require 'net/dns/resolver'
 require 'ipaddr'
 require 'public_suffix'
+require 'singleton'
 require_relative 'github-pages-health-check/version'
+require_relative 'github-pages-health-check/cloudflare'
 
 class GitHubPages
   class HealthCheck
@@ -18,14 +20,12 @@ class GitHubPages
       199.27.73.133
     ]
 
-    CLOUDFLARE_v4 = IPAddr.new("108.162.192.0/18")
-
     def initialize(domain)
       @domain = domain
     end
 
     def cloudflare_ip?
-      dns.all? { |answer| answer.class == Net::DNS::RR::A && CLOUDFLARE_v4.include?(answer.address.to_s) }
+      dns.all? { |answer| answer.class == Net::DNS::RR::A && CloudFlare.controls_ip?(answer.address) }
     end
 
     # Returns an array of DNS answers

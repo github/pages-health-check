@@ -2,4 +2,18 @@
 
 set -ex
 
-bundle exec rspec
+script/bootstrap
+
+if [ -L $0 ]; then
+  root=$(cd "$(dirname "$(readlink "$0")")"/.. && pwd)
+else
+  root=$(cd "$(dirname "$0")"/.. && pwd)
+fi
+
+export PATH="$root/bin:/usr/share/rbenv/shims:$PATH"
+
+export RBENV_VERSION=$(cat $root/.ruby-version)
+export BUNDLE_GEMFILE="$root/Gemfile"
+
+bundle exec bin/rspec
+script/check-cloudflare-ips

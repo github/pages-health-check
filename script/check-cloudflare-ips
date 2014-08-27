@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+script/update-cloudflare-ips >/dev/null 2>&1
+
+# `git diff --quiet` suppresses output and sets a return code
+# 0 - no changes
+# 1 - changes
+if git diff -w --quiet --cached config/cloudflare-ips.txt
+then
+  echo CloudFlare IP list is up-to-date.
+  exit 0
+else
+  echo git reset config/cloudflare-ips.txt
+  git reset --quiet config/cloudflare-ips.txt
+  echo '*** CloudFlare IP list is out of date! Run script/update-cloudflare-ips!'
+  exit 1
+fi
