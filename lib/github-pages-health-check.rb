@@ -5,15 +5,13 @@ require 'public_suffix'
 require 'singleton'
 require_relative 'github-pages-health-check/version'
 require_relative 'github-pages-health-check/cloudflare'
+require_relative 'github-pages-health-check/error'
 require_relative 'github-pages-health-check/errors/deprecated_ip'
 require_relative 'github-pages-health-check/errors/invalid_a_record'
 require_relative 'github-pages-health-check/errors/invalid_cname'
 
 class GitHubPages
   class HealthCheck
-    class DeprecatedIP < StandardError; end
-    class InvalidARecord < StandardError; end
-    class InvalidCNAME < StandardError; end
 
     attr_accessor :domain
 
@@ -126,7 +124,7 @@ class GitHubPages
     def reason
       check!
       nil
-    rescue StandardError => e
+    rescue GitHubPages::HealthCheck::Error => e
       e
     end
 

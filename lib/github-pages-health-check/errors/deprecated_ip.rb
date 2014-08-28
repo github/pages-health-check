@@ -1,6 +1,6 @@
 class GitHubPages
   class HealthCheck
-    class DeprecatedIP < StandardError
+    class DeprecatedIP < Error
       def message
         "A record points to deprecated IP address"
       end

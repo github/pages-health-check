@@ -1,6 +1,6 @@
 class GitHubPages
   class HealthCheck
-    class InvalidARecord < StandardError
+    class InvalidARecord < Error
       def message
         "Should not be an A record"
       end

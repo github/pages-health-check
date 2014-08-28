@@ -1,6 +1,6 @@
 class GitHubPages
   class HealthCheck
-    class InvalidCNAME < StandardError
+    class InvalidCNAME < Error
       def message
         "CNAME does not point to GitHub Pages"
       end
