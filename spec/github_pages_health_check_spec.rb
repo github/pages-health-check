@@ -123,8 +123,15 @@ describe(GitHubPages::HealthCheck) do
 
   it "returns valid json" do
     data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-    expect(data.length).to eql(10)
-    data.each { |key, value| expect([true,false].include?(value)).to eql(true) }
+    expect(data.length).to eql(11)
+    data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
+  end
+
+  it "return the error" do
+    check = GitHubPages::HealthCheck.new "developer.facebook.com"
+    expect(check.valid?).to eql(false)
+    expect(check.reason.class).to eql(GitHubPages::HealthCheck::InvalidCNAME)
+    expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
   end
 
 end

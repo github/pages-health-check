@@ -5,6 +5,9 @@ require 'public_suffix'
 require 'singleton'
 require_relative 'github-pages-health-check/version'
 require_relative 'github-pages-health-check/cloudflare'
+require_relative 'github-pages-health-check/errors/deprecated_ip'
+require_relative 'github-pages-health-check/errors/invalid_a_record'
+require_relative 'github-pages-health-check/errors/invalid_cname'
 
 class GitHubPages
   class HealthCheck
@@ -91,7 +94,8 @@ class GitHubPages
         :should_be_a_record?            => should_be_a_record?,
         :pointed_to_github_user_domain? => pointed_to_github_user_domain?,
         :pages_domain?                  => pages_domain?,
-        :valid?                         => valid?
+        :valid?                         => valid?,
+        :reason                         => reason
       }
     end
 
@@ -99,6 +103,7 @@ class GitHubPages
       to_hash.to_json
     end
 
+    # Runs all checks, raises an error if invalid
     def check!
       return unless dns
       return if cloudflare_ip?
@@ -109,11 +114,20 @@ class GitHubPages
     end
     alias_method :valid!, :check!
 
+    # Runs all checks, returns true if valid, otherwise false
     def valid?
       check!
       true
     rescue
       false
+    end
+
+    # Return the error, if any
+    def reason
+      check!
+      nil
+    rescue StandardError => e
+      e
     end
 
     def inspect
