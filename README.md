@@ -39,7 +39,7 @@
 
 ### Getting checks in bulk
 
-```
+```ruby
 > check.to_hash
 => {
  :cloudflare_ip?=>false,
@@ -56,4 +56,16 @@
 > require 'json'
 > check.to_json
 => "{\"cloudflare_ip?\":false,\"old_ip_address?\":false,\"a_record?\":true,\"cname_record?\":false,\"valid_domain?\":true,\"apex_domain?\":true,\"should_be_a_record?\":true,\"pointed_to_github_user_domain?\":false,\"pages_domain?\":false,\"valid?\":true}"
+```
+
+### Getting the reason a domain is invalid
+
+```ruby
+> check = GitHubPages::HealthCheck.new "developer.facebook.com"
+> check.valid?
+=> false
+> check.reason
+=> #<GitHubPages::HealthCheck::InvalidCNAME>
+> check.reason.message
+=> "CNAME does not point to GitHub Pages"
 ```
