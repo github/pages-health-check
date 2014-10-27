@@ -1,6 +1,6 @@
 # GitHub Pages Health Check
 
-*Checks your GitHub Pages site for commons DNS configuration issues*
+*Checks your GitHub Pages site for common DNS configuration issues*
 
 ## Installation
 
