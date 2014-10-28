@@ -31,8 +31,8 @@ class GitHubPages
 
     # Returns an array of DNS answers
     def dns
-      @dns ||= Net::DNS::Resolver.start(domain).answer if domain
-    rescue Exception => msg
+      @dns ||= without_warnings { Net::DNS::Resolver.start(domain).answer } if domain
+    rescue Exception
       false
     end
 
@@ -136,6 +136,16 @@ class GitHubPages
       to_hash.inject(Array.new) do |all, pair|
         all.push pair.join(": ")
       end.join("\n")
+    end
+
+    private
+
+    # surpress warn-level feedback due to unsupported record types
+    def without_warnings(&block)
+      warn_level, $VERBOSE = $VERBOSE, nil
+      result = block.call
+      $VERBOSE = warn_level
+      result
     end
   end
 end
