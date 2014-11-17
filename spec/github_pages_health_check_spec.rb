@@ -123,7 +123,7 @@ describe(GitHubPages::HealthCheck) do
 
   it "returns valid json" do
     data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-    expect(data.length).to eql(11)
+    expect(data.length).to eql(12)
     data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
   end
 

@@ -99,6 +99,7 @@ class GitHubPages
         :should_be_a_record?            => should_be_a_record?,
         :pointed_to_github_user_domain? => pointed_to_github_user_domain?,
         :pages_domain?                  => pages_domain?,
+        :served_by_pages?               => served_by_pages?,
         :valid?                         => valid?,
         :reason                         => reason
       }
