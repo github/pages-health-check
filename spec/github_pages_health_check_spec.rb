@@ -134,4 +134,31 @@ describe(GitHubPages::HealthCheck) do
     expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
   end
 
+  it "knows when a domain is served by pages" do
+    check = GitHubPages::HealthCheck.new "chooosealicense.com"
+    expect(check.valid?).to eql(true)
+  end
+
+  it "knows when a GitHub domain is served by pages" do
+    check = GitHubPages::HealthCheck.new "mac.github.com"
+    expect(check.valid?).to eql(true)
+  end
+
+  it "knows when a domain isn't served bt pages" do
+    check = GitHubPages::HealthCheck.new "github.com"
+    expect(check.valid?).to eql(false)
+    expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
+    expect(check.reason.message).to eql("Domain does not resovle to the GitHub Pages server")
+  end
+
+  it "knows when the domain is a github domain" do
+    check = GitHubPages::HealthCheck.new "pages.github.com"
+    expect(check.github_domain?).to eql(true)
+
+    check = GitHubPages::HealthCheck.new "choosealicense.com"
+    expect(check.github_domain?).to eql(false)
+
+    check = GitHubPages::HealthCheck.new "benbalter.github.io"
+    expect(check.github_domain?).to eql(false)
+  end
 end

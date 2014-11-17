@@ -3,12 +3,14 @@ require 'net/dns/resolver'
 require 'ipaddr'
 require 'public_suffix'
 require 'singleton'
+require 'net/http'
 require_relative 'github-pages-health-check/version'
 require_relative 'github-pages-health-check/cloudflare'
 require_relative 'github-pages-health-check/error'
 require_relative 'github-pages-health-check/errors/deprecated_ip'
 require_relative 'github-pages-health-check/errors/invalid_a_record'
 require_relative 'github-pages-health-check/errors/invalid_cname'
+require_relative 'github-pages-health-check/errors/not_served_by_pages'
 
 class GitHubPages
   class HealthCheck
@@ -81,6 +83,11 @@ class GitHubPages
       !!domain.match(/^[\w-]+\.github\.(io|com)\.?$/i)
     end
 
+    # Is this domain owned by GitHub?
+    def github_domain?
+      !!domain.match(/\.github\.com$/)
+    end
+
     def to_hash
       {
         :cloudflare_ip?                 => cloudflare_ip?,
@@ -97,6 +104,15 @@ class GitHubPages
       }
     end
 
+    def served_by_pages?
+      scheme = github_domain? ? "https" : "http"
+      uri = URI("#{scheme}://#{domain}")
+      response = Net::HTTP.get_response(uri)
+      response.to_hash["server"] == ["GitHub.com"]
+    rescue
+      false
+    end
+
     def to_json
       to_hash.to_json
     end
@@ -107,7 +123,8 @@ class GitHubPages
       return if cloudflare_ip?
       raise DeprecatedIP if a_record? && old_ip_address?
       raise InvalidARecord if valid_domain? && a_record? && !should_be_a_record?
-      raise InvalidCNAME if valid_domain? && !apex_domain? && !pointed_to_github_user_domain?
+      raise InvalidCNAME if valid_domain? && !github_domain? && !apex_domain? && !pointed_to_github_user_domain?
+      raise NotServedByPages unless served_by_pages?
       true
     end
     alias_method :valid!, :check!
