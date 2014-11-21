@@ -148,7 +148,7 @@ describe(GitHubPages::HealthCheck) do
     check = GitHubPages::HealthCheck.new "github.com"
     expect(check.valid?).to eql(false)
     expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
-    expect(check.reason.message).to eql("Domain does not resovle to the GitHub Pages server")
+    expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
   end
 
   it "knows when the domain is a github domain" do
