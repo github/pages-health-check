@@ -1,2 +1,4 @@
 language: ruby
 script: "script/cibuild"
+sudo: false
+cache: bundler
