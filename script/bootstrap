@@ -11,4 +11,4 @@ fi
 #set ruby version, see https://github.com/github/pages-jekyll/pull/17
 export PATH=/usr/share/rbenv/shims:$PATH BUNDLE_GEMFILE=$(pwd)/Gemfile
 
-bundle install --path vendor/gems --binstubs --local --standalone --clean "$@"
+bundle install --path vendor/gems --binstubs --standalone --clean "$@"
