@@ -1,4 +1,5 @@
 language: ruby
+before_script: "bundle update" # the cache may have out-dated gems
 script: "script/cibuild"
 sudo: false
 cache: bundler
