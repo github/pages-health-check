@@ -79,7 +79,7 @@ class GitHubPages
     # Is the given cname a pages domain?
     #
     # domain - the domain to check, generaly the target of a cname
-    def pages_domain?(domain = domain)
+    def pages_domain?(domain = domain())
       !!domain.match(/^[\w-]+\.github\.(io|com)\.?$/i)
     end
 
