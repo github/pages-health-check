@@ -23,6 +23,11 @@ class GitHubPages
       199.27.73.133
     ]
 
+    CURRENT_IP_ADDRESSES = %w[
+      192.30.252.153
+      192.30.252.154
+    ]
+
     def initialize(domain)
       @domain = domain
     end
@@ -74,6 +79,18 @@ class GitHubPages
     # Is the domain's first response a CNAME to a pages domain?
     def pointed_to_github_user_domain?
       dns.first.class == Net::DNS::RR::CNAME && pages_domain?(dns.first.cname.to_s)
+    end
+
+    # Is the domain's first response an A record to a valid GitHub Pages IP?
+    def pointed_to_github_pages_ip?
+      dns.first.class == Net::DNS::RR::A && github_pages_ip?(dns.first.value)
+    end
+
+    # Is the IP address a valid GitHub Pages IP address
+    #
+    # ip - the IP address to check
+    def github_pages_ip?(ip)
+      CURRENT_IP_ADDRESSES.include?(ip)
     end
 
     # Is the given cname a pages domain?
