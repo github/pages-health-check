@@ -83,14 +83,7 @@ class GitHubPages
 
     # Is the domain's first response an A record to a valid GitHub Pages IP?
     def pointed_to_github_pages_ip?
-      dns.first.class == Net::DNS::RR::A && github_pages_ip?(dns.first.value)
-    end
-
-    # Is the IP address a valid GitHub Pages IP address
-    #
-    # ip - the IP address to check
-    def github_pages_ip?(ip)
-      CURRENT_IP_ADDRESSES.include?(ip)
+      dns.first.class == Net::DNS::RR::A && CURRENT_IP_ADDRESSES.include?(dns.first.value)
     end
 
     # Is the given cname a pages domain?
