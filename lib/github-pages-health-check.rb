@@ -38,7 +38,7 @@ class GitHubPages
 
     # Returns an array of DNS answers
     def dns
-      @dns ||= without_warnings { Net::DNS::Resolver.start(domain).answer } if domain
+      @dns ||= without_warnings { Net::DNS::Resolver.start(absolute_domain).answer  } if domain
     rescue Exception
       false
     end
@@ -181,6 +181,14 @@ class GitHubPages
       result = block.call
       $VERBOSE = warn_level
       result
+    end
+
+    # Adjust `domain` so that it won't be searched for with /etc/resolv.conf's search rules.
+    #
+    #     GitHubPages::HealthCheck.new("anything.io").absolute_domain
+    #     => "anything.io."
+    def absolute_domain
+      domain.end_with?(".") ? domain : "#{domain}."
     end
   end
 end
