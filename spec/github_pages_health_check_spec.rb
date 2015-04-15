@@ -1,5 +1,5 @@
-require 'spec_helper'
-require 'json'
+require "spec_helper"
+require "json"
 
 describe(GitHubPages::HealthCheck) do
   let(:health_check) { GitHubPages::HealthCheck.new("foo.github.io") }
@@ -89,6 +89,21 @@ describe(GitHubPages::HealthCheck) do
     end
   end
 
+  it "can determine when an apex domain is pointed at a GitHub Pages IP address" do
+    allow(health_check).to receive(:domain) { "getbootstrap.com" }
+    expect(health_check.pointed_to_github_pages_ip?).to be(true)
+  end
+
+  it "can determine when an apex domain is not pointed at a GitHub Pages IP address" do
+    allow(health_check).to receive(:domain) { "example.com" }
+    expect(health_check.pointed_to_github_pages_ip?).to be(false)
+  end
+
+  it "can determine that a subdomain with a CNAME record is not pointed at a GitHub Pages IP address" do
+    allow(health_check).to receive(:domain) { "pages.github.com" }
+    expect(health_check.pointed_to_github_pages_ip?).to be(false)
+  end
+
   it "retrieves a site's dns record" do
     allow(health_check).to receive(:domain) { "pages.github.com" }
     expect(health_check.dns.first.class).to eql(Net::DNS::RR::CNAME)
@@ -123,7 +138,7 @@ describe(GitHubPages::HealthCheck) do
 
   it "returns valid json" do
     data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-    expect(data.length).to eql(12)
+    expect(data.length).to eql(13)
     data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
   end
 

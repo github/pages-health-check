@@ -1,16 +1,16 @@
-require 'net/dns'
-require 'net/dns/resolver'
-require 'ipaddr'
-require 'public_suffix'
-require 'singleton'
-require 'net/http'
-require_relative 'github-pages-health-check/version'
-require_relative 'github-pages-health-check/cloudflare'
-require_relative 'github-pages-health-check/error'
-require_relative 'github-pages-health-check/errors/deprecated_ip'
-require_relative 'github-pages-health-check/errors/invalid_a_record'
-require_relative 'github-pages-health-check/errors/invalid_cname'
-require_relative 'github-pages-health-check/errors/not_served_by_pages'
+require "net/dns"
+require "net/dns/resolver"
+require "ipaddr"
+require "public_suffix"
+require "singleton"
+require "net/http"
+require_relative "github-pages-health-check/version"
+require_relative "github-pages-health-check/cloudflare"
+require_relative "github-pages-health-check/error"
+require_relative "github-pages-health-check/errors/deprecated_ip"
+require_relative "github-pages-health-check/errors/invalid_a_record"
+require_relative "github-pages-health-check/errors/invalid_cname"
+require_relative "github-pages-health-check/errors/not_served_by_pages"
 
 class GitHubPages
   class HealthCheck
@@ -21,6 +21,11 @@ class GitHubPages
       207.97.227.245
       204.232.175.78
       199.27.73.133
+    ]
+
+    CURRENT_IP_ADDRESSES = %w[
+      192.30.252.153
+      192.30.252.154
     ]
 
     def initialize(domain)
@@ -76,6 +81,11 @@ class GitHubPages
       dns.first.class == Net::DNS::RR::CNAME && pages_domain?(dns.first.cname.to_s)
     end
 
+    # Is the domain's first response an A record to a valid GitHub Pages IP?
+    def pointed_to_github_pages_ip?
+      dns.first.class == Net::DNS::RR::A && CURRENT_IP_ADDRESSES.include?(dns.first.value)
+    end
+
     # Is the given cname a pages domain?
     #
     # domain - the domain to check, generaly the target of a cname
@@ -98,6 +108,7 @@ class GitHubPages
         :apex_domain?                   => apex_domain?,
         :should_be_a_record?            => should_be_a_record?,
         :pointed_to_github_user_domain? => pointed_to_github_user_domain?,
+        :pointed_to_github_pages_ip?    => pointed_to_github_pages_ip?,
         :pages_domain?                  => pages_domain?,
         :served_by_pages?               => served_by_pages?,
         :valid?                         => valid?,

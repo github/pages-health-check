@@ -1,7 +1,7 @@
-require 'spec_helper'
-require 'json'
-require 'tempfile'
-require 'ipaddr'
+require "spec_helper"
+require "json"
+require "tempfile"
+require "ipaddr"
 
 describe(GitHubPages::HealthCheck::CloudFlare) do
 
@@ -11,7 +11,7 @@ describe(GitHubPages::HealthCheck::CloudFlare) do
 
   context "default" do
     let(:instance) { GitHubPages::HealthCheck::CloudFlare.instance }
-    
+
     it "loads the default config" do
       path = File.expand_path(instance.path)
       expected = File.expand_path("../config/cloudflare-ips.txt", File.dirname(__FILE__))
