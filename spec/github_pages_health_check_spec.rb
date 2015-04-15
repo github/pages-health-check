@@ -185,4 +185,12 @@ describe(GitHubPages::HealthCheck) do
     check = GitHubPages::HealthCheck.new "benbalter.github.io"
     expect(check.github_domain?).to eql(false)
   end
+
+  it "does not resolve domains that do not exist" do
+    check = GitHubPages::HealthCheck.new "this-domain-does-not-exist-and-should-not-ever-exist.io."
+    expect(check.dns).to be_empty
+
+    check = GitHubPages::HealthCheck.new "this-domain-does-not-exist-and-should-not-ever-exist.io"
+    expect(check.dns).to be_empty
+  end
 end
