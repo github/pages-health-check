@@ -1,5 +1,5 @@
-require 'spec_helper'
-require 'json'
+require "spec_helper"
+require "json"
 
 describe(GitHubPages::HealthCheck) do
   let(:health_check) { GitHubPages::HealthCheck.new("foo.github.io") }
