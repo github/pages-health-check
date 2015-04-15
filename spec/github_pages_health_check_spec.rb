@@ -144,7 +144,16 @@ describe(GitHubPages::HealthCheck) do
     expect(check.valid?).to eql(true)
   end
 
-  it "knows when a domain isn't served bt pages" do
+  it "knows when an apex domain using A records is served by pages" do
+    # Tests this redirect scenario for apex domains using A records:
+    # › curl -I http://getbootstrap.com/
+    # HTTP/1.1 302 Found
+    # Location: /
+    check = GitHubPages::HealthCheck.new "getbootstrap.com"
+    expect(check.valid?).to eql(true)
+  end
+
+  it "knows when a domain isn't served by pages" do
     check = GitHubPages::HealthCheck.new "github.com"
     expect(check.valid?).to eql(false)
     expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)

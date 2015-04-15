@@ -109,6 +109,12 @@ class GitHubPages
       scheme = github_domain? ? "https" : "http"
       uri = URI("#{scheme}://#{domain}")
       response = Net::HTTP.get_response(uri)
+      if response.is_a? Net::HTTPRedirection
+        for t in 1..3
+          response = Net::HTTP.get_response(uri)
+          break if response.is_a? Net::HTTPSuccess
+        end
+      end
       response.to_hash["server"] == ["GitHub.com"]
     rescue
       false
