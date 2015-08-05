@@ -2,3 +2,4 @@ language: ruby
 script: "script/cibuild"
 install:
   - sudo bash -c 'echo search github.com >> /etc/resolv.conf'
+cache: bundler
