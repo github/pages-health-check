@@ -4,6 +4,7 @@ require "ipaddr"
 require "public_suffix"
 require "singleton"
 require "net/http"
+require 'typhoeus'
 require_relative "github-pages-health-check/version"
 require_relative "github-pages-health-check/cloudflare"
 require_relative "github-pages-health-check/error"
@@ -117,18 +118,8 @@ class GitHubPages
     end
 
     def served_by_pages?
-      scheme = github_domain? ? "https" : "http"
-      uri = URI("#{scheme}://#{domain}")
-      response = Net::HTTP.get_response(uri)
-      if response.is_a? Net::HTTPRedirection
-        for t in 1..3
-          response = Net::HTTP.get_response(uri)
-          break if response.is_a? Net::HTTPSuccess
-        end
-      end
-      response.to_hash["server"] == ["GitHub.com"]
-    rescue
-      false
+      response = Typhoeus.head(uri, followlocation: true)
+      response.success? && response.headers["Server"] == "GitHub.com"
     end
 
     def to_json
@@ -189,6 +180,14 @@ class GitHubPages
     #     => "anything.io."
     def absolute_domain
       domain.end_with?(".") ? domain : "#{domain}."
+    end
+
+    def scheme
+      @scheme ||= github_domain? ? "https" : "http"
+    end
+
+    def uri
+      @uri ||= URI("#{scheme}://#{domain}")
     end
   end
 end

@@ -150,13 +150,13 @@ describe(GitHubPages::HealthCheck) do
   end
 
   it "knows when a domain is served by pages" do
-    check = GitHubPages::HealthCheck.new "chooosealicense.com"
-    expect(check.valid?).to eql(true)
+    check = GitHubPages::HealthCheck.new "choosealicense.com"
+    expect(check.served_by_pages?).to eql(true)
   end
 
   it "knows when a GitHub domain is served by pages" do
     check = GitHubPages::HealthCheck.new "mac.github.com"
-    expect(check.valid?).to eql(true)
+    expect(check.served_by_pages?).to eql(true)
   end
 
   it "knows when an apex domain using A records is served by pages" do
@@ -165,12 +165,17 @@ describe(GitHubPages::HealthCheck) do
     # HTTP/1.1 302 Found
     # Location: /
     check = GitHubPages::HealthCheck.new "getbootstrap.com"
-    expect(check.valid?).to eql(true)
+    expect(check.served_by_pages?).to eql(true)
+  end
+
+  it "knows when a domain with a redirect is served by pages" do
+    check = GitHubPages::HealthCheck.new "management.cio.gov"
+    expect(check.served_by_pages?).to eql(true)
   end
 
   it "knows when a domain isn't served by pages" do
-    check = GitHubPages::HealthCheck.new "github.com"
-    expect(check.valid?).to eql(false)
+    check = GitHubPages::HealthCheck.new "google.com"
+    expect(check.served_by_pages?).to eql(false)
     expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
     expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
   end
