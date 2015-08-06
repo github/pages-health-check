@@ -202,6 +202,11 @@ describe(GitHubPages::HealthCheck) do
       check = GitHubPages::HealthCheck.new "management.cio.gov"
       expect(check.proxied?).to eql(true)
     end
+
+    it "knows a site not served by pages isn't proxied" do
+      check = GitHubPages::HealthCheck.new "google.com"
+      expect(check.proxied?).to eql(true)
+    end
   end
 
   it "knows when the domain is a github domain" do
