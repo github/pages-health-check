@@ -45,7 +45,7 @@ class GitHubPages
     #   3. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub IP
     def proxied?
       return true if cloudflare_ip?
-      return false if pointed_to_github_pages_ip? || old_ip_address? || pointed_to_github_user_domain?
+      return false if pointed_to_github_pages_ip? || pointed_to_github_user_domain?
       served_by_pages?
     end
 

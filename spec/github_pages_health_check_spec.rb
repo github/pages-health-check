@@ -198,11 +198,6 @@ describe(GitHubPages::HealthCheck) do
       expect(health_check.proxied?).to be(false)
     end
 
-    it "knows a site pointed to a legacy IP isn't proxied" do
-      allow(health_check).to receive(:dns) { [a_packet("204.232.175.78")] }
-      expect(health_check.proxied?).to be(false)
-    end
-
     it "detects proxied sites" do
       check = GitHubPages::HealthCheck.new "management.cio.gov"
       expect(check.proxied?).to eql(true)
