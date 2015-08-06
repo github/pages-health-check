@@ -138,7 +138,7 @@ describe(GitHubPages::HealthCheck) do
 
   it "returns valid json" do
     data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-    expect(data.length).to eql(13)
+    expect(data.length).to eql(14)
     data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
   end
 
@@ -149,35 +149,64 @@ describe(GitHubPages::HealthCheck) do
     expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
   end
 
-  it "knows when a domain is served by pages" do
-    check = GitHubPages::HealthCheck.new "choosealicense.com"
-    expect(check.served_by_pages?).to eql(true)
+  context "served by pages" do
+    it "knows when a domain is served by pages" do
+      check = GitHubPages::HealthCheck.new "choosealicense.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when a GitHub domain is served by pages" do
+      check = GitHubPages::HealthCheck.new "mac.github.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when an apex domain using A records is served by pages" do
+      # Tests this redirect scenario for apex domains using A records:
+      # › curl -I http://getbootstrap.com/
+      # HTTP/1.1 302 Found
+      # Location: /
+      check = GitHubPages::HealthCheck.new "getbootstrap.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when a domain with a redirect is served by pages" do
+      check = GitHubPages::HealthCheck.new "management.cio.gov"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when a domain isn't served by pages" do
+      check = GitHubPages::HealthCheck.new "google.com"
+      expect(check.served_by_pages?).to eql(false)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
+      expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
+    end
   end
 
-  it "knows when a GitHub domain is served by pages" do
-    check = GitHubPages::HealthCheck.new "mac.github.com"
-    expect(check.served_by_pages?).to eql(true)
-  end
+  context "proxies" do
+    it "knows cloudflare sites are proxied" do
+      allow(health_check).to receive(:dns) { [a_packet("108.162.196.20")] }
+      expect(health_check.proxied?).to be(true)
+    end
 
-  it "knows when an apex domain using A records is served by pages" do
-    # Tests this redirect scenario for apex domains using A records:
-    # › curl -I http://getbootstrap.com/
-    # HTTP/1.1 302 Found
-    # Location: /
-    check = GitHubPages::HealthCheck.new "getbootstrap.com"
-    expect(check.served_by_pages?).to eql(true)
-  end
+    it "knows a site pointed to a Pages IP isn't proxied" do
+      allow(health_check).to receive(:dns) { [a_packet("192.30.252.153")] }
+      expect(health_check.proxied?).to be(false)
+    end
 
-  it "knows when a domain with a redirect is served by pages" do
-    check = GitHubPages::HealthCheck.new "management.cio.gov"
-    expect(check.served_by_pages?).to eql(true)
-  end
+    it "knows a site pointed to a Pages domain isn't proxied" do
+      allow(health_check).to receive(:dns) { [cname_packet("pages.github.com")] }
+      expect(health_check.proxied?).to be(false)
+    end
 
-  it "knows when a domain isn't served by pages" do
-    check = GitHubPages::HealthCheck.new "google.com"
-    expect(check.served_by_pages?).to eql(false)
-    expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
-    expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
+    it "knows a site pointed to a legacy IP isn't proxied" do
+      allow(health_check).to receive(:dns) { [a_packet("204.232.175.78")] }
+      expect(health_check.proxied?).to be(false)
+    end
+
+    it "detects proxied sites" do
+      check = GitHubPages::HealthCheck.new "management.cio.gov"
+      expect(check.proxied?).to eql(true)
+    end
   end
 
   it "knows when the domain is a github domain" do

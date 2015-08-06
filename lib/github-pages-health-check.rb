@@ -37,9 +37,21 @@ class GitHubPages
       dns.all? { |answer| answer.class == Net::DNS::RR::A && CloudFlare.controls_ip?(answer.address) }
     end
 
+    # Does this non-GitHub-pages domain proxy a GitHub Pages site?
+    #
+    # This can be:
+    #   1. A Cloudflare-owned IP address
+    #   2. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub domain
+    #   3. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub IP
+    def proxied?
+      return true if cloudflare_ip?
+      return false if pointed_to_github_pages_ip? || old_ip_address? || pointed_to_github_user_domain?
+      served_by_pages?
+    end
+
     # Returns an array of DNS answers
     def dns
-      @dns ||= without_warnings { Net::DNS::Resolver.start(absolute_domain).answer  } if domain
+      @dns ||= without_warnings { Net::DNS::Resolver.start(absolute_domain).answer } if domain
     rescue Exception
       false
     end
@@ -101,6 +113,7 @@ class GitHubPages
 
     def to_hash
       {
+        :proxied?                       => proxied?,
         :cloudflare_ip?                 => cloudflare_ip?,
         :old_ip_address?                => old_ip_address?,
         :a_record?                      => a_record?,
@@ -129,7 +142,7 @@ class GitHubPages
     # Runs all checks, raises an error if invalid
     def check!
       return unless dns
-      return if cloudflare_ip?
+      return if proxied?
       raise DeprecatedIP if a_record? && old_ip_address?
       raise InvalidARecord if valid_domain? && a_record? && !should_be_a_record?
       raise InvalidCNAME if valid_domain? && !github_domain? && !apex_domain? && !pointed_to_github_user_domain?
