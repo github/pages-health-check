@@ -205,7 +205,7 @@ describe(GitHubPages::HealthCheck) do
 
     it "knows a site not served by pages isn't proxied" do
       check = GitHubPages::HealthCheck.new "google.com"
-      expect(check.proxied?).to eql(true)
+      expect(check.proxied?).to eql(false)
     end
   end
 
