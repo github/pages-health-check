@@ -65,11 +65,9 @@ class GitHubPages
       PublicSuffix.valid? domain
     end
 
-    # Is this domain an SLD, meaning a CNAME would be innapropriate
+    # Is this domain an apex domain, meaning a CNAME would be innapropriate
     def apex_domain?
-      PublicSuffix.parse(domain).trd == nil
-    rescue
-      false
+      dns.any? { |answer| answer.class == Net::DNS::RR::NS }
     end
 
     # Should the domain be an apex record?
