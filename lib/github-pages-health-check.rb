@@ -5,6 +5,7 @@ require "public_suffix"
 require "singleton"
 require "net/http"
 require 'typhoeus'
+require "resolv"
 require_relative "github-pages-health-check/version"
 require_relative "github-pages-health-check/cloudflare"
 require_relative "github-pages-health-check/error"
@@ -67,7 +68,13 @@ class GitHubPages
 
     # Is this domain an apex domain, meaning a CNAME would be innapropriate
     def apex_domain?
-      dns.any? { |answer| answer.class == Net::DNS::RR::NS }
+      return @apex_domain if defined?(@apex_domain)
+
+      answers = Resolv::DNS.open { |dns|
+        dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
+      }
+
+      @apex_domain = answers.any?
     end
 
     # Should the domain be an apex record?
