@@ -29,6 +29,16 @@ class GitHubPages
       192.30.252.154
     ]
 
+    TYPHOEUS_OPTIONS = {
+      :followlocation  => true,
+      :timeout         => 10,
+      :accept_encoding => "gzip",
+      :method          => :head,
+      :headers         => {
+        "User-Agent"   => "Mozilla/5.0 (compatible; GitHub Pages Health Check/#{VERSION}; +https://github.com/github/pages-health-check)"
+      }
+    }
+
     def initialize(domain)
       @domain = domain
     end
@@ -131,7 +141,7 @@ class GitHubPages
     end
 
     def served_by_pages?
-      response = Typhoeus.head(uri, followlocation: true)
+      response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
       response.success? && response.headers["Server"] == "GitHub.com"
     end
 

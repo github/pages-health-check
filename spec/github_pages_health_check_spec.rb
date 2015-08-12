@@ -227,4 +227,9 @@ describe(GitHubPages::HealthCheck) do
     check = GitHubPages::HealthCheck.new "this-domain-does-not-exist-and-should-not-ever-exist.io"
     expect(check.dns).to be_empty
   end
+
+  it "returns the Typhoeus options" do
+    expected = Regexp.escape GitHubPages::HealthCheck::VERSION
+    expect(GitHubPages::HealthCheck::TYPHOEUS_OPTIONS[:headers]["User-Agent"]).to match(expected)
+  end
 end
