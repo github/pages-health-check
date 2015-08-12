@@ -150,7 +150,8 @@ class GitHubPages
       if response.mock? && response.headers["Location"]
         response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
       end
-      response.success? && response.headers["Server"] == "GitHub.com"
+      
+      (response.mock? || response.return_code == :ok) && response.headers["Server"] == "GitHub.com"
     end
 
     def to_json
