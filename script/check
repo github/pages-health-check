@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# Usage: script/check [DOMAIN]
+
+require_relative "../lib/github-pages-health-check"
+
+if ARGV.count != 1
+  puts "Usage: script/check [DOMAIN]"
+  exit 1
+end
+
+puts GitHubPages::HealthCheck.new(ARGV[0])
