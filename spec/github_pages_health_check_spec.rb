@@ -136,26 +136,28 @@ describe(GitHubPages::HealthCheck) do
     expect(health_check.valid_domain?).to be(false)
   end
 
-  it "returns valid json" do
-    data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-    expect(data.length).to eql(14)
-    data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
-  end
-
-  it "return the error" do
-    check = GitHubPages::HealthCheck.new "developer.facebook.com"
-    expect(check.valid?).to eql(false)
-    expect(check.reason.class).to eql(GitHubPages::HealthCheck::InvalidCNAME)
-    expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
-  end
-
   context "served by pages" do
+    it "returns valid json" do
+      stub_request(:head, "benbalter.com").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
+      expect(data.length).to eql(14)
+      data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
+    end
+
     it "knows when a domain is served by pages" do
+      stub_request(:head, "http://choosealicense.com").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
       check = GitHubPages::HealthCheck.new "choosealicense.com"
       expect(check.served_by_pages?).to eql(true)
     end
 
     it "knows when a GitHub domain is served by pages" do
+      stub_request(:head, "https://mac.github.com").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
       check = GitHubPages::HealthCheck.new "mac.github.com"
       expect(check.served_by_pages?).to eql(true)
     end
@@ -165,20 +167,44 @@ describe(GitHubPages::HealthCheck) do
       # › curl -I http://getbootstrap.com/
       # HTTP/1.1 302 Found
       # Location: /
+      stub_request(:head, "http://getbootstrap.com").
+         to_return(:status => 302, :headers => {:location => "/"})
+
+      stub_request(:head, "http://getbootstrap.com/").
+        to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
       check = GitHubPages::HealthCheck.new "getbootstrap.com"
       expect(check.served_by_pages?).to eql(true)
     end
 
     it "knows when a domain with a redirect is served by pages" do
+      stub_request(:head, "http://management.cio.gov").
+         to_return(:status => 302, :headers => {:location => "https://management.cio.gov"})
+
+      stub_request(:head, "https://management.cio.gov").
+       to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
       check = GitHubPages::HealthCheck.new "management.cio.gov"
       expect(check.served_by_pages?).to eql(true)
     end
+  end
+
+  context "not served by pages" do
 
     it "knows when a domain isn't served by pages" do
+      stub_request(:head, "http://google.com").to_return(:status => 200, :headers => {})
       check = GitHubPages::HealthCheck.new "google.com"
       expect(check.served_by_pages?).to eql(false)
       expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
       expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
+    end
+
+    it "returns the error" do
+      stub_request(:head, "http://developers.facebook.com").to_return(:status => 200, :headers => {})
+      check = GitHubPages::HealthCheck.new "developers.facebook.com"
+      expect(check.valid?).to eql(false)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::InvalidCNAME)
+      expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
     end
   end
 
@@ -199,11 +225,15 @@ describe(GitHubPages::HealthCheck) do
     end
 
     it "detects proxied sites" do
+      stub_request(:head, "http://management.cio.gov").
+       to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
       check = GitHubPages::HealthCheck.new "management.cio.gov"
       expect(check.proxied?).to eql(true)
     end
 
     it "knows a site not served by pages isn't proxied" do
+      stub_request(:head, "http://google.com").to_return(:status => 200, :headers => {})
       check = GitHubPages::HealthCheck.new "google.com"
       expect(check.proxied?).to eql(false)
     end

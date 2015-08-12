@@ -1,4 +1,8 @@
-require File.expand_path("../../lib/github-pages-health-check.rb", __FILE__)
+require "bundler/setup"
+require 'webmock/rspec'
+require_relative "../lib/github-pages-health-check"
+
+WebMock.disable_net_connect!
 
 RSpec.configure do |config|
   config.raise_errors_for_deprecations!
