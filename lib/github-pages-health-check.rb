@@ -85,7 +85,7 @@ class GitHubPages
     # Is this a valid domain that PublicSuffix recognizes?
     # Used as an escape hatch to prevent false positves on DNS checkes
     def valid_domain?
-      PublicSuffix.valid?(domain)
+      PublicSuffix.valid? domain
     end
 
     # Is this domain an SLD, meaning a CNAME would be innapropriate
