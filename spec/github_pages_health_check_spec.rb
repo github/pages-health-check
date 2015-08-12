@@ -230,6 +230,6 @@ describe(GitHubPages::HealthCheck) do
 
   it "returns the Typhoeus options" do
     expected = Regexp.escape GitHubPages::HealthCheck::VERSION
-    expect(GitHubPages::HealthCheck.typhoeus_options[:headers]["User-Agent"]).to match(expected)
+    expect(GitHubPages::HealthCheck::TYPHOEUS_OPTIONS[:headers]["User-Agent"]).to match(expected)
   end
 end
