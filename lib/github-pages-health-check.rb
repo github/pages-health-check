@@ -1,5 +1,6 @@
 require "net/dns"
 require "net/dns/resolver"
+require "addressable/uri"
 require "ipaddr"
 require "public_suffix"
 require "singleton"
@@ -84,7 +85,7 @@ class GitHubPages
     # Is this a valid domain that PublicSuffix recognizes?
     # Used as an escape hatch to prevent false positves on DNS checkes
     def valid_domain?
-      PublicSuffix.valid? domain
+      PublicSuffix.valid?(domain)
     end
 
     # Is this domain an SLD, meaning a CNAME would be innapropriate
@@ -123,6 +124,7 @@ class GitHubPages
 
     def to_hash
       {
+        :uri                            => uri.to_s,
         :proxied?                       => proxied?,
         :cloudflare_ip?                 => cloudflare_ip?,
         :old_ip_address?                => old_ip_address?,
@@ -216,7 +218,7 @@ class GitHubPages
     end
 
     def uri
-      @uri ||= URI("#{scheme}://#{domain}")
+      @uri ||= Addressable::URI.new(:host => domain, :scheme => scheme, :path => "/").normalize
     end
   end
 end

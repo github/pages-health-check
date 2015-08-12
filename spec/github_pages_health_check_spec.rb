@@ -142,7 +142,8 @@ describe(GitHubPages::HealthCheck) do
          to_return(:status => 200, :headers => {:server => "GitHub.com"})
 
       data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-      expect(data.length).to eql(14)
+      expect(data.length).to eql(15)
+      expect(data.delete("uri")).to eql("http://benbalter.com/")
       data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
     end
 
@@ -186,6 +187,17 @@ describe(GitHubPages::HealthCheck) do
 
       check = GitHubPages::HealthCheck.new "management.cio.gov"
       expect(check.served_by_pages?).to eql(true)
+    end
+
+    # https://stackoverflow.com/questions/5208851/is-there-a-workaround-to-open-urls-containing-underscores-in-ruby
+    it "doesn't error out on domains with underscores" do
+      check = GitHubPages::HealthCheck.new "this_domain_is_valid.github.io"
+
+      stub_request(:head, "this_domain_is_valid.github.io").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      expect(check.served_by_pages?).to eql(true)
+      expect(check.valid?).to eql(true)
     end
   end
 
