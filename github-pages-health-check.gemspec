@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
     "LICENSE.md"
   ]
 
-  s.add_dependency("net-dns", "~> 0.6")
+  s.add_dependency("net-dns", "~> 0.8")
   s.add_dependency("public_suffix", "~> 1.4")
   s.add_dependency("typhoeus", "~> 0.7")
   s.add_dependency("addressable", "~> 2.3")
