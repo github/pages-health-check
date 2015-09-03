@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
     "lib/github-pages-health-check/errors/deprecated_ip.rb",
     "lib/github-pages-health-check/errors/invalid_a_record.rb",
     "lib/github-pages-health-check/errors/invalid_cname.rb",
+    "lib/github-pages-health-check/errors/invalid_dns.rb",
     "lib/github-pages-health-check/errors/not_served_by_pages.rb",
     "config/cloudflare-ips.txt",
     "LICENSE.md"
