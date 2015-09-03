@@ -70,13 +70,19 @@ class GitHubPages
 
     # Returns an array of DNS answers
     def dns
-      @dns ||= Timeout::timeout(TIMEOUT) do
-        without_warnings do
-          Net::DNS::Resolver.start(absolute_domain).answer if domain
+      if @dns.nil?
+        begin
+          @dns = Timeout::timeout(TIMEOUT) do
+            without_warnings do
+              Net::DNS::Resolver.start(absolute_domain).answer if domain
+            end
+          end
+          @dns ||= false
+        rescue Exception
+          @dns = false
         end
       end
-    rescue Exception
-      nil
+      @dns || nil
     end
 
     # Are we even able to get the DNS record?
