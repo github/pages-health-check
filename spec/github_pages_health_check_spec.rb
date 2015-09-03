@@ -90,7 +90,7 @@ describe(GitHubPages::HealthCheck) do
   end
 
   it "can determine when an apex domain is pointed at a GitHub Pages IP address" do
-    allow(health_check).to receive(:domain) { "getbootstrap.com" }
+    allow(health_check).to receive(:domain) { "githubuniverse.com" }
     expect(health_check.pointed_to_github_pages_ip?).to be(true)
   end
 
@@ -142,7 +142,7 @@ describe(GitHubPages::HealthCheck) do
          to_return(:status => 200, :headers => {:server => "GitHub.com"})
 
       data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-      expect(data.length).to eql(15)
+      expect(data.length).to eql(16)
       expect(data.delete("uri")).to eql("http://benbalter.com/")
       data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
     end
@@ -281,5 +281,17 @@ describe(GitHubPages::HealthCheck) do
   it "returns the Typhoeus options" do
     expected = Regexp.escape GitHubPages::HealthCheck::VERSION
     expect(GitHubPages::HealthCheck::TYPHOEUS_OPTIONS[:headers]["User-Agent"]).to match(expected)
+  end
+
+  context "dns" do
+    it "knows when the DNS resolves" do
+      allow(health_check).to receive(:dns) { [a_packet("1.2.3.4")] }
+      expect(health_check.dns?).to be(true)
+    end
+
+    it "knows when the DNS doesn't resolve" do
+      allow(health_check).to receive(:dns) { nil }
+      expect(health_check.dns?).to be(false)
+    end
   end
 end
