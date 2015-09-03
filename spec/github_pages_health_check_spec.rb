@@ -293,5 +293,10 @@ describe(GitHubPages::HealthCheck) do
       allow(health_check).to receive(:dns) { nil }
       expect(health_check.dns?).to be(false)
     end
+
+    it "knows when a domain has no record" do
+      allow(health_check).to receive(:domain) { "example.invalid" }
+      expect(health_check.dns?).to be(false)
+    end
   end
 end

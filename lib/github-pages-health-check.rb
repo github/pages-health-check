@@ -81,7 +81,7 @@ class GitHubPages
 
     # Are we even able to get the DNS record?
     def dns?
-      !dns.nil?
+      !dns.nil? && !dns.empty?
     end
     alias_method :dns_resolves?, :dns
 
