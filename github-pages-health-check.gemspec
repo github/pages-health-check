@@ -19,16 +19,18 @@ Gem::Specification.new do |s|
     "lib/github-pages-health-check/errors/deprecated_ip.rb",
     "lib/github-pages-health-check/errors/invalid_a_record.rb",
     "lib/github-pages-health-check/errors/invalid_cname.rb",
+    "lib/github-pages-health-check/errors/invalid_dns.rb",
     "lib/github-pages-health-check/errors/not_served_by_pages.rb",
     "config/cloudflare-ips.txt",
     "LICENSE.md"
   ]
 
-  s.add_dependency("net-dns", "~> 0.6")
+  s.add_dependency("net-dns", "~> 0.8")
   s.add_dependency("public_suffix", "~> 1.4")
   s.add_dependency("typhoeus", "~> 0.7")
+  s.add_dependency("addressable", "~> 2.3")
   s.add_development_dependency("rspec", "~> 3.0")
-  s.add_development_dependency("pry")
-  s.add_development_dependency("gem-release")
-
+  s.add_development_dependency("pry", "~> 0.10")
+  s.add_development_dependency("gem-release", "~> 0.7")
+  s.add_development_dependency("webmock", "~> 1.21")
 end

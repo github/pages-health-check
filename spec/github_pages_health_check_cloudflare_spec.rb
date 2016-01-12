@@ -23,7 +23,7 @@ describe(GitHubPages::HealthCheck::CloudFlare) do
     before { tempfile.unlink }
 
     it "raises an error" do
-      expect { instance.ranges }.to raise_error
+      expect { instance.ranges }.to raise_error "no implicit conversion of nil into String"
     end
   end
 

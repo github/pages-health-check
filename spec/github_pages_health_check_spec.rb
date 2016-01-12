@@ -94,7 +94,7 @@ describe(GitHubPages::HealthCheck) do
   end
 
   it "can determine when an apex domain is pointed at a GitHub Pages IP address" do
-    allow(health_check).to receive(:domain) { "getbootstrap.com" }
+    allow(health_check).to receive(:domain) { "githubuniverse.com" }
     expect(health_check.pointed_to_github_pages_ip?).to be(true)
   end
 
@@ -140,48 +140,127 @@ describe(GitHubPages::HealthCheck) do
     expect(health_check.valid_domain?).to be(false)
   end
 
-  it "returns valid json" do
-    data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
-    expect(data.length).to eql(13)
-    data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
+  context "served by pages" do
+    it "returns valid json" do
+      stub_request(:head, "benbalter.com").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      data = JSON.parse GitHubPages::HealthCheck.new("benbalter.com").to_json
+      expect(data.length).to eql(16)
+      expect(data.delete("uri")).to eql("http://benbalter.com/")
+      data.each { |key, value| expect([true,false,nil].include?(value)).to eql(true) }
+    end
+
+    it "knows when a domain is served by pages" do
+      stub_request(:head, "http://choosealicense.com").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      check = GitHubPages::HealthCheck.new "choosealicense.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when a domain is served by pages even if it returns a 404" do
+      stub_request(:head, "http://foo.github.io").
+         to_return(:status => 404, :headers => {:server => "GitHub.com"})
+
+      check = GitHubPages::HealthCheck.new "foo.github.io"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when a GitHub domain is served by pages" do
+      stub_request(:head, "https://mac.github.com").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      check = GitHubPages::HealthCheck.new "mac.github.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when an apex domain using A records is served by pages" do
+      # Tests this redirect scenario for apex domains using A records:
+      # › curl -I http://getbootstrap.com/
+      # HTTP/1.1 302 Found
+      # Location: /
+      stub_request(:head, "http://getbootstrap.com").
+         to_return(:status => 302, :headers => {:location => "/"})
+
+      stub_request(:head, "http://getbootstrap.com/").
+        to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      check = GitHubPages::HealthCheck.new "getbootstrap.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    it "knows when a domain with a redirect is served by pages" do
+      stub_request(:head, "http://management.cio.gov").
+         to_return(:status => 302, :headers => {:location => "https://management.cio.gov"})
+
+      stub_request(:head, "https://management.cio.gov").
+       to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      check = GitHubPages::HealthCheck.new "management.cio.gov"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
+    # https://stackoverflow.com/questions/5208851/is-there-a-workaround-to-open-urls-containing-underscores-in-ruby
+    it "doesn't error out on domains with underscores" do
+      check = GitHubPages::HealthCheck.new "this_domain_is_valid.github.io"
+
+      stub_request(:head, "this_domain_is_valid.github.io").
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+      expect(check.served_by_pages?).to eql(true)
+      expect(check.valid?).to eql(true)
+    end
   end
 
-  it "return the error" do
-    check = GitHubPages::HealthCheck.new "developer.facebook.com"
-    expect(check.valid?).to eql(false)
-    expect(check.reason.class).to eql(GitHubPages::HealthCheck::InvalidCNAME)
-    expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
+  context "not served by pages" do
+
+    it "knows when a domain isn't served by pages" do
+      stub_request(:head, "http://google.com").to_return(:status => 200, :headers => {})
+      check = GitHubPages::HealthCheck.new "google.com"
+      expect(check.served_by_pages?).to eql(false)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
+      expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
+    end
+
+    it "returns the error" do
+      stub_request(:head, "http://developers.facebook.com").to_return(:status => 200, :headers => {})
+      check = GitHubPages::HealthCheck.new "developers.facebook.com"
+      expect(check.valid?).to eql(false)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::InvalidCNAME)
+      expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
+    end
   end
 
-  it "knows when a domain is served by pages" do
-    check = GitHubPages::HealthCheck.new "choosealicense.com"
-    expect(check.served_by_pages?).to eql(true)
-  end
+  context "proxies" do
+    it "knows cloudflare sites are proxied" do
+      allow(health_check).to receive(:dns) { [a_packet("108.162.196.20")] }
+      expect(health_check.proxied?).to be(true)
+    end
 
-  it "knows when a GitHub domain is served by pages" do
-    check = GitHubPages::HealthCheck.new "mac.github.com"
-    expect(check.served_by_pages?).to eql(true)
-  end
+    it "knows a site pointed to a Pages IP isn't proxied" do
+      allow(health_check).to receive(:dns) { [a_packet("192.30.252.153")] }
+      expect(health_check.proxied?).to be(false)
+    end
 
-  it "knows when an apex domain using A records is served by pages" do
-    # Tests this redirect scenario for apex domains using A records:
-    # › curl -I http://getbootstrap.com/
-    # HTTP/1.1 302 Found
-    # Location: /
-    check = GitHubPages::HealthCheck.new "getbootstrap.com"
-    expect(check.served_by_pages?).to eql(true)
-  end
+    it "knows a site pointed to a Pages domain isn't proxied" do
+      allow(health_check).to receive(:dns) { [cname_packet("pages.github.com")] }
+      expect(health_check.proxied?).to be(false)
+    end
 
-  it "knows when a domain with a redirect is served by pages" do
-    check = GitHubPages::HealthCheck.new "management.cio.gov"
-    expect(check.served_by_pages?).to eql(true)
-  end
+    it "detects proxied sites" do
+      stub_request(:head, "http://management.cio.gov").
+       to_return(:status => 200, :headers => {:server => "GitHub.com"})
 
-  it "knows when a domain isn't served by pages" do
-    check = GitHubPages::HealthCheck.new "google.com"
-    expect(check.served_by_pages?).to eql(false)
-    expect(check.reason.class).to eql(GitHubPages::HealthCheck::NotServedByPages)
-    expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
+      check = GitHubPages::HealthCheck.new "management.cio.gov"
+      expect(check.proxied?).to eql(true)
+    end
+
+    it "knows a site not served by pages isn't proxied" do
+      stub_request(:head, "http://google.com").to_return(:status => 200, :headers => {})
+      check = GitHubPages::HealthCheck.new "google.com"
+      expect(check.proxied?).to eql(false)
+    end
   end
 
   it "knows when the domain is a github domain" do
@@ -201,5 +280,27 @@ describe(GitHubPages::HealthCheck) do
 
     check = GitHubPages::HealthCheck.new "this-domain-does-not-exist-and-should-not-ever-exist.io"
     expect(check.dns).to be_empty
+  end
+
+  it "returns the Typhoeus options" do
+    expected = Regexp.escape GitHubPages::HealthCheck::VERSION
+    expect(GitHubPages::HealthCheck::TYPHOEUS_OPTIONS[:headers]["User-Agent"]).to match(expected)
+  end
+
+  context "dns" do
+    it "knows when the DNS resolves" do
+      allow(health_check).to receive(:dns) { [a_packet("1.2.3.4")] }
+      expect(health_check.dns?).to be(true)
+    end
+
+    it "knows when the DNS doesn't resolve" do
+      allow(health_check).to receive(:dns) { nil }
+      expect(health_check.dns?).to be(false)
+    end
+
+    it "knows when a domain has no record" do
+      allow(health_check).to receive(:domain) { "example.invalid" }
+      expect(health_check.dns?).to be(false)
+    end
   end
 end

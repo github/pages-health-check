@@ -1,17 +1,20 @@
 require "net/dns"
 require "net/dns/resolver"
+require "addressable/uri"
 require "ipaddr"
 require "public_suffix"
 require "singleton"
 require "net/http"
-require 'typhoeus'
+require "typhoeus"
 require "resolv"
+require "timeout"
 require_relative "github-pages-health-check/version"
 require_relative "github-pages-health-check/cloudflare"
 require_relative "github-pages-health-check/error"
 require_relative "github-pages-health-check/errors/deprecated_ip"
 require_relative "github-pages-health-check/errors/invalid_a_record"
 require_relative "github-pages-health-check/errors/invalid_cname"
+require_relative "github-pages-health-check/errors/invalid_dns"
 require_relative "github-pages-health-check/errors/not_served_by_pages"
 
 class GitHubPages
@@ -30,38 +33,84 @@ class GitHubPages
       192.30.252.154
     ]
 
+    # DNS and HTTP timeout, in seconds
+    TIMEOUT = 10
+
+    TYPHOEUS_OPTIONS = {
+      :followlocation  => true,
+      :timeout         => TIMEOUT,
+      :accept_encoding => "gzip",
+      :method          => :head,
+      :headers         => {
+        "User-Agent"   => "Mozilla/5.0 (compatible; GitHub Pages Health Check/#{VERSION}; +https://github.com/github/pages-health-check)"
+      }
+    }
+
     def initialize(domain)
       @domain = domain
     end
 
     def cloudflare_ip?
-      dns.all? { |answer| answer.class == Net::DNS::RR::A && CloudFlare.controls_ip?(answer.address) }
+      dns.all? do |answer|
+        answer.class == Net::DNS::RR::A && CloudFlare.controls_ip?(answer.address)
+      end if dns?
+    end
+
+    # Does this non-GitHub-pages domain proxy a GitHub Pages site?
+    #
+    # This can be:
+    #   1. A Cloudflare-owned IP address
+    #   2. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub domain
+    #   3. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub IP
+    def proxied?
+      return unless dns?
+      return true if cloudflare_ip?
+      return false if pointed_to_github_pages_ip? || pointed_to_github_user_domain?
+      served_by_pages?
     end
 
     # Returns an array of DNS answers
     def dns
-      @dns ||= without_warnings { Net::DNS::Resolver.start(absolute_domain).answer  } if domain
-    rescue Exception
-      false
+      if @dns.nil?
+        begin
+          @dns = Timeout::timeout(TIMEOUT) do
+            without_warnings do
+              Net::DNS::Resolver.start(absolute_domain).answer if domain
+            end
+          end
+          @dns ||= false
+        rescue Exception
+          @dns = false
+        end
+      end
+      @dns || nil
     end
+
+    # Are we even able to get the DNS record?
+    def dns?
+      !dns.nil? && !dns.empty?
+    end
+    alias_method :dns_resolves?, :dns
 
     # Does this domain have *any* A record that points to the legacy IPs?
     def old_ip_address?
-      dns.any? { |answer| answer.class == Net::DNS::RR::A && LEGACY_IP_ADDRESSES.include?(answer.address.to_s) }
+      dns.any? do |answer|
+        answer.class == Net::DNS::RR::A && LEGACY_IP_ADDRESSES.include?(answer.address.to_s)
+      end if dns?
     end
 
     # Is this domain's first response an A record?
     def a_record?
-      dns.first.class == Net::DNS::RR::A
+      dns.first.class == Net::DNS::RR::A if dns?
     end
 
     # Is this domain's first response a CNAME record?
     def cname_record?
-      dns.first.class == Net::DNS::RR::CNAME
+      dns.first.class == Net::DNS::RR::CNAME if dns?
     end
 
     # Is this a valid domain that PublicSuffix recognizes?
-    # Used as an escape hatch to prevent false positves on DNS checkes
+    # Used as an escape hatch to prevent false positives on DNS checkes
     def valid_domain?
       PublicSuffix.valid? domain
     end
@@ -84,12 +133,12 @@ class GitHubPages
 
     # Is the domain's first response a CNAME to a pages domain?
     def pointed_to_github_user_domain?
-      dns.first.class == Net::DNS::RR::CNAME && pages_domain?(dns.first.cname.to_s)
+      dns.first.class == Net::DNS::RR::CNAME && pages_domain?(dns.first.cname.to_s) if dns?
     end
 
     # Is the domain's first response an A record to a valid GitHub Pages IP?
     def pointed_to_github_pages_ip?
-      dns.first.class == Net::DNS::RR::A && CURRENT_IP_ADDRESSES.include?(dns.first.value)
+      dns.first.class == Net::DNS::RR::A && CURRENT_IP_ADDRESSES.include?(dns.first.value) if dns?
     end
 
     # Is the given cname a pages domain?
@@ -106,6 +155,9 @@ class GitHubPages
 
     def to_hash
       {
+        :uri                            => uri.to_s,
+        :dns_resolves?                  => dns?,
+        :proxied?                       => proxied?,
         :cloudflare_ip?                 => cloudflare_ip?,
         :old_ip_address?                => old_ip_address?,
         :a_record?                      => a_record?,
@@ -121,10 +173,20 @@ class GitHubPages
         :reason                         => reason
       }
     end
+    alias_method :to_h, :to_hash
 
     def served_by_pages?
-      response = Typhoeus.head(uri, followlocation: true)
-      response.success? && response.headers["Server"] == "GitHub.com"
+      if @served_by_pages.nil?
+        response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
+        # Workaround for webmock not playing nicely with Typhoeus redirects
+        # See https://github.com/bblimke/webmock/issues/237
+        if response.mock? && response.headers["Location"]
+          response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
+        end
+
+        @served_by_pages = (response.mock? || response.return_code == :ok) && response.headers["Server"] == "GitHub.com"
+      end
+      @served_by_pages
     end
 
     def to_json
@@ -133,8 +195,8 @@ class GitHubPages
 
     # Runs all checks, raises an error if invalid
     def check!
-      return unless dns
-      return if cloudflare_ip?
+      raise InvalidDNS unless dns?
+      return if proxied?
       raise DeprecatedIP if a_record? && old_ip_address?
       raise InvalidARecord if valid_domain? && a_record? && !should_be_a_record?
       raise InvalidCNAME if valid_domain? && !github_domain? && !apex_domain? && !pointed_to_github_user_domain?
@@ -192,7 +254,7 @@ class GitHubPages
     end
 
     def uri
-      @uri ||= URI("#{scheme}://#{domain}")
+      @uri ||= Addressable::URI.new(:host => domain, :scheme => scheme, :path => "/").normalize
     end
   end
 end
