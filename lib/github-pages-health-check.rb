@@ -5,8 +5,9 @@ require "ipaddr"
 require "public_suffix"
 require "singleton"
 require "net/http"
-require 'typhoeus'
-require 'timeout'
+require "typhoeus"
+require "resolv"
+require "timeout"
 require_relative "github-pages-health-check/version"
 require_relative "github-pages-health-check/cloudflare"
 require_relative "github-pages-health-check/error"
@@ -114,11 +115,15 @@ class GitHubPages
       PublicSuffix.valid? domain
     end
 
-    # Is this domain an SLD, meaning a CNAME would be innapropriate
+    # Is this domain an apex domain, meaning a CNAME would be innapropriate
     def apex_domain?
-      PublicSuffix.parse(domain).trd == nil
-    rescue
-      false
+      return @apex_domain if defined?(@apex_domain)
+
+      answers = Resolv::DNS.open { |dns|
+        dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
+      }
+
+      @apex_domain = answers.any?
     end
 
     # Should the domain be an apex record?

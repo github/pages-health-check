@@ -4,6 +4,10 @@ require "json"
 describe(GitHubPages::HealthCheck) do
   let(:health_check) { GitHubPages::HealthCheck.new("foo.github.io") }
 
+  def make_health_check(domain)
+    GitHubPages::HealthCheck.new(domain)
+  end
+
   def a_packet(ip)
      Net::DNS::RR::A.new(:name => "pages.invalid", :address => ip, :ttl => 1000)
   end
@@ -59,22 +63,22 @@ describe(GitHubPages::HealthCheck) do
   end
 
   it "knows what should be an apex record" do
-    allow(health_check).to receive(:domain) { "parkermoore.de" }
+    health_check = make_health_check("parkermoore.de")
     expect(health_check.should_be_a_record?).to be(true)
 
-    allow(health_check).to receive(:domain) { "bbc.co.uk" }
+    health_check = make_health_check("bbc.co.uk")
     expect(health_check.should_be_a_record?).to be(true)
 
-    allow(health_check).to receive(:domain) { "blog.parkermoore.de" }
+    health_check = make_health_check("blog.parkermoore.de")
     expect(health_check.should_be_a_record?).to be(false)
 
-    allow(health_check).to receive(:domain) { "www.bbc.co.uk" }
+    health_check = make_health_check("www.bbc.co.uk")
     expect(health_check.should_be_a_record?).to be(false)
 
-    allow(health_check).to receive(:domain) { "foo.github.io" }
+    health_check = make_health_check("foo.github.io")
     expect(health_check.should_be_a_record?).to be(false)
 
-    allow(health_check).to receive(:domain) { "pages.github.com" }
+    health_check = make_health_check("pages.github.com")
     expect(health_check.should_be_a_record?).to be(false)
   end
 
