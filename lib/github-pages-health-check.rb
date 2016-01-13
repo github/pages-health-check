@@ -176,7 +176,7 @@ class GitHubPages
     alias_method :to_h, :to_hash
 
     def served_by_pages?
-      if @served_by_pages.nil?
+      @served_by_pages ||= begin
         response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
         # Workaround for webmock not playing nicely with Typhoeus redirects
         # See https://github.com/bblimke/webmock/issues/237
@@ -184,9 +184,12 @@ class GitHubPages
           response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
         end
 
-        @served_by_pages = (response.mock? || response.return_code == :ok) && response.headers["Server"] == "GitHub.com"
+        return false unless response.mock? || response.return_code == :ok
+        return true if response.headers["Server"] == "GitHub.com"
+
+        # Typhoeus mangles the case of the header, compare insensitively
+        response.headers.any? { |k,v| k =~ /X-GitHub-Request-Id/i }
       end
-      @served_by_pages
     end
 
     def to_json
