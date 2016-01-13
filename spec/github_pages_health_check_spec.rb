@@ -159,6 +159,14 @@ describe(GitHubPages::HealthCheck) do
       expect(check.served_by_pages?).to eql(true)
     end
 
+    it "falls back to the request ID" do
+      stub_request(:head, "http://choosealicense.com").
+         to_return(:status => 200, :headers => {"X-GitHub-Request-Id" => "1234"})
+
+      check = GitHubPages::HealthCheck.new "choosealicense.com"
+      expect(check.served_by_pages?).to eql(true)
+    end
+
     it "knows when a domain is served by pages even if it returns a 404" do
       stub_request(:head, "http://foo.github.io").
          to_return(:status => 404, :headers => {:server => "GitHub.com"})
