@@ -6,6 +6,30 @@ describe(GitHubPages::HealthCheck) do
     GitHubPages::HealthCheck.new(domain)
   end
 
+  context "constructor" do
+    let(:expected) { "foo.github.io" }
+    before(:each) do
+      stub_request(:head, expected).
+         to_return(:status => 200, :headers => {:server => "GitHub.com"})
+    end
+
+    it "can handle bare domains" do
+      expect(make_health_check("foo.github.io").domain).to eql(expected)
+    end
+
+    it "can handle URI's" do
+      expect(make_health_check("https://foo.github.io").domain).to eql(expected)
+      expect(make_health_check("http://foo.github.io").domain).to eql(expected)
+      expect(make_health_check("ftp://foo.github.io").domain).to eql(expected)
+    end
+
+    it "can handle paths" do
+      expect(make_health_check("foo.github.io/im-a-path/").domain).to eql(expected)
+      expect(make_health_check("foo.github.io/im-a-path").domain).to eql(expected)
+      expect(make_health_check("foo.github.io/index.html").domain).to eql(expected)
+    end
+  end
+
   def a_packet(ip)
      Net::DNS::RR::A.new(:name => "pages.invalid", :address => ip, :ttl => 1000)
   end
