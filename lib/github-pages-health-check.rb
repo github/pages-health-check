@@ -16,6 +16,7 @@ require_relative "github-pages-health-check/errors/invalid_a_record"
 require_relative "github-pages-health-check/errors/invalid_cname"
 require_relative "github-pages-health-check/errors/invalid_dns"
 require_relative "github-pages-health-check/errors/not_served_by_pages"
+require_relative "github-pages-health-check/printer"
 
 class GitHubPages
   class HealthCheck
@@ -153,28 +154,6 @@ class GitHubPages
       !!domain.match(/\.github\.com$/)
     end
 
-    def to_hash
-      {
-        :uri                            => uri.to_s,
-        :dns_resolves?                  => dns?,
-        :proxied?                       => proxied?,
-        :cloudflare_ip?                 => cloudflare_ip?,
-        :old_ip_address?                => old_ip_address?,
-        :a_record?                      => a_record?,
-        :cname_record?                  => cname_record?,
-        :valid_domain?                  => valid_domain?,
-        :apex_domain?                   => apex_domain?,
-        :should_be_a_record?            => should_be_a_record?,
-        :pointed_to_github_user_domain? => pointed_to_github_user_domain?,
-        :pointed_to_github_pages_ip?    => pointed_to_github_pages_ip?,
-        :pages_domain?                  => pages_domain?,
-        :served_by_pages?               => served_by_pages?,
-        :valid?                         => valid?,
-        :reason                         => reason
-      }
-    end
-    alias_method :to_h, :to_hash
-
     def served_by_pages?
       return @served_by_pages if defined? @served_by_pages
       @served_by_pages = begin
@@ -191,10 +170,6 @@ class GitHubPages
         # Typhoeus mangles the case of the header, compare insensitively
         response.headers.any? { |k,v| k =~ /X-GitHub-Request-Id/i }
       end
-    end
-
-    def to_json
-      to_hash.to_json
     end
 
     # Runs all checks, raises an error if invalid
@@ -229,13 +204,46 @@ class GitHubPages
       "#<GitHubPages::HealthCheck @domain=\"#{domain}\" valid?=#{valid?}>"
     end
 
-    def to_s
-      to_hash.inject(Array.new) do |all, pair|
-        all.push pair.join(": ")
-      end.join("\n")
+    def to_hash
+      {
+        :uri                            => uri.to_s,
+        :valid?                         => valid?,
+        :dns_resolves?                  => dns?,
+        :proxied?                       => proxied?,
+        :cloudflare_ip?                 => cloudflare_ip?,
+        :old_ip_address?                => old_ip_address?,
+        :a_record?                      => a_record?,
+        :cname_record?                  => cname_record?,
+        :valid_domain?                  => valid_domain?,
+        :apex_domain?                   => apex_domain?,
+        :should_be_a_record?            => should_be_a_record?,
+        :pointed_to_github_user_domain? => pointed_to_github_user_domain?,
+        :pointed_to_github_pages_ip?    => pointed_to_github_pages_ip?,
+        :pages_domain?                  => pages_domain?,
+        :served_by_pages?               => served_by_pages?,
+        :reason                         => reason
+      }
+    end
+    alias_method :to_h, :to_hash
+
+    def to_json
+      to_hash.to_json
     end
 
+    def to_s
+      printer.simple_string
+    end
+
+    def to_s_pretty
+      printer.pretty_print
+    end
+    alias_method :pretty_print, :to_s_pretty
+
     private
+
+    def printer
+      @printer ||= GitHubPages::HealthCheck::Printer.new(self)
+    end
 
     # surpress warn-level feedback due to unsupported record types
     def without_warnings(&block)
