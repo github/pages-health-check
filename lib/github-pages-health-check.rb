@@ -47,7 +47,7 @@ class GitHubPages
     }
 
     def initialize(domain)
-      @domain = domain
+      @domain = host_from_uri(domain)
     end
 
     def cloudflare_ip?
@@ -259,6 +259,25 @@ class GitHubPages
 
     def uri
       @uri ||= Addressable::URI.new(:host => domain, :scheme => scheme, :path => "/").normalize
+    end
+
+    # Parse the URI. Accept either domain names or full URI's.
+    # Used by the initializer so we can be more flexible with inputs.
+    #
+    # domain - a URI or domain name.
+    #
+    # Examples
+    #
+    #   host_from_uri("benbalter.github.com")
+    #   # => 'benbalter.github.com'
+    #   host_from_uri("https://benbalter.github.com")
+    #   # => 'benbalter.github.com'
+    #   host_from_uri("benbalter.github.com/help-me-im-a-path/")
+    #   # => 'benbalter.github.com'
+    #
+    # Return the hostname.
+    def host_from_uri(domain)
+      Addressable::URI.parse(domain).host || Addressable::URI.parse("http://#{domain}").host
     end
   end
 end
