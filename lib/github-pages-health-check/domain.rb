@@ -24,6 +24,10 @@ module GitHubPages
       ].freeze
 
       def initialize(host)
+        unless host.is_a? String
+          raise ArgumentError, "Expected string, got #{host.class}"
+        end
+        
         @host = host_from_uri(host)
       end
 
