@@ -32,20 +32,18 @@ module GitHubPages
 
       def deprecated_ip?
         return @deprecated_ip if defined? @deprecated_ip
-        @deprecated_ip = a_record? && old_ip_address?
+        @deprecated_ip = (a_record? && old_ip_address?)
       end
 
       def invalid_a_record?
         return @invalid_a_record if defined? @invalid_a_record
-        @invalid_a_record = valid_domain? && a_record? && !should_be_a_record?
+        @invalid_a_record = (valid_domain? && a_record? && !should_be_a_record?)
       end
 
       def invalid_cname?
         return @invalid_cname if defined? @invalid_cname
-        @invalid_cname = begin
-          return false unless valid_domain?
-          !github_domain? && !apex_domain? && !pointed_to_github_user_domain?
-        end
+        @invalid_cname = !valid_domain? ||
+          !(github_domain? || apex_domain? || pointed_to_github_user_domain?)
       end
 
       # Is this a valid domain that PublicSuffix recognizes?
