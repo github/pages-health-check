@@ -4,6 +4,6 @@ set -ex
 
 script/bootstrap
 
-bundle exec rspec
+script/test
 script/check-cloudflare-ips
 bundle exec gem build github-pages-health-check.gemspec

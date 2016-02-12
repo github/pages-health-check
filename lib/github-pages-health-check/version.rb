@@ -1,5 +1,5 @@
-class GitHubPages
-  class HealthCheck
-    VERSION = "0.6.0"
+module GitHubPages
+  module HealthCheck
+    VERSION = "1.0.0"
   end
 end

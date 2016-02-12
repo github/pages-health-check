@@ -1,5 +1,5 @@
-class GitHubPages
-  class HealthCheck
+module GitHubPages
+  module HealthCheck
     class Printer
       PRETTY_LEFT_WIDTH = 11
       PRETTY_JOINER = " | "

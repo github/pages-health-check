@@ -23,7 +23,7 @@ describe(GitHubPages::HealthCheck::CloudFlare) do
     before { tempfile.unlink }
 
     it "raises an error" do
-      expect { instance.ranges }.to raise_error "no implicit conversion of nil into String"
+      expect { instance.send(:ranges) }.to raise_error "no implicit conversion of nil into String"
     end
   end
 
@@ -31,12 +31,12 @@ describe(GitHubPages::HealthCheck::CloudFlare) do
     before { tempfile.write("199.27.128.0/21\n173.245.48.0/20") }
 
     it "has two IPs" do
-      expect(instance.ranges.size).to eql(2)
+      expect(instance.send(:ranges).size).to eql(2)
     end
 
     it "loads the IP addresses" do
-      expect(instance.ranges).to include(IPAddr.new("199.27.128.0/21"))
-      expect(instance.ranges).to include(IPAddr.new("173.245.48.0/20"))
+      expect(instance.send(:ranges)).to include(IPAddr.new("199.27.128.0/21"))
+      expect(instance.send(:ranges)).to include(IPAddr.new("173.245.48.0/20"))
     end
 
     it("controls? 199.27.128.55") { expect(instance.controls_ip?(IPAddr.new("199.27.128.55"))).to be_truthy }
