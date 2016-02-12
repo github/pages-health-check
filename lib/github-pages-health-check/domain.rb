@@ -4,6 +4,17 @@ module GitHubPages
 
       attr_reader :host
 
+      LEGACY_IP_ADDRESSES = %w[
+        207.97.227.245
+        204.232.175.78
+        199.27.73.133
+      ]
+
+      CURRENT_IP_ADDRESSES = %w[
+        192.30.252.153
+        192.30.252.154
+      ]
+
       def initialize(host)
         @host = host_from_uri(host)
       end

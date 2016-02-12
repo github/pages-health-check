@@ -28,17 +28,6 @@ module GitHubPages
     autoload :Repository, "github-pages-health-check/repository"
     autoload :Site,       "github-pages-health-check/site"
 
-    LEGACY_IP_ADDRESSES = %w[
-      207.97.227.245
-      204.232.175.78
-      199.27.73.133
-    ]
-
-    CURRENT_IP_ADDRESSES = %w[
-      192.30.252.153
-      192.30.252.154
-    ]
-
     # DNS and HTTP timeout, in seconds
     TIMEOUT = 10
 
