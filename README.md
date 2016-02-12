@@ -13,8 +13,8 @@
 ### Basic Usage
 
 ```ruby
-> check = GitHubPages::HealthCheck.new("choosealicense.com")
-=> #<GitHubPages::HealthCheck @domain="choosealicense.com" valid?=true>
+> check = GitHubPages::HealthCheck::Site.new("choosealicense.com")
+=> #<GitHubPages::HealthCheck::Site @domain="choosealicense.com" valid?=true>
 > check.valid?
 => true
 ```
@@ -22,20 +22,20 @@
 ### An invalid domain
 
 ```ruby
-> check = GitHubPages::HealthCheck.new("foo.github.com")
+> check = GitHubPages::HealthCheck::Site.new("foo.github.com")
 > check.valid?
 => false
 > check.valid!
-=> GitHubPages::HealthCheck::InvalidCNAME
+raises GitHubPages::HealthCheck::Errors::InvalidCNAMEError
 ```
 
 
 ### Retrieving specific checks
 
 ``` ruby
-> check.should_be_a_record?
+> check.domain.should_be_a_record?
 => true
-> check.a_record?
+> check.domain.a_record?
 => true
 ```
 
@@ -56,7 +56,6 @@
  :pages_domain?=>false,
  :valid?=>true
 }
-> require "json"
 > check.to_json
 => "{\"cloudflare_ip?\":false,\"old_ip_address?\":false,\"a_record?\":true,\"cname_record?\":false,\"valid_domain?\":true,\"apex_domain?\":true,\"should_be_a_record?\":true,\"pointed_to_github_user_domain?\":false,\"pointed_to_github_pages_ip?\":false,\"pages_domain?\":false,\"valid?\":true}"
 ```
@@ -64,7 +63,7 @@
 ### Getting the reason a domain is invalid
 
 ```ruby
-> check = GitHubPages::HealthCheck.new "developer.facebook.com"
+> check = GitHubPages::HealthCheck::Site.new "developer.facebook.com"
 > check.valid?
 => false
 > check.reason
