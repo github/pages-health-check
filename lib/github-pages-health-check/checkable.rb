@@ -42,10 +42,9 @@ module GitHubPages
         to_hash.to_json
       end
 
+      # Convert the hash to a human-readable key/value pair string
       def to_s
-        to_hash.inject(Array.new) do |all, pair|
-          all.push pair.join(": ")
-        end.join("\n")
+        to_hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
       end
     end
   end

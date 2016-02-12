@@ -10,6 +10,7 @@ require "resolv"
 require "timeout"
 require "octokit"
 require "json"
+require "yaml"
 require_relative "github-pages-health-check/version"
 
 if File.exists?(File.expand_path "../.env", File.dirname(__FILE__))
