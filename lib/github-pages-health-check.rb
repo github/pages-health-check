@@ -12,7 +12,7 @@ require "octokit"
 require "json"
 require_relative "github-pages-health-check/version"
 
-if File.exists?(File.expand_path ".env", File.dirname(__FILE__))
+if File.exists?(File.expand_path "../.env", File.dirname(__FILE__))
   require 'dotenv'
   Dotenv.load
 end
