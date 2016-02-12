@@ -11,9 +11,7 @@ module GitHubPages
       end
 
       def simple_string
-        health_check.to_hash.inject(Array.new) do |all, pair|
-          all.push pair.join(": ")
-        end.join("\n")
+        health_check.to_hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
       end
 
       def pretty_print
