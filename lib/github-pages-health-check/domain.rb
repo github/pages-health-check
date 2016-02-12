@@ -8,12 +8,20 @@ module GitHubPages
         207.97.227.245
         204.232.175.78
         199.27.73.133
-      ]
+      ].freeze
 
       CURRENT_IP_ADDRESSES = %w[
         192.30.252.153
         192.30.252.154
-      ]
+      ].freeze
+
+      HASH_METHODS = [
+        :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?,
+        :old_ip_address?, :a_record?, :cname_record?, :valid_domain?,
+        :apex_domain?, :should_be_a_record?, :pointed_to_github_user_domain?,
+        :pointed_to_github_pages_ip?, :pages_domain?, :served_by_pages?,
+        :valid_domain?
+      ].freeze
 
       def initialize(host)
         @host = host_from_uri(host)
@@ -23,10 +31,10 @@ module GitHubPages
       def check!
         raise Errors::InvalidDNSError unless dns_resolves?
         return true if proxied?
-        raise Errors::DeprecatedIPError if deprecated_ip?
-        raise Errors::InvalidARecord    if invalid_a_record?
-        raise Errors::InvalidCNAME      if invalid_cname?
-        raise Errors::NotServedByPages  unless served_by_pages?
+        raise Errors::DeprecatedIPError      if deprecated_ip?
+        raise Errors::InvalidARecordError    if invalid_a_record?
+        raise Errors::InvalidCNAMEError      if invalid_cname?
+        raise Errors::NotServedByPagesError  unless served_by_pages?
         true
       end
 

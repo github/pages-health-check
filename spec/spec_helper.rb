@@ -15,3 +15,14 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = "random"
 end
+
+def with_env(key, value)
+  old_env = ENV[key]
+  ENV[key] = value
+  yield
+  ENV[key] = old_env
+end
+
+def fixture_path(fixture = "")
+  File.expand_path "./fixtures/#{fixture}", File.dirname(__FILE__)
+end

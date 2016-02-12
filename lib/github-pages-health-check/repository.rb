@@ -5,10 +5,14 @@ module GitHubPages
       attr_reader :name, :owner
 
       REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
+      
+      HASH_METHODS = [
+        :name_with_owner, :built?, :last_built,  :build_duration, :build_error
+      ].freeze
 
       def initialize(name_with_owner, access_token: nil)
         unless name_with_owner =~ REPO_REGEX
-          raise GitHubPages::HealthCheck::Errors::InvalidRepositoryError
+          raise Errors::InvalidRepositoryError
         end
         parts = name_with_owner.split("/")
         @owner = parts.first
@@ -54,8 +58,8 @@ module GitHubPages
       private
 
       def client
-        raise MissingAccessTokenError if @acecss_token.nil?
-        @client ||= Octokit::Client.new(@access_token)
+        raise Errors::MissingAccessTokenError if @access_token.nil?
+        @client ||= Octokit::Client.new(access_token: @access_token)
       end
 
       def pages_info
@@ -63,7 +67,7 @@ module GitHubPages
       end
 
       def cname
-        @pages_info.cname
+        pages_info.cname
       end
     end
   end

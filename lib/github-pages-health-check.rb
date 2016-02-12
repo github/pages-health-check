@@ -20,7 +20,7 @@ end
 module GitHubPages
   module HealthCheck
 
-    autoload :Cloudflare, "github-pages-health-check/cloudflare"
+    autoload :CloudFlare, "github-pages-health-check/cloudflare"
     autoload :Error,      "github-pages-health-check/error"
     autoload :Errors,     "github-pages-health-check/errors"
     autoload :Checkable,  "github-pages-health-check/checkable"
