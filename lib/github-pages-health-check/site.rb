@@ -1,6 +1,6 @@
 module GitHubPages
   module HealthCheck
-    class Site < GitHubPages::HealthCheck::Checkable
+    class Site < Checkable
 
       attr_reader :repository, :domain
 

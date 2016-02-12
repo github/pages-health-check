@@ -1,6 +1,6 @@
 module GitHubPages
   module HealthCheck
-    class Repository < GitHubPages::HealthCheck::Checkable
+    class Repository < Checkable
 
       attr_reader :name, :owner
 
