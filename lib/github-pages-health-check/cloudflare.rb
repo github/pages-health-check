@@ -1,9 +1,10 @@
-class GitHubPages
-  class HealthCheck
+module GitHubPages
+  module HealthCheck
     class CloudFlare
       include Singleton
 
-      CONFIG_PATH = File.expand_path("../../config/cloudflare-ips.txt", File.dirname(__FILE__))
+      # Internal: The path of the config file.
+      attr_reader :path
 
       # Public: Does cloudflare control this address?
       def self.controls_ip?(address)
@@ -12,16 +13,15 @@ class GitHubPages
 
       # Internal: Create a new cloudflare info instance.
       def initialize(options = {})
-        @path = options.fetch(:path) { CONFIG_PATH }
+        @path = options.fetch(:path) { default_config_path }
       end
-
-      # Internal: The path of the config file.
-      attr_reader :path
 
       # Internal: Does cloudflare control this address?
       def controls_ip?(address)
         ranges.any? { |range| range.include?(address) }
       end
+
+      private
 
       # Internal: The IP address ranges that cloudflare controls.
       def ranges
@@ -31,6 +31,10 @@ class GitHubPages
       # Internal: Load IPAddr ranges from #path
       def load_ranges
         File.read(path).lines.map { |line| IPAddr.new(line.chomp) }
+      end
+
+      def default_config_path
+        File.expand_path("../../config/cloudflare-ips.txt", File.dirname(__FILE__))
       end
     end
   end

@@ -1,11 +1,12 @@
-class GitHubPages
-  class HealthCheck
+module GitHubPages
+  module HealthCheck
     class Error < StandardError
-      def message
-        "Invalid domain"
+      def self.inherited(base)
+        subclasses << base
       end
-      def to_s
-        message
+
+      def self.subclasses
+        @subclasses ||= []
       end
     end
   end
