@@ -49,5 +49,9 @@ module GitHubPages
       $VERBOSE = warn_level
       result
     end
+
+    def self.check(repository_or_domain, access_token: nil)
+      Site.new repository_or_domain, access_token: access_token
+    end
   end
 end

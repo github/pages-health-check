@@ -101,6 +101,8 @@ describe(GitHubPages::HealthCheck::Repository) do
     end
 
     context "without an access token" do
+      before { subject.instance_variable_set("@access_token", nil) }
+      
       it "raises an error" do
         expected = GitHubPages::HealthCheck::Errors::MissingAccessTokenError
         expect { subject.send(:client) }.to raise_error(expected)
