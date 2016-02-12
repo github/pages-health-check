@@ -26,7 +26,7 @@
 > check.valid?
 => false
 > check.valid!
-=> GitHubPages::HealthCheck::Errors::InvalidCNAMEError
+raises GitHubPages::HealthCheck::Errors::InvalidCNAMEError
 ```
 
 
