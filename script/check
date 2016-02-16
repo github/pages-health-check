@@ -8,4 +8,4 @@ if ARGV.count != 1
   exit 1
 end
 
-puts GitHubPages::HealthCheck.new(ARGV[0])
+puts GitHubPages::HealthCheck.check(ARGV[0])

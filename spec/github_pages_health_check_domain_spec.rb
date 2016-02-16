@@ -73,6 +73,12 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(domain_check.a_record?).to be(false)
     end
 
+    it "returns the cname" do
+      domain_check = make_domain_check
+      allow(domain_check).to receive(:dns) { [cname_packet("pages.github.com")] }
+      expect(domain_check.cname.host).to eql("pages.github.com")
+    end
+
     it "knows a subdomain is not an apex domain" do
       domain_check = make_domain_check "blog.parkermoore.de"
       expect(domain_check.apex_domain?).to be(false)
@@ -105,12 +111,12 @@ describe(GitHubPages::HealthCheck::Domain) do
       ["parkr.github.io", "mattr-.github.com"].each do |domain|
         domain_check = make_domain_check
         allow(domain_check).to receive(:dns) { [cname_packet(domain)] }
-        expect(domain_check.pointed_to_github_user_domain?).to be(true)
+        expect(domain_check.cname_to_github_user_domain?).to be(true)
       end
       ["github.com", "ben.balter.com"].each do |domain|
         domain_check = make_domain_check
         allow(domain_check).to receive(:dns) { [cname_packet(domain)] }
-        expect(domain_check.pointed_to_github_user_domain?).to be(false)
+        expect(domain_check.cname_to_github_user_domain?).to be(false)
       end
     end
 
@@ -120,9 +126,61 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(domain_check.valid_domain?).to be(true)
       expect(domain_check.github_domain?).to be(false)
       expect(domain_check.apex_domain?).to be(false)
-      expect(domain_check.pointed_to_github_user_domain?).to eql(false)
+      expect(domain_check.cname_to_github_user_domain?).to eql(false)
       expect(domain_check.invalid_cname?).to eql(true)
     end
+
+    it "flags CNAMEs to pages.github.com as invalid" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("pages.github.com")] }
+      expect(domain_check.invalid_cname?).to eql(true)
+    end
+
+    it "flags CNAMEs directly to fastly as invalid" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("github.map.fastly.net")] }
+      expect(domain_check.invalid_cname?).to eql(true)
+    end
+
+    it "knows CNAMEs to user subdomains are valid" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("foo.github.io")] }
+      expect(domain_check.invalid_cname?).to eql(false)
+    end
+
+    it "knows when the domain is CNAME'd to a user domain" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("foo.github.io")] }
+      expect(domain_check.cname_to_github_user_domain?).to eql(true)
+    end
+
+    it "knows when the domain is CNAME'd to pages.github.com" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("pages.github.com")] }
+      expect(domain_check.cname_to_pages_dot_github_dot_com?).to eql(true)
+    end
+
+    it "knows when the domain is CNAME'd to pages.github.io" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("pages.github.io")] }
+      expect(domain_check.cname_to_pages_dot_github_dot_com?).to eql(true)
+    end
+
+    it "knows when the domain is CNAME'd to fastly" do
+      domain_check = make_domain_check("foo.github.biz")
+      allow(domain_check).to receive(:dns) { [cname_packet("github.map.fastly.net")] }
+      expect(domain_check.cname_to_fastly?).to eql(true)
+    end
+  end
+
+  it "knows if the domain is a github domain" do
+    domain_check = make_domain_check("government.github.com")
+    expect(domain_check.github_domain?).to eql(true)
+  end
+
+  it "knows if the domain is a fastly domain" do
+    domain_check = make_domain_check("github.map.fastly.net")
+    expect(domain_check.fastly?).to eql(true)
   end
 
   context "apex domains" do
@@ -289,7 +347,19 @@ describe(GitHubPages::HealthCheck::Domain) do
 
     it "knows a site pointed to a Pages domain isn't proxied" do
       domain_check = make_domain_check
+      allow(domain_check).to receive(:dns) { [cname_packet("foo.github.io")] }
+      expect(domain_check.proxied?).to be(false)
+    end
+
+    it "knows a site CNAMEd to pages.github.com isn't proxied" do
+      domain_check = make_domain_check
       allow(domain_check).to receive(:dns) { [cname_packet("pages.github.com")] }
+      expect(domain_check.proxied?).to be(false)
+    end
+
+    it "knows a site CNAME'd directly to Fastly isn't proxied" do
+      domain_check = make_domain_check('foo.github.biz')
+      allow(domain_check).to receive(:dns) { [cname_packet("github.map.fastly.net")] }
       expect(domain_check.proxied?).to be(false)
     end
 
