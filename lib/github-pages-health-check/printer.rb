@@ -19,7 +19,7 @@ module GitHubPages
         output = StringIO.new
 
         # Header
-        output.puts new_line "Domain", "#{values[:uri]} was health checked"
+        output.puts new_line "Domain", "#{values[:uri]}"
         output.puts ("-" * (PRETTY_LEFT_WIDTH + 1)) + "|" + "-" * 50
 
         output.puts new_line "DNS", "does not resolve" if not values[:dns_resolves?]
