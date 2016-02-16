@@ -39,12 +39,23 @@ module GitHubPages
       alias_method :to_h, :to_hash
 
       def to_json
+        require 'json'
         to_hash.to_json
       end
 
-      # Convert the hash to a human-readable key/value pair string
       def to_s
-        to_hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
+        printer.simple_string
+      end
+
+      def to_s_pretty
+        printer.pretty_print
+      end
+      alias_method :pretty_print, :to_s_pretty
+
+      private
+
+      def printer
+        @printer ||= GitHubPages::HealthCheck::Printer.new(self)
       end
     end
   end

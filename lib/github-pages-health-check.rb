@@ -9,8 +9,6 @@ require "typhoeus"
 require "resolv"
 require "timeout"
 require "octokit"
-require "json"
-require "yaml"
 require_relative "github-pages-health-check/version"
 
 if File.exists?(File.expand_path "../.env", File.dirname(__FILE__))
@@ -28,6 +26,7 @@ module GitHubPages
     autoload :Domain,     "github-pages-health-check/domain"
     autoload :Repository, "github-pages-health-check/repository"
     autoload :Site,       "github-pages-health-check/site"
+    autoload :Printer,    "github-pages-health-check/printer"
 
     # DNS and HTTP timeout, in seconds
     TIMEOUT = 10
