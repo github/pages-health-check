@@ -39,6 +39,7 @@ module GitHubPages
       alias_method :to_h, :to_hash
 
       def to_json
+        require 'json'
         to_hash.to_json
       end
 
