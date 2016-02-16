@@ -56,7 +56,6 @@ raises GitHubPages::HealthCheck::Errors::InvalidCNAMEError
  :pages_domain?=>false,
  :valid?=>true
 }
-> require 'json'
 > check.to_json
 => "{\"cloudflare_ip?\":false,\"old_ip_address?\":false,\"a_record?\":true,\"cname_record?\":false,\"valid_domain?\":true,\"apex_domain?\":true,\"should_be_a_record?\":true,\"pointed_to_github_user_domain?\":false,\"pointed_to_github_pages_ip?\":false,\"pages_domain?\":false,\"valid?\":true}"
 ```
