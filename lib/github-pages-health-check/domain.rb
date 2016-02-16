@@ -18,7 +18,8 @@ module GitHubPages
       HASH_METHODS = [
         :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?,
         :old_ip_address?, :a_record?, :cname_record?, :valid_domain?,
-        :apex_domain?, :should_be_a_record?, :pointed_to_github_user_domain?,
+        :apex_domain?, :should_be_a_record?, :cname_to_github_user_domain?,
+        :cname_to_pages_dot_github_dot_com?, :cname_to_fastly?,
         :pointed_to_github_pages_ip?, :pages_domain?, :served_by_pages?,
         :valid_domain?
       ].freeze
@@ -27,7 +28,7 @@ module GitHubPages
         unless host.is_a? String
           raise ArgumentError, "Expected string, got #{host.class}"
         end
-        
+
         @host = host_from_uri(host)
       end
 
@@ -54,8 +55,12 @@ module GitHubPages
 
       def invalid_cname?
         return @invalid_cname if defined? @invalid_cname
-        @invalid_cname = !valid_domain? ||
-          !(github_domain? || apex_domain? || pointed_to_github_user_domain?)
+        @invalid_cname = begin
+          return false unless valid_domain?
+          return false if github_domain? || apex_domain?
+          return true  if cname_to_pages_dot_github_dot_com? || cname_to_fastly?
+          !cname_to_github_user_domain?
+        end
       end
 
       # Is this a valid domain that PublicSuffix recognizes?
@@ -81,29 +86,50 @@ module GitHubPages
         !pages_domain? && apex_domain?
       end
 
-      # Is the domain's first response a CNAME to a pages domain?
-      def pointed_to_github_user_domain?
-        dns.first.class == Net::DNS::RR::CNAME && pages_domain?(dns.first.cname.to_s) if dns?
-      end
-
       # Is the domain's first response an A record to a valid GitHub Pages IP?
       def pointed_to_github_pages_ip?
-        dns.first.class == Net::DNS::RR::A && CURRENT_IP_ADDRESSES.include?(dns.first.value) if dns?
+        a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.value)
       end
 
-      # Is the given cname a pages domain?
+      # Is the domain's first response a CNAME to a pages domain?
+      def cname_to_github_user_domain?
+        cname? && !cname_to_pages_dot_github_dot_com? && cname.pages_domain?
+      end
+
+      # Is the given domain a CNAME to pages.github.(io|com)
+      # instead of being CNAME'd to the user's subdomain?
       #
       # domain - the domain to check, generaly the target of a cname
-      def pages_domain?(domain = nil)
-        domain ||= host
-        !!domain.match(/^[\w-]+\.github\.(io|com)\.?$/i)
+      def cname_to_pages_dot_github_dot_com?
+        cname? && cname.pages_dot_github_dot_com?
+      end
+
+      # Is the given domain CNAME'd directly to our Fastly account?
+      def cname_to_fastly?
+        cname? && !pages_domain? && cname.fastly?
+      end
+
+      # Is the host a *.github.io domain?
+      def pages_domain?
+        !!host.match(/\A[\w-]+\.github\.(io|com)\.?\z/i)
+      end
+
+      # Is the host pages.github.com or pages.github.io?
+      def pages_dot_github_dot_com?
+        !!host.match(/\Apages\.github\.(io|com)\.?\z/i)
       end
 
       # Is this domain owned by GitHub?
       def github_domain?
-        !!host.match(/\.github\.com$/)
+        !!host.match(/\.github\.com\z/)
       end
 
+      # Is the host our Fastly CNAME?
+      def fastly?
+        !!host.match(/\Agithub\.map\.fastly\.net\.?\z/i)
+      end
+
+      # Does the domain resolve to a CloudFlare-owned IP
       def cloudflare_ip?
         return unless dns?
         dns.all? do |answer|
@@ -120,7 +146,8 @@ module GitHubPages
       def proxied?
         return unless dns?
         return true if cloudflare_ip?
-        return false if pointed_to_github_pages_ip? || pointed_to_github_user_domain?
+        return false if pointed_to_github_pages_ip? || cname_to_github_user_domain?
+        return false if cname_to_pages_dot_github_dot_com? || cname_to_fastly?
         served_by_pages?
       end
 
@@ -151,12 +178,22 @@ module GitHubPages
 
       # Is this domain's first response an A record?
       def a_record?
-        dns.first.class == Net::DNS::RR::A if dns?
+        return unless dns?
+        dns.first.class == Net::DNS::RR::A
       end
 
       # Is this domain's first response a CNAME record?
       def cname_record?
-        dns.first.class == Net::DNS::RR::CNAME if dns?
+        return unless dns?
+        dns.first.class == Net::DNS::RR::CNAME
+      end
+      alias cname? cname_record?
+
+      # The domain to which this domain's CNAME resolves
+      # Returns nil if the domain is not a CNAME
+      def cname
+        return unless cname?
+        @cname ||= Domain.new(dns.first.cname.to_s)
       end
 
       def served_by_pages?
