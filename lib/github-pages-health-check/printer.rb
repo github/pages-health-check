@@ -11,6 +11,7 @@ module GitHubPages
       end
 
       def simple_string
+        require 'yaml'
         health_check.to_hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
       end
 
