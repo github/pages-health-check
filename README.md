@@ -71,3 +71,13 @@ raises GitHubPages::HealthCheck::Errors::InvalidCNAMEError
 > check.reason.message
 => "CNAME does not point to GitHub Pages"
 ```
+
+### Repository checks
+
+Repository checks require a personal access or OAuth token with `repo` or scope. This can be passed as the second argument to the Site or Repository constructors like so:
+
+```ruby
+check = GitHubPages::HealthCheck::Site.new "github/pages-health-check", access_token: "1234
+```
+
+You can also set `OCTOKIT_ACCESS_TOKEN` as an environmental variable, or via a `.env` file in your working directory.
