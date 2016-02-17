@@ -13,13 +13,12 @@ module GitHubPages
       end
 
       def check!
-        domain.check!
-        repository.check! unless repository.nil?
+        [domain, repository].each { |check| check.check! unless check.nil? }
         true
       end
 
       def to_hash
-        hash = domain.to_hash.dup
+        hash = (domain || {}).to_hash.dup
         hash = hash.merge(repository.to_hash) unless repository.nil?
         hash[:valid?] = valid?
         hash[:reason] = reason

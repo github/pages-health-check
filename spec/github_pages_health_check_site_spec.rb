@@ -50,6 +50,30 @@ describe(GitHubPages::HealthCheck::Site) do
         end
       end
 
+      context "with no cname" do
+        before do
+          if init_type == "repo"
+            fixture = File.read(fixture_path("pages_info_no_cname.json"))
+            stub_request(:get, "https://api.github.com/repos/github/pages.github.com/pages").
+              to_return(:status => 200, :body => fixture, :headers => {'Content-Type'=>'application/json'})
+
+            fixture = File.read(fixture_path("build_success.json"))
+            stub_request(:get, "https://api.github.com/repos/github/pages.github.com/pages/builds/latest").
+                to_return(:status => 200, :body => fixture, :headers => {'Content-Type'=>'application/json'})
+          end
+        end
+
+        if init_type == "repo"
+          it "knows it doesn't know the domain" do
+            expect(subject.domain).to eql(nil)
+          end
+
+          it "doesnt err out when it checks" do
+            expect(subject.check!).to eql(true)
+          end
+        end
+      end
+
       context "json" do
         let(:json) { JSON.parse subject.to_json }
 

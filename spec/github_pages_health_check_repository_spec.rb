@@ -102,7 +102,7 @@ describe(GitHubPages::HealthCheck::Repository) do
 
     context "without an access token" do
       before { subject.instance_variable_set("@access_token", nil) }
-      
+
       it "raises an error" do
         expected = GitHubPages::HealthCheck::Errors::MissingAccessTokenError
         expect { subject.send(:client) }.to raise_error(expected)
@@ -129,6 +129,19 @@ describe(GitHubPages::HealthCheck::Repository) do
     it "returns the domain" do
       expect(subject.domain.class).to eql(GitHubPages::HealthCheck::Domain)
       expect(subject.domain.host).to eql("pages.github.com")
+    end
+
+    context "without a CNAME" do
+      before do
+        subject.instance_variable_set("@access_token", "1234")
+        fixture = File.read(fixture_path("pages_info_no_cname.json"))
+        stub_request(:get, "https://api.github.com/repos/github/pages.github.com/pages").
+          to_return(:status => 200, :body => fixture, :headers => {'Content-Type'=>'application/json'})
+      end
+
+      it "doesn't try to build the domain" do
+        expect(subject.domain).to be_nil
+      end
     end
   end
 end

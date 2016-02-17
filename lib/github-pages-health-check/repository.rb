@@ -5,7 +5,7 @@ module GitHubPages
       attr_reader :name, :owner
 
       REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
-      
+
       HASH_METHODS = [
         :name_with_owner, :built?, :last_built,  :build_duration, :build_error
       ].freeze
@@ -39,7 +39,7 @@ module GitHubPages
       end
 
       def build_error
-        last_build.error.message unless built?
+        last_build.error["message"] unless built?
       end
       alias_method :reason, :build_error
 
@@ -52,6 +52,7 @@ module GitHubPages
       end
 
       def domain
+        return if cname.nil?
         @domain ||= GitHubPages::HealthCheck::Domain.new(cname)
       end
 
