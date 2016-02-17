@@ -12,7 +12,9 @@ module GitHubPages
 
       def simple_string
         require 'yaml'
-        health_check.to_hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
+        hash = health_check.to_hash
+        hash[:reason] = hash[:reason].to_s if hash[:reason]
+        hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
       end
 
       def pretty_print
