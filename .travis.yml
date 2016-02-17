@@ -4,3 +4,6 @@ install:
   - sudo bash -c 'echo search github.com >> /etc/resolv.conf'
 cache: bundler
 rvm: 2.1.7
+
+sudo: required
+dist: precise
