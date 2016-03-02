@@ -204,7 +204,6 @@ module GitHubPages
         return unless dns_resolves?
 
         @served_by_pages = begin
-
           response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
 
           # Workaround for webmock not playing nicely with Typhoeus redirects
