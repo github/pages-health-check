@@ -76,9 +76,14 @@ module GitHubPages
         return @apex_domain if defined?(@apex_domain)
         return unless valid_domain?
 
-        answers = Resolv::DNS.open { |dns|
-          dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
-        }
+          answers = begin
+            Resolv::DNS.open { |dns|
+              dns.timeouts = TIMEOUT
+              dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
+            }
+          rescue Timeout::Error, NoMethodError
+            []
+          end
 
         @apex_domain = answers.any?
       end
