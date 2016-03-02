@@ -34,6 +34,7 @@ module GitHubPages
 
       # Runs all checks, raises an error if invalid
       def check!
+        return unless valid_domain?
         raise Errors::InvalidDNSError unless dns_resolves?
         return true if proxied?
         raise Errors::DeprecatedIPError      if deprecated_ip?
@@ -45,7 +46,7 @@ module GitHubPages
 
       def deprecated_ip?
         return @deprecated_ip if defined? @deprecated_ip
-        @deprecated_ip = (a_record? && old_ip_address?)
+        @deprecated_ip = (valid_domain? && a_record? && old_ip_address?)
       end
 
       def invalid_a_record?
@@ -73,6 +74,7 @@ module GitHubPages
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
+        return unless valid_domain?
 
         answers = Resolv::DNS.open { |dns|
           dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
@@ -154,6 +156,7 @@ module GitHubPages
       # Returns an array of DNS answers
       def dns
         return @dns if defined? @dns
+        return unless valid_domain?
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
             Net::DNS::Resolver.start(absolute_domain).answer unless host.nil?
@@ -198,8 +201,10 @@ module GitHubPages
 
       def served_by_pages?
         return @served_by_pages if defined? @served_by_pages
+        return unless dns_resolves?
 
         @served_by_pages = begin
+
           response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
 
           # Workaround for webmock not playing nicely with Typhoeus redirects
