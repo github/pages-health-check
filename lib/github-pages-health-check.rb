@@ -29,7 +29,7 @@ module GitHubPages
     autoload :Printer,    "github-pages-health-check/printer"
 
     # DNS and HTTP timeout, in seconds
-    TIMEOUT = 10
+    TIMEOUT = 5
 
     TYPHOEUS_OPTIONS = {
       :followlocation  => true,
