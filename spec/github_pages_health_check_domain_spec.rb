@@ -404,6 +404,9 @@ describe(GitHubPages::HealthCheck::Domain) do
 
       domain_check = make_domain_check "github.invalid"
       expect(domain_check.valid_domain?).to be(false)
+      
+      expect(domain_check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidDomainError)
+      expect(domain_check.reason.message).to eql("Domain is not a valid domain")
     end
   end
 
