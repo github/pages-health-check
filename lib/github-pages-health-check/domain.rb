@@ -34,8 +34,8 @@ module GitHubPages
 
       # Runs all checks, raises an error if invalid
       def check!
-        return unless valid_domain?
-        raise Errors::InvalidDNSError unless dns_resolves?
+        raise Errors::InvalidDomainError unless valid_domain?
+        raise Errors::InvalidDNSError    unless dns_resolves?
         return true if proxied?
         raise Errors::DeprecatedIPError      if deprecated_ip?
         raise Errors::InvalidARecordError    if invalid_a_record?
