@@ -29,7 +29,7 @@ module GitHubPages
           raise ArgumentError, "Expected string, got #{host.class}"
         end
 
-        @host = host_from_uri(host)
+        @host = normalize_host(host)
       end
 
       # Runs all checks, raises an error if invalid
@@ -241,15 +241,16 @@ module GitHubPages
       #
       # Examples
       #
-      #   host_from_uri("benbalter.github.com")
+      #   normalize_host("benbalter.github.com")
       #   # => 'benbalter.github.com'
-      #   host_from_uri("https://benbalter.github.com")
+      #   normalize_host("https://benbalter.github.com")
       #   # => 'benbalter.github.com'
-      #   host_from_uri("benbalter.github.com/help-me-im-a-path/")
+      #   normalize_host("benbalter.github.com/help-me-im-a-path/")
       #   # => 'benbalter.github.com'
       #
       # Return the hostname.
-      def host_from_uri(domain)
+      def normalize_host(domain)
+        domain = domain.strip.chomp(".")
         Addressable::URI.parse(domain).host || Addressable::URI.parse("http://#{domain}").host
       end
 
