@@ -31,6 +31,14 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(make_domain_check("foo.github.io/im-a-path").host).to eql(expected)
       expect(make_domain_check("foo.github.io/index.html").host).to eql(expected)
     end
+
+    it "strips whitespace" do
+      expect(make_domain_check(" foo.github.io ").host).to eql(expected)
+    end
+
+    it "normalizes FQDNs" do
+      expect(make_domain_check("foo.github.io.").host).to eql(expected)
+    end
   end
 
   context "A records" do
@@ -404,7 +412,7 @@ describe(GitHubPages::HealthCheck::Domain) do
 
       domain_check = make_domain_check "github.invalid"
       expect(domain_check.valid_domain?).to be(false)
-      
+
       expect(domain_check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidDomainError)
       expect(domain_check.reason.message).to eql("Domain is not a valid domain")
     end
