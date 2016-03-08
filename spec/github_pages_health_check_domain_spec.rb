@@ -44,6 +44,10 @@ describe(GitHubPages::HealthCheck::Domain) do
       check = make_domain_check("http://@")
       expect(check.host).to eql(nil)
       expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidDomainError)
+
+      check = make_domain_check("//")
+      expect(check.host).to eql(nil)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidDomainError)
     end
   end
 
