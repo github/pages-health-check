@@ -252,6 +252,8 @@ module GitHubPages
       def normalize_host(domain)
         domain = domain.strip.chomp(".")
         Addressable::URI.parse(domain).host || Addressable::URI.parse("http://#{domain}").host
+      rescue Addressable::URI::InvalidURIError
+        nil
       end
 
       # Adjust `domain` so that it won't be searched for with /etc/resolv.conf's search rules.
