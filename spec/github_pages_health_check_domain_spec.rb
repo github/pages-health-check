@@ -39,6 +39,12 @@ describe(GitHubPages::HealthCheck::Domain) do
     it "normalizes FQDNs" do
       expect(make_domain_check("foo.github.io.").host).to eql(expected)
     end
+
+    it "doesn't err on invalid domains" do
+      check = make_domain_check("http://@")
+      expect(check.host).to eql(nil)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidDomainError)
+    end
   end
 
   context "A records" do
