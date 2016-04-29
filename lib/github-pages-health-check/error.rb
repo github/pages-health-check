@@ -3,6 +3,7 @@ module GitHubPages
     class Error < StandardError
       DOCUMENTATION_BASE = "https://help.github.com"
       DOCUMENTATION_PATH = "/categories/github-pages-basics/"
+      LOCAL_ONLY = false # Error is only used when running locally
 
       attr_reader :repository, :domain
 

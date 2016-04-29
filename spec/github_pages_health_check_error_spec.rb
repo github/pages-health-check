@@ -1,15 +1,10 @@
 require "spec_helper"
 
 describe(GitHubPages::HealthCheck::Error) do
-  # Errors used locally that do not have coresponding documentation URLs
-  ERROR_WHITELIST = [
-    GitHubPages::HealthCheck::Errors::MissingAccessTokenError,
-    GitHubPages::HealthCheck::Errors::InvalidRepositoryError
-  ]
 
   GitHubPages::HealthCheck::Errors.all.each do |klass|
-    next if ERROR_WHITELIST.include?(klass)
-
+    next if klass::LOCAL_ONLY
+    
     context "The #{klass.name.split('::').last} error" do
       let(:domain) { GitHubPages::HealthCheck::Domain.new("example.com") }
       subject { klass.new(domain: domain) }
