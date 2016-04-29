@@ -25,10 +25,11 @@ module GitHubPages
         "Something's wrong with your GitHub Pages site."
       end
 
+      # Error message, with get more info URL appended
       def message_with_url
         msg = message.gsub(/\s+/, " ").squeeze(" ").strip
-        msg << "." unless msg =~ /\.$/
-        [msg, more_info].join(" ")
+        msg << "." unless msg =~ /\.$/ #add trailing period if not there
+        "#{msg} #{more_info}"
       end
       alias_method :message_formatted, :message_with_url
 
