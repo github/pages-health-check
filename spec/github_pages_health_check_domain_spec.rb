@@ -346,7 +346,7 @@ describe(GitHubPages::HealthCheck::Domain) do
       check = make_domain_check "developers.facebook.com"
       expect(check.valid?).to eql(false)
       expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidCNAMEError)
-      expect(check.reason.message).to eql("CNAME does not point to GitHub Pages")
+      expect(check.reason.message).to match(/not set up with a correct CNAME record/i)
     end
   end
 

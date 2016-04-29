@@ -26,7 +26,7 @@ module GitHubPages
       alias_method :nwo, :name_with_owner
 
       def check!
-        raise Errors::BuildError, build_error unless built?
+        raise Errors::BuildError.new(repository: self), build_error unless built?
         true
       end
 

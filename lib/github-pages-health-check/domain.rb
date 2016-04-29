@@ -34,13 +34,13 @@ module GitHubPages
 
       # Runs all checks, raises an error if invalid
       def check!
-        raise Errors::InvalidDomainError unless valid_domain?
-        raise Errors::InvalidDNSError    unless dns_resolves?
+        raise Errors::InvalidDomainError.new(domain: self) unless valid_domain?
+        raise Errors::InvalidDNSError.new(domain: self)    unless dns_resolves?
         return true if proxied?
-        raise Errors::DeprecatedIPError      if deprecated_ip?
-        raise Errors::InvalidARecordError    if invalid_a_record?
-        raise Errors::InvalidCNAMEError      if invalid_cname?
-        raise Errors::NotServedByPagesError  unless served_by_pages?
+        raise Errors::DeprecatedIPError.new(domain: self)      if deprecated_ip?
+        raise Errors::InvalidARecordError.new(domain: self)    if invalid_a_record?
+        raise Errors::InvalidCNAMEError.new(domain: self)      if invalid_cname?
+        raise Errors::NotServedByPagesError.new(domain: self)  unless served_by_pages?
         true
       end
 
