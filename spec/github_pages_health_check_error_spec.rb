@@ -4,7 +4,7 @@ describe(GitHubPages::HealthCheck::Error) do
 
   GitHubPages::HealthCheck::Errors.all.each do |klass|
     next if klass::LOCAL_ONLY
-    
+
     context "The #{klass.name.split('::').last} error" do
       let(:domain) { GitHubPages::HealthCheck::Domain.new("example.com") }
       subject { klass.new(domain: domain) }
@@ -19,6 +19,10 @@ describe(GitHubPages::HealthCheck::Error) do
         default = "/categories/github-pages-basics/"
         expect(klass::DOCUMENTATION_PATH).to_not eql(default)
         expect(subject.send(:documentation_url)).to_not be_nil
+      end
+
+      it "the documentation path has a trailing slash" do
+        expect(klass::DOCUMENTATION_PATH).to match(%r{/$})
       end
     end
   end
