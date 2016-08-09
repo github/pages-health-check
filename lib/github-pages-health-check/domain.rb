@@ -16,7 +16,7 @@ module GitHubPages
       ].freeze
 
       HASH_METHODS = [
-        :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?,
+        :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?, :fastly_ip?,
         :old_ip_address?, :a_record?, :cname_record?, :valid_domain?,
         :apex_domain?, :should_be_a_record?, :cname_to_github_user_domain?,
         :cname_to_pages_dot_github_dot_com?, :cname_to_fastly?,
@@ -138,10 +138,12 @@ module GitHubPages
 
       # Does the domain resolve to a CloudFlare-owned IP
       def cloudflare_ip?
-        return unless dns?
-        dns.all? do |answer|
-          answer.class == Net::DNS::RR::A && CloudFlare.controls_ip?(answer.address)
-        end
+        cdn_ip?(CloudFlare)
+      end
+
+      # Does the domain resolve to a Fastly-owned IP
+      def fastly_ip?
+        cdn_ip?(Fastly)
       end
 
       # Does this non-GitHub-pages domain proxy a GitHub Pages site?
@@ -154,7 +156,7 @@ module GitHubPages
         return unless dns?
         return true if cloudflare_ip?
         return false if pointed_to_github_pages_ip? || cname_to_github_user_domain?
-        return false if cname_to_pages_dot_github_dot_com? || cname_to_fastly?
+        return false if cname_to_pages_dot_github_dot_com? || cname_to_fastly? || fastly_ip?
         served_by_pages?
       end
 
@@ -267,6 +269,14 @@ module GitHubPages
 
       def scheme
         @scheme ||= github_domain? ? "https" : "http"
+      end
+
+      # Does the domain resolve to a CDN-owned IP
+      def cdn_ip?(cdn)
+        return unless dns?
+        dns.all? do |answer|
+          answer.class == Net::DNS::RR::A && cdn.controls_ip?(answer.address)
+        end
       end
     end
   end

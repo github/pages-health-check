@@ -19,7 +19,9 @@ end
 module GitHubPages
   module HealthCheck
 
-    autoload :CloudFlare, "github-pages-health-check/cloudflare"
+    autoload :CDN,        "github-pages-health-check/cdn"
+    autoload :CloudFlare, "github-pages-health-check/cdns/cloudflare"
+    autoload :Fastly,     "github-pages-health-check/cdns/fastly"
     autoload :Error,      "github-pages-health-check/error"
     autoload :Errors,     "github-pages-health-check/errors"
     autoload :Checkable,  "github-pages-health-check/checkable"
