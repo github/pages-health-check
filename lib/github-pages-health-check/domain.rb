@@ -4,12 +4,15 @@ module GitHubPages
 
       attr_reader :host
 
-      LEGACY_IP_ADDRESSES = %w[
-        207.97.227.245
-        204.232.175.78
-        199.27.73.133
-        199.27.76.133
-      ].freeze 
+      LEGACY_IP_ADDRESSES = [
+        # Legacy GitHub Datacenter
+        "207.97.227.245",
+        "204.232.175.78",
+
+        # Legacy Fastly Datacenter
+        "199.27.73.133",
+        "199.27.76.133"
+      ].freeze
 
       CURRENT_IP_ADDRESSES = %w[
         192.30.252.153
@@ -37,8 +40,8 @@ module GitHubPages
       def check!
         raise Errors::InvalidDomainError.new(domain: self) unless valid_domain?
         raise Errors::InvalidDNSError.new(domain: self)    unless dns_resolves?
-        return true if proxied?
         raise Errors::DeprecatedIPError.new(domain: self)      if deprecated_ip?
+        return true if proxied?
         raise Errors::InvalidARecordError.new(domain: self)    if invalid_a_record?
         raise Errors::InvalidCNAMEError.new(domain: self)      if invalid_cname?
         raise Errors::NotServedByPagesError.new(domain: self)  unless served_by_pages?
