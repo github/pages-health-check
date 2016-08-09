@@ -33,6 +33,10 @@ module GitHubPages
       end
       alias_method :message_formatted, :message_with_url
 
+      def to_s
+        "#{message_with_url} (#{self.class.name.split('::').last})".gsub("\n", " ").squeeze(" ").strip
+      end
+
       private
 
       def username
