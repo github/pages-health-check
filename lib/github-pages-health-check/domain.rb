@@ -8,7 +8,8 @@ module GitHubPages
         207.97.227.245
         204.232.175.78
         199.27.73.133
-      ].freeze
+        199.27.76.133
+      ].freeze 
 
       CURRENT_IP_ADDRESSES = %w[
         192.30.252.153
