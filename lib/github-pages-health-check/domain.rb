@@ -72,7 +72,7 @@ module GitHubPages
       # Used as an escape hatch to prevent false positives on DNS checkes
       def valid_domain?
         return @valid if defined? @valid
-        @valid = PublicSuffix.valid?(host)
+        @valid = PublicSuffix.valid?(host, default_rule: nil)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
