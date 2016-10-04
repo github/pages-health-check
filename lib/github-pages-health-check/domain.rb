@@ -21,7 +21,7 @@ module GitHubPages
 
       HASH_METHODS = [
         :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?, :fastly_ip?,
-        :old_ip_address?, :a_record?, :cname_record?, :has_mx_records?,
+        :old_ip_address?, :a_record?, :cname_record?, :mx_records_present?,
         :valid_domain?, :apex_domain?, :should_be_a_record?,
         :cname_to_github_user_domain?, :cname_to_pages_dot_github_dot_com?,
         :cname_to_fastly?, :pointed_to_github_pages_ip?, :pages_domain?,
@@ -94,7 +94,7 @@ module GitHubPages
 
       # Should the domain be an apex record?
       def should_be_a_record?
-        !pages_domain? && (apex_domain? || has_mx_records?)
+        !pages_domain? && (apex_domain? || mx_records_present?)
       end
 
       def should_be_cname_record?
@@ -218,9 +218,9 @@ module GitHubPages
         @cname ||= Domain.new(dns.first.cname.to_s)
       end
 
-      def has_mx_records?
+      def mx_records_present?
         return unless dns?
-        dns.any? { |answer| p answer; answer.class == Net::DNS::RR::MX }
+        dns.any? { |answer| answer.class == Net::DNS::RR::MX }
       end
 
       def served_by_pages?
