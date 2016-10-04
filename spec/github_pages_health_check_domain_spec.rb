@@ -350,11 +350,12 @@ describe(GitHubPages::HealthCheck::Domain) do
     end
 
     it "returns the error" do
-      stub_request(:head, "http://developers.facebook.com").to_return(:status => 200, :headers => {})
-      check = make_domain_check "developers.facebook.com"
+      stub_request(:head, "http://techblog.netflix.com").to_return(:status => 200, :headers => {})
+      check = make_domain_check "techblog.netflix.com"
       expect(check.valid?).to eql(false)
-      expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::NotServedByPagesError)
-      expect(check.reason.message).to eql("Domain does not resolve to the GitHub Pages server")
+      expect(check.mx_records_present?).to eq(false)
+      expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidCNAMEError)
+      expect(check.reason.message).to match(/not set up with a correct CNAME record/i)
     end
   end
 
