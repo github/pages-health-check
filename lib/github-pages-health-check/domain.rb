@@ -28,6 +28,10 @@ module GitHubPages
         :valid_domain?
       ].freeze
 
+      def self.valid_domain?(domain)
+        !new(domain.to_s).host.nil?
+      end
+
       def initialize(host)
         unless host.is_a? String
           raise ArgumentError, "Expected string, got #{host.class}"
@@ -199,7 +203,8 @@ module GitHubPages
       # Is this domain's first response a CNAME record?
       def cname_record?
         return unless dns?
-        dns.first.class == Net::DNS::RR::CNAME
+        dns.first.class == Net::DNS::RR::CNAME &&
+          Domain.valid_domain?(dns.first.cname.to_s)
       end
       alias cname? cname_record?
 

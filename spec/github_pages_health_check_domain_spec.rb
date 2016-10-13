@@ -91,6 +91,15 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(domain_check.a_record?).to be(false)
     end
 
+    it "handles a broken CNAME gracefully" do
+      domain_check = make_domain_check
+      allow(domain_check).to receive(:dns) do
+        [cname_packet("example.com").tap {|c| c.instance_variable_set(:@cname, "@.") }]
+      end
+      expect(domain_check.cname?).to be(false)
+      expect(described_class.valid_domain?("@.")).to be(false)
+    end
+
     it "returns the cname" do
       domain_check = make_domain_check
       allow(domain_check).to receive(:dns) { [cname_packet("pages.github.com")] }
