@@ -97,7 +97,7 @@ describe(GitHubPages::HealthCheck::Domain) do
         [cname_packet("example.com").tap {|c| c.instance_variable_set(:@cname, "@.") }]
       end
       expect(domain_check.cname?).to be(false)
-      expect(described_class.valid_domain?("@.")).to be(false)
+      expect(domain_check.cname.valid_domain?).to be(false)
     end
 
     it "returns the cname" do
