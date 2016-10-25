@@ -199,14 +199,15 @@ module GitHubPages
       # Is this domain's first response a CNAME record?
       def cname_record?
         return unless dns?
-        dns.first.class == Net::DNS::RR::CNAME
+        return false unless cname
+        cname.valid_domain?
       end
       alias cname? cname_record?
 
       # The domain to which this domain's CNAME resolves
       # Returns nil if the domain is not a CNAME
       def cname
-        return unless cname?
+        return unless dns.first.class == Net::DNS::RR::CNAME
         @cname ||= Domain.new(dns.first.cname.to_s)
       end
 
