@@ -13,6 +13,10 @@ describe(GitHubPages::HealthCheck::Domain) do
     Net::DNS::RR::CNAME.new(:name => "pages.invalid", :cname => domain, :ttl => 1000)
   end
 
+  def mx_packet
+    Net::DNS::RR::MX.new(:name => "pages.invalid", :exchange => "mail.example.com", :preference => 10, :ttl => 100)
+  end
+
   context "constructor" do
     let(:expected) { "foo.github.io" }
 
@@ -132,6 +136,10 @@ describe(GitHubPages::HealthCheck::Domain) do
 
       domain_check = make_domain_check("pages.github.com")
       expect(domain_check.should_be_a_record?).to be(false)
+
+      domain_check = make_domain_check("blog.parkermoore.de")
+      allow(domain_check).to receive(:dns) { [a_packet("1.2.3.4"), mx_packet] }
+      expect(domain_check.should_be_a_record?).to be(true)
     end
 
     it "can determine a valid GitHub Pages CNAME value" do
@@ -351,9 +359,10 @@ describe(GitHubPages::HealthCheck::Domain) do
     end
 
     it "returns the error" do
-      stub_request(:head, "http://developers.facebook.com").to_return(:status => 200, :headers => {})
-      check = make_domain_check "developers.facebook.com"
+      stub_request(:head, "http://techblog.netflix.com").to_return(:status => 200, :headers => {})
+      check = make_domain_check "techblog.netflix.com"
       expect(check.valid?).to eql(false)
+      expect(check.mx_records_present?).to eq(false)
       expect(check.reason.class).to eql(GitHubPages::HealthCheck::Errors::InvalidCNAMEError)
       expect(check.reason.message).to match(/not set up with a correct CNAME record/i)
     end

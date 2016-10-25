@@ -21,11 +21,11 @@ module GitHubPages
 
       HASH_METHODS = [
         :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?, :fastly_ip?,
-        :old_ip_address?, :a_record?, :cname_record?, :valid_domain?,
-        :apex_domain?, :should_be_a_record?, :cname_to_github_user_domain?,
-        :cname_to_pages_dot_github_dot_com?, :cname_to_fastly?,
-        :pointed_to_github_pages_ip?, :pages_domain?, :served_by_pages?,
-        :valid_domain?
+        :old_ip_address?, :a_record?, :cname_record?, :mx_records_present?,
+        :valid_domain?, :apex_domain?, :should_be_a_record?,
+        :cname_to_github_user_domain?, :cname_to_pages_dot_github_dot_com?,
+        :cname_to_fastly?, :pointed_to_github_pages_ip?, :pages_domain?,
+        :served_by_pages?, :valid_domain?
       ].freeze
 
       def initialize(host)
@@ -64,7 +64,7 @@ module GitHubPages
           return false unless valid_domain?
           return false if github_domain? || apex_domain?
           return true  if cname_to_pages_dot_github_dot_com? || cname_to_fastly?
-          !cname_to_github_user_domain?
+          !cname_to_github_user_domain? && should_be_cname_record?
         end
       end
 
@@ -94,7 +94,11 @@ module GitHubPages
 
       # Should the domain be an apex record?
       def should_be_a_record?
-        !pages_domain? && apex_domain?
+        !pages_domain? && (apex_domain? || mx_records_present?)
+      end
+
+      def should_be_cname_record?
+        !should_be_a_record?
       end
 
       # Is the domain's first response an A record to a valid GitHub Pages IP?
@@ -170,11 +174,18 @@ module GitHubPages
         return unless valid_domain?
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
-            Net::DNS::Resolver.start(absolute_domain).answer unless host.nil?
+            unless host.nil?
+              resolver.search(absolute_domain, Net::DNS::A).answer +
+                resolver.search(absolute_domain, Net::DNS::MX).answer
+            end
           end
         end
       rescue StandardError
         @dns = nil
+      end
+
+      def resolver
+        @resolver ||= Net::DNS::Resolver.new
       end
 
       # Are we even able to get the DNS record?
@@ -209,6 +220,11 @@ module GitHubPages
       def cname
         return unless dns.first.class == Net::DNS::RR::CNAME
         @cname ||= Domain.new(dns.first.cname.to_s)
+      end
+
+      def mx_records_present?
+        return unless dns?
+        dns.any? { |answer| answer.class == Net::DNS::RR::MX }
       end
 
       def served_by_pages?
