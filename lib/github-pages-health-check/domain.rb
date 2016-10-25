@@ -175,7 +175,6 @@ module GitHubPages
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
             unless host.nil?
-              resolver = Net::DNS::Resolver.new
               resolver.search(absolute_domain, Net::DNS::A).answer +
                 resolver.search(absolute_domain, Net::DNS::MX).answer
             end
@@ -183,6 +182,10 @@ module GitHubPages
         end
       rescue StandardError
         @dns = nil
+      end
+
+      def resolver
+        @resolver ||= Net::DNS::Resolver.new
       end
 
       # Are we even able to get the DNS record?
