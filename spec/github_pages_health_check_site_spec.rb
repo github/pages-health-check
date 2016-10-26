@@ -4,6 +4,9 @@ describe(GitHubPages::HealthCheck::Site) do
   before do
     stub_request(:head, "https://pages.github.com/").
        to_return(:status => 200, :headers => {:server => "GitHub.com"})
+
+    stub_request(:head, "http://pages.github.com/").
+      to_return(:status => 200, :headers => {:server => "GitHub.com"})
   end
 
   ["domain", "repo"].each do |init_type|
