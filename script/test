@@ -1,2 +1,4 @@
 #!/bin/sh
+
 bundle exec rspec $@
+bundle exec rubocop -D -S
