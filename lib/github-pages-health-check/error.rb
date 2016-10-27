@@ -1,8 +1,9 @@
+# frozen_string_literal: true
 module GitHubPages
   module HealthCheck
     class Error < StandardError
-      DOCUMENTATION_BASE = "https://help.github.com"
-      DOCUMENTATION_PATH = "/categories/github-pages-basics/"
+      DOCUMENTATION_BASE = 'https://help.github.com'
+      DOCUMENTATION_PATH = '/categories/github-pages-basics/'
       LOCAL_ONLY = false # Error is only used when running locally
 
       attr_reader :repository, :domain
@@ -27,21 +28,21 @@ module GitHubPages
 
       # Error message, with get more info URL appended
       def message_with_url
-        msg = message.gsub(/\s+/, " ").squeeze(" ").strip
-        msg << "." unless msg =~ /\.$/ #add trailing period if not there
+        msg = message.gsub(/\s+/, ' ').squeeze(' ').strip
+        msg << '.' unless msg =~ /\.$/ # add trailing period if not there
         "#{msg} #{more_info}"
       end
-      alias_method :message_formatted, :message_with_url
+      alias message_formatted message_with_url
 
       def to_s
-        "#{message_with_url} (#{self.class.name.split('::').last})".gsub("\n", " ").squeeze(" ").strip
+        "#{message_with_url} (#{self.class.name.split('::').last})".tr("\n", ' ').squeeze(' ').strip
       end
 
       private
 
       def username
         if repository.nil?
-          "[YOUR USERNAME]"
+          '[YOUR USERNAME]'
         else
           repository.owner
         end

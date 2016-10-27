@@ -1,4 +1,5 @@
-Dir[File.expand_path("../errors/*_error.rb", __FILE__)].each do |f|
+# frozen_string_literal: true
+Dir[File.expand_path('../errors/*_error.rb', __FILE__)].each do |f|
   require f
 end
 

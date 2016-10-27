@@ -1,9 +1,9 @@
+# frozen_string_literal: true
 module GitHubPages
   module HealthCheck
     module Errors
       class InvalidCNAMEError < GitHubPages::HealthCheck::Error
-        # rubocop:disable Metrics/LineLength
-        DOCUMENTATION_PATH = "/articles/setting-up-a-custom-domain-with-github-pages/".freeze
+        DOCUMENTATION_PATH = '/articles/setting-up-a-custom-domain-with-github-pages/'
 
         def message
           <<-MSG

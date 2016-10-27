@@ -1,29 +1,29 @@
+# frozen_string_literal: true
 module GitHubPages
   module HealthCheck
     class Repository < Checkable
-
       attr_reader :name, :owner
 
       REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
 
       HASH_METHODS = [
-        :name_with_owner, :built?, :last_built,  :build_duration, :build_error
+        :name_with_owner, :built?, :last_built, :build_duration, :build_error
       ].freeze
 
       def initialize(name_with_owner, access_token: nil)
         unless name_with_owner =~ REPO_REGEX
           raise Errors::InvalidRepositoryError
         end
-        parts = name_with_owner.split("/")
+        parts = name_with_owner.split('/')
         @owner = parts.first
         @name  = parts.last
-        @access_token = access_token || ENV["OCTOKIT_ACCESS_TOKEN"]
+        @access_token = access_token || ENV['OCTOKIT_ACCESS_TOKEN']
       end
 
       def name_with_owner
-        @name_with_owner ||= [owner,name].join("/")
+        @name_with_owner ||= [owner, name].join('/')
       end
-      alias_method :nwo, :name_with_owner
+      alias nwo name_with_owner
 
       def check!
         raise Errors::BuildError.new(repository: self), build_error unless built?
@@ -35,20 +35,20 @@ module GitHubPages
       end
 
       def built?
-        last_build && last_build.status == "built"
+        last_build && last_build.status == 'built'
       end
 
       def build_error
-        last_build.error["message"] unless built?
+        last_build.error['message'] unless built?
       end
-      alias_method :reason, :build_error
+      alias reason build_error
 
       def build_duration
-        last_build.duration unless last_build.nil?
+        last_build&.duration
       end
 
       def last_built
-        last_build.updated_at unless last_build.nil?
+        last_build&.updated_at
       end
 
       def domain
