@@ -474,4 +474,89 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(domain_check.dns?).to be(false)
     end
   end
+
+  context "https" do
+    let(:domain) { "pages.github.com" }
+    let(:domain_check) { make_domain_check(domain) }
+
+    context "a site that supports HTTPS" do
+      let(:domain) { "pages.github.com" }
+
+      before do
+        stub_request(:head, "https://pages.github.com/").
+           to_return(:status => 200, :headers => {:server => "GitHub.com"})
+         allow(domain_check.send(:https_response)).to receive(:return_code) { :ok }
+
+      end
+
+      it "knows it supports https" do
+        expect(domain_check.https?).to eql(true)
+      end
+
+      it "knows there's no error" do
+        expect(domain_check.https_error).to be_nil
+      end
+    end
+
+    context "a site that doesn't support HTTPS" do
+      let(:domain) { "pages.github.com" }
+
+      before do
+        stub_request(:head, "https://pages.github.com/").
+           to_return(:status => 200, :headers => {:server => "GitHub.com"})
+         allow(domain_check.send(:https_response)).to receive(:return_code) { :ssl_cacert }
+
+      end
+
+      it "knows it doesn't support https" do
+        expect(domain_check.https?).to eql(false)
+      end
+
+      it "knows the error reason" do
+        expect(domain_check.https_error).to eql(:ssl_cacert)
+      end
+
+      it "knows it doesn't enforce https" do
+        expect(domain_check.enforces_https?).to eql(false)
+      end
+    end
+
+    context "a site that enforces HTTPS" do
+      let(:domain) { "pages.github.com" }
+
+      before do
+        stub_request(:head, "https://pages.github.com/").
+           to_return(:status => 200, :headers => {:server => "GitHub.com"})
+         allow(domain_check.send(:https_response)).to receive(:return_code) { :ok }
+
+         stub_request(:head, "http://pages.github.com/").
+            to_return(:status => 301, :headers => {:Location => "https://pages.github.com"})
+      end
+
+      it "knows it supports https" do
+        expect(domain_check.https?).to eql(true)
+      end
+
+      it "knows it enforces https" do
+        expect(domain_check.enforces_https?).to eql(true)
+      end
+    end
+
+    context "a site with a relative redirect" do
+      let(:domain) { "pages.github.com" }
+
+      before do
+        stub_request(:head, "https://pages.github.com/").
+           to_return(:status => 200, :headers => {:server => "GitHub.com"})
+         allow(domain_check.send(:https_response)).to receive(:return_code) { :ok }
+
+         stub_request(:head, "http://pages.github.com/").
+            to_return(:status => 301, :headers => {:Location => "/versions"})
+      end
+
+      it "knows it doesn't enforce https" do
+        expect(domain_check.enforces_https?).to eql(false)
+      end
+    end
+  end
 end

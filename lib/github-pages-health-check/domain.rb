@@ -25,7 +25,7 @@ module GitHubPages
         :valid_domain?, :apex_domain?, :should_be_a_record?,
         :cname_to_github_user_domain?, :cname_to_pages_dot_github_dot_com?,
         :cname_to_fastly?, :pointed_to_github_pages_ip?, :pages_domain?,
-        :served_by_pages?, :valid_domain?
+        :served_by_pages?, :valid_domain?, :https?, :enforces_https?, :https_error
       ].freeze
 
       def initialize(host)
@@ -232,14 +232,6 @@ module GitHubPages
         return unless dns_resolves?
 
         @served_by_pages = begin
-          response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
-
-          # Workaround for webmock not playing nicely with Typhoeus redirects
-          # See https://github.com/bblimke/webmock/issues/237
-          if response.mock? && response.headers["Location"]
-            response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
-          end
-
           return false unless response.mock? || response.return_code == :ok
           return true if response.headers["Server"] == "GitHub.com"
 
@@ -248,14 +240,58 @@ module GitHubPages
         end
       end
 
-      def uri
-        @uri ||= begin
-          options = { :host => host, :scheme => scheme, :path => "/" }
-          Addressable::URI.new(options).normalize.to_s
-        end
+      def uri(overrides={})
+        options = { :host => host, :scheme => scheme, :path => "/" }
+        options = options.merge(overrides)
+        Addressable::URI.new(options).normalize.to_s
+      end
+
+      # Does this domain respond to HTTPS requests with a valid cert?
+      def https?
+        https_response.return_code == :ok
+      end
+
+      # The response code of the HTTPS request, if it failed.
+      # Useful for diagnosing cert errors
+      def https_error
+        https_response.return_code unless https?
+      end
+
+      # Does this domain redirect HTTP requests to HTTPS?
+      def enforces_https?
+        return false unless https? && http_response.headers["Location"]
+        redirect = Addressable::URI.parse(http_response.headers["Location"])
+        redirect.scheme == "https" && redirect.host == host
       end
 
       private
+
+      # The domain's response to HTTP(S) requests, following redirects
+      def response
+        return @response if defined? @response
+
+        @response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
+
+        # Workaround for webmock not playing nicely with Typhoeus redirects
+        # See https://github.com/bblimke/webmock/issues/237
+        if @response.mock? && @response.headers["Location"]
+          @response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
+        end
+
+        @response
+      end
+
+      # The domain's response to HTTP requests, without following redirects
+      def http_response
+        options = TYPHOEUS_OPTIONS.merge(:followlocation => false )
+        @http_response ||= Typhoeus.head(uri(:scheme => "http"), options)
+      end
+
+      # The domain's response to HTTPS requests, without following redirects
+      def https_response
+        options = TYPHOEUS_OPTIONS.merge(:followlocation => false )
+        @https_response ||= Typhoeus.head(uri(:scheme => "https"), options)
+      end
 
       # Parse the URI. Accept either domain names or full URI's.
       # Used by the initializer so we can be more flexible with inputs.
