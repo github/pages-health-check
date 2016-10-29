@@ -158,13 +158,17 @@ module GitHubPages
       #
       # This can be:
       #   1. A Cloudflare-owned IP address
-      #   2. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub domain
-      #   3. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub IP
+      #   2. A site that returns GitHub.com server headers, but
+      #      isn't CNAME'd to a GitHub domain
+      #   3. A site that returns GitHub.com server headers, but
+      #      isn't CNAME'd to a GitHub IP
       def proxied?
         return unless dns?
         return true if cloudflare_ip?
-        return false if pointed_to_github_pages_ip? || cname_to_github_user_domain?
-        return false if cname_to_pages_dot_github_dot_com? || cname_to_fastly? || fastly_ip?
+        return false if pointed_to_github_pages_ip?
+        return false if cname_to_github_user_domain?
+        return false if cname_to_pages_dot_github_dot_com?
+        return false if cname_to_fastly? || fastly_ip?
         served_by_pages?
       end
 
@@ -197,7 +201,7 @@ module GitHubPages
       # Does this domain have *any* A record that points to the legacy IPs?
       def old_ip_address?
         dns.any? do |answer|
-          answer.class == Net::DNS::RR::A && LEGACY_IP_ADDRESSES.include?(answer.address.to_s)
+          answer.is_a?(Net::DNS::RR::A) && legacy_ip?(answer.address.to_s)
         end if dns?
       end
 
@@ -310,13 +314,14 @@ module GitHubPages
       # Return the hostname.
       def normalize_host(domain)
         domain = domain.strip.chomp(".")
-        host = Addressable::URI.parse(domain).host || Addressable::URI.parse("http://#{domain}").host
+        host = Addressable::URI.parse(domain).host
+        host ||= Addressable::URI.parse("http://#{domain}").host
         host unless host.to_s.empty?
       rescue Addressable::URI::InvalidURIError
         nil
       end
 
-      # Adjust `domain` so that it won't be searched for with /etc/resolv.conf's search rules.
+      # Adjust `domain` so that it won't be searched for with /etc/resolv.conf
       #
       #     GitHubPages::HealthCheck.new("anything.io").absolute_domain
       #     => "anything.io."
@@ -334,6 +339,10 @@ module GitHubPages
         dns.all? do |answer|
           answer.class == Net::DNS::RR::A && cdn.controls_ip?(answer.address)
         end
+      end
+
+      def legacy_ip?(ip)
+        LEGACY_IP_ADDRESSES.include?(ip)
       end
     end
   end

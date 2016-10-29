@@ -35,10 +35,14 @@ module GitHubPages
       alias message_formatted message_with_url
 
       def to_s
-        "#{message_with_url} (#{self.class.name.split("::").last})".tr("\n", " ").squeeze(" ").strip
+        "#{message_with_url} (#{name})".tr("\n", " ").squeeze(" ").strip
       end
 
       private
+
+      def name
+        self.class.name.split("::").last
+      end
 
       def username
         if repository.nil?

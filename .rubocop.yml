@@ -2,7 +2,8 @@ inherit_gem:
   github-pages: .rubocop.yml
 
 Metrics/LineLength:
-  Enabled: false
+  Exclude:
+    - github-pages-health-check.gemspec
 
 Style/Documentation:
   Enabled: false
@@ -11,16 +12,20 @@ Metrics/ClassLength:
   Enabled: false
 
 Metrics/MethodLength:
-  Enabled: false
+  Exclude:
+    - lib/github-pages-health-check/printer.rb
 
 Metrics/CyclomaticComplexity:
-  Enabled: false
+  Exclude:
+    - lib/github-pages-health-check/printer.rb
 
 Metrics/PerceivedComplexity:
-  Enabled: false
+  Exclude:
+    - lib/github-pages-health-check/printer.rb
 
 Metrics/AbcSize:
-  Enabled: false
+  Exclude:
+    - lib/github-pages-health-check/printer.rb
 
 Style/DoubleNegation:
   Enabled: false

@@ -33,13 +33,17 @@ module GitHubPages
     # DNS and HTTP timeout, in seconds
     TIMEOUT = 5
 
+    HUMAN_NAME = "GitHub Pages Health Check"
+    URL = "https://github.com/github/pages-health-check"
+    USER_AGENT = "Mozilla/5.0 (compatible; #{HUMAN_NAME}/#{VERSION}; +#{URL})"
+
     TYPHOEUS_OPTIONS = {
       :followlocation => true,
       :timeout => TIMEOUT,
       :accept_encoding => "gzip",
       :method => :head,
       :headers => {
-        "User-Agent" => "Mozilla/5.0 (compatible; GitHub Pages Health Check/#{VERSION}; +https://github.com/github/pages-health-check)"
+        "User-Agent" => USER_AGENT
       }
     }.freeze
 
