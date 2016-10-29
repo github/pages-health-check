@@ -1,6 +1,9 @@
 inherit_gem:
   github-pages: .rubocop.yml
 
+AllCops:
+  TargetRubyVersion: 2.2
+
 Metrics/LineLength:
   Exclude:
     - github-pages-health-check.gemspec

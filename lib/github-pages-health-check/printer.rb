@@ -3,7 +3,7 @@ module GitHubPages
   module HealthCheck
     class Printer
       PRETTY_LEFT_WIDTH = 11
-      PRETTY_JOINER = " | "
+      PRETTY_JOINER = " | ".freeze
 
       attr_reader :health_check
 
