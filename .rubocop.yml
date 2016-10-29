@@ -1,3 +1,6 @@
+inherit_gem:
+  github-pages: .rubocop.yml
+
 Metrics/LineLength:
   Enabled: false
 

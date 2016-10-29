@@ -6,7 +6,7 @@ module GitHubPages
       HASH_METHODS = [].freeze
 
       def check!
-        raise 'Not implemented'
+        raise "Not implemented"
       end
       alias valid! check!
 
@@ -39,7 +39,7 @@ module GitHubPages
       alias to_h to_hash
 
       def to_json
-        require 'json'
+        require "json"
         to_hash.to_json
       end
 

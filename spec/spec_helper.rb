@@ -1,7 +1,7 @@
 # frozen_string_literal: true
-require 'bundler/setup'
-require 'webmock/rspec'
-require_relative '../lib/github-pages-health-check'
+require "bundler/setup"
+require "webmock/rspec"
+require_relative "../lib/github-pages-health-check"
 
 WebMock.disable_net_connect!
 
@@ -14,7 +14,7 @@ RSpec.configure do |config|
   # order dependency and want to debug it, you can fix the order by providing
   # the seed, which is printed after each run.
   #     --seed 1234
-  config.order = 'random'
+  config.order = "random"
 end
 
 def with_env(key, value)
@@ -24,6 +24,6 @@ def with_env(key, value)
   ENV[key] = old_env
 end
 
-def fixture_path(fixture = '')
+def fixture_path(fixture = "")
   File.expand_path "./fixtures/#{fixture}", File.dirname(__FILE__)
 end

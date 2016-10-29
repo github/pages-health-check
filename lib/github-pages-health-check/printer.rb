@@ -3,7 +3,7 @@ module GitHubPages
   module HealthCheck
     class Printer
       PRETTY_LEFT_WIDTH = 11
-      PRETTY_JOINER = ' | '
+      PRETTY_JOINER = " | "
 
       attr_reader :health_check
 
@@ -12,10 +12,10 @@ module GitHubPages
       end
 
       def simple_string
-        require 'yaml'
+        require "yaml"
         hash = health_check.to_hash
         hash[:reason] = hash[:reason].to_s if hash[:reason]
-        hash.to_yaml.sub(/\A---\n/, '').gsub(/^:/, '')
+        hash.to_yaml.sub(/\A---\n/, "").gsub(/^:/, "")
       end
 
       def pretty_print
@@ -23,42 +23,42 @@ module GitHubPages
         output = StringIO.new
 
         # Header
-        output.puts new_line 'Domain', (values[:uri]).to_s
-        output.puts '-' * (PRETTY_LEFT_WIDTH + 1) + '|' + '-' * 50
+        output.puts new_line "Domain", (values[:uri]).to_s
+        output.puts "-" * (PRETTY_LEFT_WIDTH + 1) + "|" + "-" * 50
 
-        output.puts new_line 'DNS', 'does not resolve' unless values[:dns_resolves?]
+        output.puts new_line "DNS", "does not resolve" unless values[:dns_resolves?]
 
         # Valid?
-        output.write new_line 'State', (values[:valid?] ? 'valid' : 'invalid').to_s
-        output.puts " - is #{'NOT ' unless values[:served_by_pages?]}served by Pages"
+        output.write new_line "State", (values[:valid?] ? "valid" : "invalid").to_s
+        output.puts " - is #{"NOT " unless values[:served_by_pages?]}served by Pages"
 
         # What's wrong?
-        output.puts new_line 'Reason', (values[:reason]).to_s unless values[:valid?]
-        output.puts new_line nil, 'pointed to user domain'  if values[:pointed_to_github_user_domain?]
-        output.puts new_line nil, 'pointed to pages IP'     if values[:pointed_to_github_pages_ip?]
+        output.puts new_line "Reason", (values[:reason]).to_s unless values[:valid?]
+        output.puts new_line nil, "pointed to user domain"  if values[:pointed_to_github_user_domain?]
+        output.puts new_line nil, "pointed to pages IP"     if values[:pointed_to_github_pages_ip?]
 
         # DNS Record info
         record_type = if values[:a_record?]
-                        'A'
+                        "A"
                       elsif values[:cname_record?]
-                        'CNAME'
+                        "CNAME"
                       else
-                        'other'
+                        "other"
                       end
-        output.write new_line 'Record Type', record_type
-        output.puts values[:should_be_a_record?] ? ', should be A record' : ', should be CNAME'
+        output.write new_line "Record Type", record_type
+        output.puts values[:should_be_a_record?] ? ", should be A record" : ", should be CNAME"
 
         ip_problems = []
-        ip_problems << 'not apex domain' unless values[:apex_domain?]
-        ip_problems << 'invalid domain' unless values[:valid_domain?]
-        ip_problems << 'old ip address used' if values[:old_ip_address?]
-        output.puts new_line 'IP Problems', "#{!ip_problems.empty? ? ip_problems.join(', ') : 'none'} "
+        ip_problems << "not apex domain" unless values[:apex_domain?]
+        ip_problems << "invalid domain" unless values[:valid_domain?]
+        ip_problems << "old ip address used" if values[:old_ip_address?]
+        output.puts new_line "IP Problems", "#{!ip_problems.empty? ? ip_problems.join(", ") : "none"} "
 
         if values[:proxied?]
-          output.puts new_line 'Proxied', "yes, through #{values[:cloudflare_ip?] ? 'CloudFlare' : 'unknown'}"
+          output.puts new_line "Proxied", "yes, through #{values[:cloudflare_ip?] ? "CloudFlare" : "unknown"}"
         end
 
-        output.puts new_line 'Domain', '*.github.com/io domain' if values[:pages_domain?]
+        output.puts new_line "Domain", "*.github.com/io domain" if values[:pages_domain?]
 
         output.string
       end
@@ -69,7 +69,7 @@ module GitHubPages
         elsif left
           ljust(left)
         elsif right
-          ' ' * (PRETTY_LEFT_WIDTH + PRETTY_JOINER.size) + right
+          " " * (PRETTY_LEFT_WIDTH + PRETTY_JOINER.size) + right
         end
       end
 

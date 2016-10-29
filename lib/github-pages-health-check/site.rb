@@ -5,7 +5,7 @@ module GitHubPages
       attr_reader :repository, :domain
 
       def initialize(repository_or_domain, access_token: nil)
-        @repository = Repository.new(repository_or_domain, access_token: access_token)
+        @repository = Repository.new(repository_or_domain, :access_token => access_token)
         @domain = @repository.domain
       rescue GitHubPages::HealthCheck::Errors::InvalidRepositoryError
         @repository = nil

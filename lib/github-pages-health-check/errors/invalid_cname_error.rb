@@ -3,7 +3,7 @@ module GitHubPages
   module HealthCheck
     module Errors
       class InvalidCNAMEError < GitHubPages::HealthCheck::Error
-        DOCUMENTATION_PATH = '/articles/setting-up-a-custom-domain-with-github-pages/'
+        DOCUMENTATION_PATH = "/articles/setting-up-a-custom-domain-with-github-pages/"
 
         def message
           <<-MSG

@@ -6,12 +6,12 @@ module GitHubPages
 
       LEGACY_IP_ADDRESSES = [
         # Legacy GitHub Datacenter
-        '207.97.227.245',
-        '204.232.175.78',
+        "207.97.227.245",
+        "204.232.175.78",
 
         # Legacy Fastly Datacenter
-        '199.27.73.133',
-        '199.27.76.133'
+        "199.27.73.133",
+        "199.27.76.133"
       ].freeze
 
       CURRENT_IP_ADDRESSES = %w(
@@ -38,13 +38,13 @@ module GitHubPages
 
       # Runs all checks, raises an error if invalid
       def check!
-        raise Errors::InvalidDomainError, domain: self unless valid_domain?
-        raise Errors::InvalidDNSError, domain: self    unless dns_resolves?
-        raise Errors::DeprecatedIPError, domain: self if deprecated_ip?
+        raise Errors::InvalidDomainError, :domain => self unless valid_domain?
+        raise Errors::InvalidDNSError, :domain => self    unless dns_resolves?
+        raise Errors::DeprecatedIPError, :domain => self if deprecated_ip?
         return true if proxied?
-        raise Errors::InvalidARecordError, domain: self    if invalid_a_record?
-        raise Errors::InvalidCNAMEError, domain: self      if invalid_cname?
-        raise Errors::NotServedByPagesError, domain: self  unless served_by_pages?
+        raise Errors::InvalidARecordError, :domain => self    if invalid_a_record?
+        raise Errors::InvalidCNAMEError, :domain => self      if invalid_cname?
+        raise Errors::NotServedByPagesError, :domain => self  unless served_by_pages?
         true
       end
 
@@ -72,7 +72,7 @@ module GitHubPages
       # Used as an escape hatch to prevent false positives on DNS checkes
       def valid_domain?
         return @valid if defined? @valid
-        @valid = PublicSuffix.valid?(host, default_rule: nil)
+        @valid = PublicSuffix.valid?(host, :default_rule => nil)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
@@ -136,7 +136,7 @@ module GitHubPages
 
       # Is this domain owned by GitHub?
       def github_domain?
-        !!host.downcase.end_with?('github.com')
+        !!host.downcase.end_with?("github.com")
       end
 
       # Is the host our Fastly CNAME?
@@ -233,7 +233,7 @@ module GitHubPages
 
         @served_by_pages = begin
           return false unless response.mock? || response.return_code == :ok
-          return true if response.headers['Server'] == 'GitHub.com'
+          return true if response.headers["Server"] == "GitHub.com"
 
           # Typhoeus mangles the case of the header, compare insensitively
           response.headers.any? { |k, _v| k =~ /X-GitHub-Request-Id/i }
@@ -241,7 +241,7 @@ module GitHubPages
       end
 
       def uri(overrides = {})
-        options = { host: host, scheme: scheme, path: '/' }
+        options = { :host => host, :scheme => scheme, :path => "/" }
         options = options.merge(overrides)
         Addressable::URI.new(options).normalize.to_s
       end
@@ -259,9 +259,9 @@ module GitHubPages
 
       # Does this domain redirect HTTP requests to HTTPS?
       def enforces_https?
-        return false unless https? && http_response.headers['Location']
-        redirect = Addressable::URI.parse(http_response.headers['Location'])
-        redirect.scheme == 'https' && redirect.host == host
+        return false unless https? && http_response.headers["Location"]
+        redirect = Addressable::URI.parse(http_response.headers["Location"])
+        redirect.scheme == "https" && redirect.host == host
       end
 
       private
@@ -274,8 +274,8 @@ module GitHubPages
 
         # Workaround for webmock not playing nicely with Typhoeus redirects
         # See https://github.com/bblimke/webmock/issues/237
-        if @response.mock? && @response.headers['Location']
-          @response = Typhoeus.head(response.headers['Location'], TYPHOEUS_OPTIONS)
+        if @response.mock? && @response.headers["Location"]
+          @response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
         end
 
         @response
@@ -283,14 +283,14 @@ module GitHubPages
 
       # The domain's response to HTTP requests, without following redirects
       def http_response
-        options = TYPHOEUS_OPTIONS.merge(followlocation: false)
-        @http_response ||= Typhoeus.head(uri(scheme: 'http'), options)
+        options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
+        @http_response ||= Typhoeus.head(uri(:scheme => "http"), options)
       end
 
       # The domain's response to HTTPS requests, without following redirects
       def https_response
-        options = TYPHOEUS_OPTIONS.merge(followlocation: false)
-        @https_response ||= Typhoeus.head(uri(scheme: 'https'), options)
+        options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
+        @https_response ||= Typhoeus.head(uri(:scheme => "https"), options)
       end
 
       # Parse the URI. Accept either domain names or full URI's.
@@ -309,7 +309,7 @@ module GitHubPages
       #
       # Return the hostname.
       def normalize_host(domain)
-        domain = domain.strip.chomp('.')
+        domain = domain.strip.chomp(".")
         host = Addressable::URI.parse(domain).host || Addressable::URI.parse("http://#{domain}").host
         host unless host.to_s.empty?
       rescue Addressable::URI::InvalidURIError
@@ -321,11 +321,11 @@ module GitHubPages
       #     GitHubPages::HealthCheck.new("anything.io").absolute_domain
       #     => "anything.io."
       def absolute_domain
-        host.end_with?('.') ? host : "#{host}."
+        host.end_with?(".") ? host : "#{host}."
       end
 
       def scheme
-        @scheme ||= github_domain? ? 'https' : 'http'
+        @scheme ||= github_domain? ? "https" : "http"
       end
 
       # Does the domain resolve to a CDN-owned IP

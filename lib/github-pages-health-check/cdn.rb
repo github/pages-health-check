@@ -14,7 +14,7 @@ module GitHubPages
 
       # Internal: Create a new CDN info instance.
       def initialize(options = {})
-        @name = options.fetch(:name) { self.class.name.split('::').last.downcase }
+        @name = options.fetch(:name) { self.class.name.split("::").last.downcase }
         @path = options.fetch(:path) { default_config_path }
       end
 

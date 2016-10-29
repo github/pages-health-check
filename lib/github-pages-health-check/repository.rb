@@ -14,19 +14,19 @@ module GitHubPages
         unless name_with_owner =~ REPO_REGEX
           raise Errors::InvalidRepositoryError
         end
-        parts = name_with_owner.split('/')
+        parts = name_with_owner.split("/")
         @owner = parts.first
         @name  = parts.last
-        @access_token = access_token || ENV['OCTOKIT_ACCESS_TOKEN']
+        @access_token = access_token || ENV["OCTOKIT_ACCESS_TOKEN"]
       end
 
       def name_with_owner
-        @name_with_owner ||= [owner, name].join('/')
+        @name_with_owner ||= [owner, name].join("/")
       end
       alias nwo name_with_owner
 
       def check!
-        raise Errors::BuildError.new(repository: self), build_error unless built?
+        raise Errors::BuildError.new(:repository => self), build_error unless built?
         true
       end
 
@@ -35,11 +35,11 @@ module GitHubPages
       end
 
       def built?
-        last_build && last_build.status == 'built'
+        last_build && last_build.status == "built"
       end
 
       def build_error
-        last_build.error['message'] unless built?
+        last_build.error["message"] unless built?
       end
       alias reason build_error
 
@@ -60,7 +60,7 @@ module GitHubPages
 
       def client
         raise Errors::MissingAccessTokenError if @access_token.nil?
-        @client ||= Octokit::Client.new(access_token: @access_token)
+        @client ||= Octokit::Client.new(:access_token => @access_token)
       end
 
       def pages_info
