@@ -9,7 +9,8 @@ Style/Documentation:
   Enabled: false
 
 Metrics/ClassLength:
-  Enabled: false
+  Exclude:
+    - lib/github-pages-health-check/domain.rb
 
 Metrics/MethodLength:
   Exclude:
