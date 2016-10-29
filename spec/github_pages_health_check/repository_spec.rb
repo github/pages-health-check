@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "spec_helper"
 
-describe(GitHubPages::HealthCheck::Repository) do
+RSpec.describe(GitHubPages::HealthCheck::Repository) do
   let(:owner) { "github" }
   let(:repo_name) { "pages.github.com" }
   let(:repo) { "#{owner}/#{repo_name}" }

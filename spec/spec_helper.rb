@@ -7,8 +7,11 @@ WebMock.disable_net_connect!
 
 RSpec.configure do |config|
   config.raise_errors_for_deprecations!
-  config.run_all_when_everything_filtered = true
-  config.filter_run :focus
+  config.disable_monkey_patching!
+  config.example_status_persistence_file_path = "spec/examples.txt"
+  config.default_formatter = "doc" if config.files_to_run.one?
+  config.order = :random
+  Kernel.srand config.seed
 end
 
 def with_env(key, value)

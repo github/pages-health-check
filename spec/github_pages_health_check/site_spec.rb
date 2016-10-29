@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "spec_helper"
 
-describe(GitHubPages::HealthCheck::Site) do
+RSpec.describe(GitHubPages::HealthCheck::Site) do
   let(:api_base) { "https://api.github.com" }
   let(:repo) { "github/page.github.com" }
   let(:domain) { "pages.github.com" }

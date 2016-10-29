@@ -4,7 +4,7 @@ require "json"
 require "tempfile"
 require "ipaddr"
 
-describe(GitHubPages::HealthCheck::CDN) do
+RSpec.describe(GitHubPages::HealthCheck::CDN) do
   subject { described_class.instance }
 
   it "loads the default config" do

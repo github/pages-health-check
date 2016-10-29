@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "spec_helper"
 
-describe(GitHubPages::HealthCheck::Error) do
+RSpec.describe(GitHubPages::HealthCheck::Error) do
   GitHubPages::HealthCheck::Errors.all.each do |klass|
     next if klass::LOCAL_ONLY
 

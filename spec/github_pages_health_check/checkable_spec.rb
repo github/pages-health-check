@@ -11,7 +11,7 @@ class CheckableHelper < GitHubPages::HealthCheck::Checkable
   end
 end
 
-describe(CheckableHelper) do
+RSpec.describe(CheckableHelper) do
   context "valid" do
     it "knows the check is valid" do
       with_env "OCTOKIT_ACCESS_TOKEN", "1234" do

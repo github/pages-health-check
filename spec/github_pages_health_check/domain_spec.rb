@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require "spec_helper"
 
-describe(GitHubPages::HealthCheck::Domain) do
+RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:domain) { "foo.github.io" }
   let(:cname) { domain }
   subject { described_class.new(domain) }
