@@ -1,5 +1,6 @@
 language: ruby
 script: "script/cibuild"
+before_install: bundle update
 install:
   - sudo bash -c 'echo search github.com >> /etc/resolv.conf'
 cache: bundler
