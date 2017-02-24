@@ -242,7 +242,7 @@ describe(GitHubPages::HealthCheck::Domain) do
 
   context "GitHub Pages IPs" do
     it "can determine when an apex domain is pointed at a GitHub Pages IP address" do
-      domain_check = make_domain_check "githubuniverse.com"
+      domain_check = make_domain_check "fontawesome.io"
       expect(domain_check.pointed_to_github_pages_ip?).to be(true)
     end
 
