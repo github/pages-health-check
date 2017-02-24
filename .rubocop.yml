@@ -73,6 +73,9 @@ Metrics/LineLength:
     - github-pages-health-check.gemspec
     - lib/github-pages-health-check/errors/*.rb
 
+Metrics/BlockLength:
+  Enabled: false
+  
 Style/MultilineTernaryOperator:
   Severity: error
 

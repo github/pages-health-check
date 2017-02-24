@@ -9,9 +9,23 @@ module GitHubPages
         "207.97.227.245",
         "204.232.175.78",
 
-        # Legacy Fastly Datacenter
+        # Aug. 2016 Fastly datacenter deprecation
         "199.27.73.133",
-        "199.27.76.133"
+        "199.27.76.133",
+
+        # Feb. 2017 Fastly datacenter deprecation
+        "185.31.17.133",
+        "185.31.18.133",
+        "185.31.19.133",
+        "199.27.74.133",
+        "199.27.75.133",
+        "199.27.79.133",
+        "23.235.39.133",
+        "23.235.43.133",
+        "23.235.44.133",
+        "23.235.46.133",
+        "23.235.47.133",
+        "45.32.88.68"
       ].freeze
 
       CURRENT_IP_ADDRESSES = %w(
@@ -200,9 +214,11 @@ module GitHubPages
 
       # Does this domain have *any* A record that points to the legacy IPs?
       def old_ip_address?
+        return unless dns?
+
         dns.any? do |answer|
           answer.is_a?(Net::DNS::RR::A) && legacy_ip?(answer.address.to_s)
-        end if dns?
+        end
       end
 
       # Is this domain's first response an A record?

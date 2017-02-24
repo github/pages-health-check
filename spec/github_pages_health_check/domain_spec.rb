@@ -119,6 +119,13 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
           expect(subject).to_not be_a_old_ip_address
         end
       end
+
+      it "doesn't list current IPs as deprecated" do
+        deprecated = GitHubPages::HealthCheck::Domain::LEGACY_IP_ADDRESSES
+        GitHubPages::HealthCheck::Domain::CURRENT_IP_ADDRESSES.each do |ip|
+          expect(deprecated).to_not include(ip)
+        end
+      end
     end
 
     it "knows when a domain is an A record" do
@@ -327,7 +334,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   context "GitHub Pages IPs" do
     context "apex domains" do
       context "pointed to Pages IP" do
-        let(:domain) { "githubuniverse.com" }
+        let(:domain) { "fontawesome.io" }
 
         it "Knows it's a Pages IP" do
           expect(subject).to be_pointed_to_github_pages_ip
