@@ -70,6 +70,13 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(domain_check.old_ip_address?).to be(false)
     end
 
+    it "doesn't list current IPs as deprecated" do
+      deprecated = GitHubPages::HealthCheck::Domain::LEGACY_IP_ADDRESSES
+      GitHubPages::HealthCheck::Domain::CURRENT_IP_ADDRESSES.each do |ip|
+        expect(deprecated).to_not include(ip)
+      end
+    end
+
     it "knows when a domain is an A record" do
       domain_check = make_domain_check
       allow(domain_check).to receive(:dns) { [a_packet("1.2.3.4")] }
@@ -242,7 +249,7 @@ describe(GitHubPages::HealthCheck::Domain) do
 
   context "GitHub Pages IPs" do
     it "can determine when an apex domain is pointed at a GitHub Pages IP address" do
-      domain_check = make_domain_check "githubuniverse.com"
+      domain_check = make_domain_check "fontawesome.io"
       expect(domain_check.pointed_to_github_pages_ip?).to be(true)
     end
 
