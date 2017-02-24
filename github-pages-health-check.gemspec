@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require File.expand_path("../lib/github-pages-health-check/version", __FILE__)
 
 Gem::Specification.new do |s|
@@ -12,7 +13,7 @@ Gem::Specification.new do |s|
   s.homepage              = "https://github.com/github/github-pages-health-check"
   s.license               = "MIT"
   s.files                 = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  s.require_paths         = ['lib']
+  s.require_paths         = ["lib"]
 
   s.add_dependency("net-dns", "~> 0.8")
   s.add_dependency("public_suffix", "~> 2.0")
@@ -25,4 +26,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency("gem-release", "~> 0.7")
   s.add_development_dependency("webmock", "~> 1.21")
   s.add_development_dependency("dotenv", "~> 1.0")
+  s.add_development_dependency("rubocop", "~> 0.40")
 end

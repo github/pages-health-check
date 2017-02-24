@@ -1,7 +1,7 @@
+# frozen_string_literal: true
 module GitHubPages
   module HealthCheck
     class Domain < Checkable
-
       attr_reader :host
 
       LEGACY_IP_ADDRESSES = [
@@ -28,10 +28,10 @@ module GitHubPages
         "45.32.88.68"
       ].freeze
 
-      CURRENT_IP_ADDRESSES = %w[
+      CURRENT_IP_ADDRESSES = %w(
         192.30.252.153
         192.30.252.154
-      ].freeze
+      ).freeze
 
       HASH_METHODS = [
         :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?, :fastly_ip?,
@@ -52,13 +52,13 @@ module GitHubPages
 
       # Runs all checks, raises an error if invalid
       def check!
-        raise Errors::InvalidDomainError.new(domain: self) unless valid_domain?
-        raise Errors::InvalidDNSError.new(domain: self)    unless dns_resolves?
-        raise Errors::DeprecatedIPError.new(domain: self)      if deprecated_ip?
+        raise Errors::InvalidDomainError, :domain => self unless valid_domain?
+        raise Errors::InvalidDNSError, :domain => self    unless dns_resolves?
+        raise Errors::DeprecatedIPError, :domain => self if deprecated_ip?
         return true if proxied?
-        raise Errors::InvalidARecordError.new(domain: self)    if invalid_a_record?
-        raise Errors::InvalidCNAMEError.new(domain: self)      if invalid_cname?
-        raise Errors::NotServedByPagesError.new(domain: self)  unless served_by_pages?
+        raise Errors::InvalidARecordError, :domain => self    if invalid_a_record?
+        raise Errors::InvalidCNAMEError, :domain => self      if invalid_cname?
+        raise Errors::NotServedByPagesError, :domain => self  unless served_by_pages?
         true
       end
 
@@ -86,7 +86,7 @@ module GitHubPages
       # Used as an escape hatch to prevent false positives on DNS checkes
       def valid_domain?
         return @valid if defined? @valid
-        @valid = PublicSuffix.valid?(host, default_rule: nil)
+        @valid = PublicSuffix.valid?(host, :default_rule => nil)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
@@ -94,14 +94,14 @@ module GitHubPages
         return @apex_domain if defined?(@apex_domain)
         return unless valid_domain?
 
-          answers = begin
-            Resolv::DNS.open { |dns|
-              dns.timeouts = TIMEOUT
-              dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
-            }
-          rescue Timeout::Error, NoMethodError
-            []
+        answers = begin
+          Resolv::DNS.open do |dns|
+            dns.timeouts = TIMEOUT
+            dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
           end
+        rescue Timeout::Error, NoMethodError
+          []
+        end
 
         @apex_domain = answers.any?
       end
@@ -150,7 +150,7 @@ module GitHubPages
 
       # Is this domain owned by GitHub?
       def github_domain?
-        !!host.match(/\.github\.com\z/)
+        !!host.downcase.end_with?("github.com")
       end
 
       # Is the host our Fastly CNAME?
@@ -172,13 +172,17 @@ module GitHubPages
       #
       # This can be:
       #   1. A Cloudflare-owned IP address
-      #   2. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub domain
-      #   3. A site that returns GitHub.com server headers, but isn't CNAME'd to a GitHub IP
+      #   2. A site that returns GitHub.com server headers, but
+      #      isn't CNAME'd to a GitHub domain
+      #   3. A site that returns GitHub.com server headers, but
+      #      isn't CNAME'd to a GitHub IP
       def proxied?
         return unless dns?
         return true if cloudflare_ip?
-        return false if pointed_to_github_pages_ip? || cname_to_github_user_domain?
-        return false if cname_to_pages_dot_github_dot_com? || cname_to_fastly? || fastly_ip?
+        return false if pointed_to_github_pages_ip?
+        return false if cname_to_github_user_domain?
+        return false if cname_to_pages_dot_github_dot_com?
+        return false if cname_to_fastly? || fastly_ip?
         served_by_pages?
       end
 
@@ -206,13 +210,15 @@ module GitHubPages
       def dns?
         !(dns.nil? || dns.empty?)
       end
-      alias_method :dns_resolves?, :dns?
+      alias dns_resolves? dns?
 
       # Does this domain have *any* A record that points to the legacy IPs?
       def old_ip_address?
+        return unless dns?
+
         dns.any? do |answer|
-          answer.class == Net::DNS::RR::A && LEGACY_IP_ADDRESSES.include?(answer.address.to_s)
-        end if dns?
+          answer.is_a?(Net::DNS::RR::A) && legacy_ip?(answer.address.to_s)
+        end
       end
 
       # Is this domain's first response an A record?
@@ -250,11 +256,11 @@ module GitHubPages
           return true if response.headers["Server"] == "GitHub.com"
 
           # Typhoeus mangles the case of the header, compare insensitively
-          response.headers.any? { |k,v| k =~ /X-GitHub-Request-Id/i }
+          response.headers.any? { |k, _v| k =~ /X-GitHub-Request-Id/i }
         end
       end
 
-      def uri(overrides={})
+      def uri(overrides = {})
         options = { :host => host, :scheme => scheme, :path => "/" }
         options = options.merge(overrides)
         Addressable::URI.new(options).normalize.to_s
@@ -297,13 +303,13 @@ module GitHubPages
 
       # The domain's response to HTTP requests, without following redirects
       def http_response
-        options = TYPHOEUS_OPTIONS.merge(:followlocation => false )
+        options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
         @http_response ||= Typhoeus.head(uri(:scheme => "http"), options)
       end
 
       # The domain's response to HTTPS requests, without following redirects
       def https_response
-        options = TYPHOEUS_OPTIONS.merge(:followlocation => false )
+        options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
         @https_response ||= Typhoeus.head(uri(:scheme => "https"), options)
       end
 
@@ -324,13 +330,14 @@ module GitHubPages
       # Return the hostname.
       def normalize_host(domain)
         domain = domain.strip.chomp(".")
-        host = Addressable::URI.parse(domain).host || Addressable::URI.parse("http://#{domain}").host
+        host = Addressable::URI.parse(domain).host
+        host ||= Addressable::URI.parse("http://#{domain}").host
         host unless host.to_s.empty?
       rescue Addressable::URI::InvalidURIError
         nil
       end
 
-      # Adjust `domain` so that it won't be searched for with /etc/resolv.conf's search rules.
+      # Adjust `domain` so that it won't be searched for with /etc/resolv.conf
       #
       #     GitHubPages::HealthCheck.new("anything.io").absolute_domain
       #     => "anything.io."
@@ -348,6 +355,10 @@ module GitHubPages
         dns.all? do |answer|
           answer.class == Net::DNS::RR::A && cdn.controls_ip?(answer.address)
         end
+      end
+
+      def legacy_ip?(ip)
+        LEGACY_IP_ADDRESSES.include?(ip)
       end
     end
   end

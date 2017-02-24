@@ -1,16 +1,17 @@
+# frozen_string_literal: true
 require "spec_helper"
 
 class CheckableHelper < GitHubPages::HealthCheck::Checkable
   def check!
     if ENV["OCTOKIT_ACCESS_TOKEN"].to_s.empty?
       raise GitHubPages::HealthCheck::Errors::MissingAccessTokenError
-    else
-      true
     end
+
+    true
   end
 end
 
-describe(CheckableHelper) do
+RSpec.describe(CheckableHelper) do
   context "valid" do
     it "knows the check is valid" do
       with_env "OCTOKIT_ACCESS_TOKEN", "1234" do

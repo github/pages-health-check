@@ -1,11 +1,11 @@
+# frozen_string_literal: true
 module GitHubPages
   module HealthCheck
     class Site < Checkable
-
       attr_reader :repository, :domain
 
       def initialize(repository_or_domain, access_token: nil)
-        @repository = Repository.new(repository_or_domain, access_token: access_token)
+        @repository = Repository.new(repository_or_domain, :access_token => access_token)
         @domain = @repository.domain
       rescue GitHubPages::HealthCheck::Errors::InvalidRepositoryError
         @repository = nil
@@ -13,7 +13,7 @@ module GitHubPages
       end
 
       def check!
-        [domain, repository].each { |check| check.check! unless check.nil? }
+        [domain, repository].each { |check| check.check! if check }
         true
       end
 
@@ -24,8 +24,8 @@ module GitHubPages
         hash[:reason] = reason
         hash
       end
-      alias_method :to_h, :to_hash
-      alias_method :as_json, :to_hash
+      alias to_h to_hash
+      alias as_json to_hash
     end
   end
 end

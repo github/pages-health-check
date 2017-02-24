@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # Usage: script/check [DOMAIN]
 
 require_relative "../lib/github-pages-health-check"

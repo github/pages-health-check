@@ -1,13 +1,13 @@
+# frozen_string_literal: true
 module GitHubPages
   module HealthCheck
     class Repository < Checkable
-
       attr_reader :name, :owner
 
       REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
 
       HASH_METHODS = [
-        :name_with_owner, :built?, :last_built,  :build_duration, :build_error
+        :name_with_owner, :built?, :last_built, :build_duration, :build_error
       ].freeze
 
       def initialize(name_with_owner, access_token: nil)
@@ -21,12 +21,12 @@ module GitHubPages
       end
 
       def name_with_owner
-        @name_with_owner ||= [owner,name].join("/")
+        @name_with_owner ||= [owner, name].join("/")
       end
-      alias_method :nwo, :name_with_owner
+      alias nwo name_with_owner
 
       def check!
-        raise Errors::BuildError.new(repository: self), build_error unless built?
+        raise Errors::BuildError.new(:repository => self), build_error unless built?
         true
       end
 
@@ -41,14 +41,14 @@ module GitHubPages
       def build_error
         last_build.error["message"] unless built?
       end
-      alias_method :reason, :build_error
+      alias reason build_error
 
       def build_duration
-        last_build.duration unless last_build.nil?
+        last_build.duration if last_build
       end
 
       def last_built
-        last_build.updated_at unless last_build.nil?
+        last_build.updated_at if last_build
       end
 
       def domain
@@ -60,7 +60,7 @@ module GitHubPages
 
       def client
         raise Errors::MissingAccessTokenError if @access_token.nil?
-        @client ||= Octokit::Client.new(access_token: @access_token)
+        @client ||= Octokit::Client.new(:access_token => @access_token)
       end
 
       def pages_info
