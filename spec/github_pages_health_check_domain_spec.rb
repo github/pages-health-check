@@ -70,6 +70,13 @@ describe(GitHubPages::HealthCheck::Domain) do
       expect(domain_check.old_ip_address?).to be(false)
     end
 
+    it "doesn't list current IPs as deprecated" do
+      deprecated = GitHubPages::HealthCheck::Domain::LEGACY_IP_ADDRESSES
+      GitHubPages::HealthCheck::Domain::CURRENT_IP_ADDRESSES.each do |ip|
+        expect(deprecated).to_not include(ip)
+      end
+    end
+
     it "knows when a domain is an A record" do
       domain_check = make_domain_check
       allow(domain_check).to receive(:dns) { [a_packet("1.2.3.4")] }
