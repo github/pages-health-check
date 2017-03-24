@@ -136,11 +136,9 @@ module GitHubPages
             dns.timeouts = TIMEOUT
             dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::SOA)
           end
-        rescue Timeout::Error, NoMethodError
-          []
         end
 
-        @apex_domain = answers.any?
+        @apex_domain = answers.any? { |answer| answer.rname == absolute_domain }
       end
 
       # Should the domain be an apex record?
