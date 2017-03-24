@@ -134,7 +134,7 @@ module GitHubPages
         answers = begin
           Resolv::DNS.open do |dns|
             dns.timeouts = TIMEOUT
-            dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
+            dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::SOA)
           end
         rescue Timeout::Error, NoMethodError
           []
