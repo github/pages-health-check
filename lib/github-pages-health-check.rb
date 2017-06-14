@@ -10,6 +10,9 @@ require "typhoeus"
 require "resolv"
 require "timeout"
 require "octokit"
+
+$LOAD_PATH.unshift File.dirname(__FILE__)
+
 require_relative "github-pages-health-check/version"
 
 if File.exist?(File.expand_path("../.env", File.dirname(__FILE__)))
