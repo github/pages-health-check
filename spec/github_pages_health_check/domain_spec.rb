@@ -263,14 +263,28 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
 
       context "to fastly" do
-        let(:cname) { "github.map.fastly.net" }
+        context "github map" do
+          let(:cname) { "github.map.fastly.net" }
 
-        it "flags CNAMEs directly to fastly as invalid" do
-          expect(subject).to be_an_invalid_cname
+          it "flags CNAMEs directly to fastly as invalid" do
+            expect(subject).to be_an_invalid_cname
+          end
+
+          it "knows when the domain is CNAME'd to fastly" do
+            expect(subject).to be_a_cname_to_fastly
+          end
         end
 
-        it "knows when the domain is CNAME'd to fastly" do
-          expect(subject).to be_a_cname_to_fastly
+        context "sni.github map" do
+          let(:cname) { "sni.github.map.fastly.net" }
+
+          it "flags CNAMEs directly to fastly as invalid" do
+            expect(subject).to be_an_invalid_cname
+          end
+
+          it "knows when the domain is CNAME'd to fastly" do
+            expect(subject).to be_a_cname_to_fastly
+          end
         end
       end
 

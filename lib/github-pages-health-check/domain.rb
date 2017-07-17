@@ -192,7 +192,10 @@ module GitHubPages
 
       # Is the host our Fastly CNAME?
       def fastly?
-        !!host.match(/\Agithub\.map\.fastly\.net\.?\z/i)
+        !!(
+          host.match(/\Agithub\.map\.fastly\.net\.?\z/i) ||
+          host.match(/\Asni\.github\.map\.fastly\.net\.?\z/i)
+        )
       end
 
       # Does the domain resolve to a CloudFlare-owned IP
