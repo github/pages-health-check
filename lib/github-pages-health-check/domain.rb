@@ -192,7 +192,7 @@ module GitHubPages
 
       # Is the host our Fastly CNAME?
       def fastly?
-        !!host.match(/\Agithub\.map\.fastly\.net\.?\z/i)
+        !!host.match(/\A#{Regexp.union(Fastly::HOSTNAMES)}\z/i)
       end
 
       # Does the domain resolve to a CloudFlare-owned IP
@@ -390,7 +390,8 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
         dns.all? do |answer|
-          answer.class == Net::DNS::RR::A && cdn.controls_ip?(answer.address)
+          next true unless answer.class == Net::DNS::RR::A
+          cdn.controls_ip?(answer.address)
         end
       end
 
