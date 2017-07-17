@@ -517,12 +517,17 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
     context "a non-CNAME" do
       let(:domain) { "http://techblog.netflix.com" }
+      let(:ip) { GitHubPages::HealthCheck::Domain::CURRENT_IP_ADDRESSES.shuffle.first }
       let(:cname_error) do
         GitHubPages::HealthCheck::Errors::InvalidCNAMEError
       end
 
+      before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
+
       it "returns the error" do
+        expect(subject.dns).to eq([a_packet])
         expect(subject.valid?).to be_falsy
+        expect(subject.a_record?).to be_truthy
         expect(subject.mx_records_present?).to be_falsy
         expect(subject.reason).to be_a(cname_error)
         regex = /not set up with a correct CNAME record/i
