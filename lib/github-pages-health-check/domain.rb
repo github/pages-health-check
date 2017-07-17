@@ -393,7 +393,8 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
         dns.all? do |answer|
-          answer.class == Net::DNS::RR::A && cdn.controls_ip?(answer.address)
+          next true unless answer.class == Net::DNS::RR::A
+          cdn.controls_ip?(answer.address)
         end
       end
 
