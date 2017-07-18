@@ -1,143 +1,63 @@
-require 'net/dns'
-require 'net/dns/resolver'
-require 'ipaddr'
-require 'public_suffix'
-require 'singleton'
-require_relative 'github-pages-health-check/version'
-require_relative 'github-pages-health-check/cloudflare'
-require_relative 'github-pages-health-check/errors/deprecated_ip'
-require_relative 'github-pages-health-check/errors/invalid_a_record'
-require_relative 'github-pages-health-check/errors/invalid_cname'
+# frozen_string_literal: true
+require "net/dns"
+require "net/dns/resolver"
+require "addressable/uri"
+require "ipaddr"
+require "public_suffix"
+require "singleton"
+require "net/http"
+require "typhoeus"
+require "resolv"
+require "timeout"
+require "octokit"
+require_relative "github-pages-health-check/version"
 
-class GitHubPages
-  class HealthCheck
-    class DeprecatedIP < StandardError; end
-    class InvalidARecord < StandardError; end
-    class InvalidCNAME < StandardError; end
+if File.exist?(File.expand_path("../.env", File.dirname(__FILE__)))
+  require "dotenv"
+  Dotenv.load
+end
 
-    attr_accessor :domain
+module GitHubPages
+  module HealthCheck
+    autoload :CDN,        "github-pages-health-check/cdn"
+    autoload :CloudFlare, "github-pages-health-check/cdns/cloudflare"
+    autoload :Fastly,     "github-pages-health-check/cdns/fastly"
+    autoload :Error,      "github-pages-health-check/error"
+    autoload :Errors,     "github-pages-health-check/errors"
+    autoload :Checkable,  "github-pages-health-check/checkable"
+    autoload :Domain,     "github-pages-health-check/domain"
+    autoload :Repository, "github-pages-health-check/repository"
+    autoload :Site,       "github-pages-health-check/site"
+    autoload :Printer,    "github-pages-health-check/printer"
 
-    LEGACY_IP_ADDRESSES = %w[
-      207.97.227.245
-      204.232.175.78
-      199.27.73.133
-    ]
+    # DNS and HTTP timeout, in seconds
+    TIMEOUT = 5
 
-    def initialize(domain)
-      @domain = domain
-    end
+    HUMAN_NAME = "GitHub Pages Health Check".freeze
+    URL = "https://github.com/github/pages-health-check".freeze
+    USER_AGENT = "Mozilla/5.0 (compatible; #{HUMAN_NAME}/#{VERSION}; +#{URL})".freeze
 
-    def cloudflare_ip?
-      dns.all? { |answer| answer.class == Net::DNS::RR::A && CloudFlare.controls_ip?(answer.address) }
-    end
-
-    # Returns an array of DNS answers
-    def dns
-      @dns ||= Net::DNS::Resolver.start(domain).answer if domain
-    rescue Exception => msg
-      false
-    end
-
-    # Does this domain have *any* A record that points to the legacy IPs?
-    def old_ip_address?
-      dns.any? { |answer| answer.class == Net::DNS::RR::A && LEGACY_IP_ADDRESSES.include?(answer.address.to_s) }
-    end
-
-    # Is this domain's first response an A record?
-    def a_record?
-      dns.first.class == Net::DNS::RR::A
-    end
-
-    # Is this domain's first response a CNAME record?
-    def cname_record?
-      dns.first.class == Net::DNS::RR::CNAME
-    end
-
-    # Is this a valid domain that PublicSuffix recognizes?
-    # Used as an escape hatch to prevent false positves on DNS checkes
-    def valid_domain?
-      PublicSuffix.valid? domain
-    end
-
-    # Is this domain an SLD, meaning a CNAME would be innapropriate
-    def apex_domain?
-      PublicSuffix.parse(domain).trd == nil
-    rescue
-      false
-    end
-
-    # Should the domain be an apex record?
-    def should_be_a_record?
-      !pages_domain? && apex_domain?
-    end
-
-    # Is the domain's first response a CNAME to a pages domain?
-    def pointed_to_github_user_domain?
-      dns.first.class == Net::DNS::RR::CNAME && pages_domain?(dns.first.cname.to_s)
-    end
-
-    # Is the given cname a pages domain?
-    #
-    # domain - the domain to check, generaly the target of a cname
-    def pages_domain?(domain = domain)
-      !!domain.match(/^[\w-]+\.github\.(io|com)\.?$/i)
-    end
-
-    def to_hash
-      {
-        :cloudflare_ip?                 => cloudflare_ip?,
-        :old_ip_address?                => old_ip_address?,
-        :a_record?                      => a_record?,
-        :cname_record?                  => cname_record?,
-        :valid_domain?                  => valid_domain?,
-        :apex_domain?                   => apex_domain?,
-        :should_be_a_record?            => should_be_a_record?,
-        :pointed_to_github_user_domain? => pointed_to_github_user_domain?,
-        :pages_domain?                  => pages_domain?,
-        :valid?                         => valid?,
-        :reason                         => reason
+    TYPHOEUS_OPTIONS = {
+      :followlocation => true,
+      :timeout => TIMEOUT,
+      :accept_encoding => "gzip",
+      :method => :head,
+      :headers => {
+        "User-Agent" => USER_AGENT
       }
+    }.freeze
+
+    # surpress warn-level feedback due to unsupported record types
+    def self.without_warnings(&block)
+      warn_level = $VERBOSE
+      $VERBOSE = nil
+      result = block.call
+      $VERBOSE = warn_level
+      result
     end
 
-    def to_json
-      to_hash.to_json
-    end
-
-    # Runs all checks, raises an error if invalid
-    def check!
-      return unless dns
-      return if cloudflare_ip?
-      raise DeprecatedIP if a_record? && old_ip_address?
-      raise InvalidARecord if valid_domain? && a_record? && !should_be_a_record?
-      raise InvalidCNAME if valid_domain? && !apex_domain? && !pointed_to_github_user_domain?
-      true
-    end
-    alias_method :valid!, :check!
-
-    # Runs all checks, returns true if valid, otherwise false
-    def valid?
-      check!
-      true
-    rescue
-      false
-    end
-
-    # Return the error, if any
-    def reason
-      check!
-      nil
-    rescue StandardError => e
-      e
-    end
-
-    def inspect
-      "#<GitHubPages::HealthCheck @domain=\"#{domain}\" valid?=#{valid?}>"
-    end
-
-    def to_s
-      to_hash.inject(Array.new) do |all, pair|
-        all.push pair.join(": ")
-      end.join("\n")
+    def self.check(repository_or_domain, access_token: nil)
+      Site.new repository_or_domain, :access_token => access_token
     end
   end
 end

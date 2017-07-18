@@ -3,3 +3,5 @@
 .bundle
 vendor/gems
 /bin
+.env
+spec/examples.txt
