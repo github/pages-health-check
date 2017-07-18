@@ -211,6 +211,14 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         it "knows it should be an a record" do
           expect(subject.should_be_a_record?).to be_truthy
         end
+
+        context "pointed to Fastly" do
+          let(:ip) { "151.101.33.147" }
+
+          it "notes it as a Fastly IP" do
+            expect(subject).to be_a_fastly_ip
+          end
+        end
       end
     end
 
