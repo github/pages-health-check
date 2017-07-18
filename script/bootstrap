@@ -2,13 +2,4 @@
 
 set -ex
 
-cd "$(dirname "$0")/.."
-
-if [ -f .ruby-version ] ; then
-  export RBENV_VERSION=$(cat .ruby-version)
-fi
-
-#set ruby version, see https://github.com/github/pages-jekyll/pull/17
-export PATH=/usr/share/rbenv/shims:$PATH BUNDLE_GEMFILE=$(pwd)/Gemfile
-
-bundle install --path vendor/gems --binstubs --local --standalone --clean "$@"
+bundle install
