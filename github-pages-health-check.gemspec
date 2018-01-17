@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency("net-dns", "~> 0.8")
   s.add_dependency("public_suffix", "~> 2.0")
-  s.add_dependency("typhoeus", "~> 0.7")
+  s.add_dependency("typhoeus", "~> 1.3")
   s.add_dependency("addressable", "~> 2.3")
   s.add_dependency("octokit", "~> 4.0")
 
