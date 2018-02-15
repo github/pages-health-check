@@ -6,19 +6,19 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:cname) { domain }
   subject { described_class.new(domain) }
   let(:cname_packet) do
-    Net::DNS::RR::CNAME.new(:name => "pages.invalid",
+    Net::DNS::RR::CNAME.new(:name => domain,
                             :cname => cname,
                             :ttl => 1000)
   end
   let(:mx_packet) do
-    Net::DNS::RR::MX.new(:name => "pages.invalid",
+    Net::DNS::RR::MX.new(:name => domain,
                          :exchange => "mail.example.com",
                          :preference => 10,
                          :ttl => 1000)
   end
   let(:ip) { "127.0.0.1" }
   let(:a_packet) do
-    Net::DNS::RR::A.new(:name => "pages.invalid", :address => ip, :ttl => 1000)
+    Net::DNS::RR::A.new(:name => domain, :address => ip, :ttl => 1000)
   end
 
   context "constructor" do
@@ -98,7 +98,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   end
 
   context "A records" do
-    before { allow(subject).to receive(:dns) { [a_packet] } }
+    before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
     context "old IP addresses" do
       %w(204.232.175.78 207.97.227.245).each do |ip_address|
@@ -142,7 +142,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   end
 
   context "CNAMEs" do
-    before { allow(subject).to receive(:dns) { [cname_packet] } }
+    before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 
     it "known when a domain is a CNAME record" do
       expect(subject).to be_a_cname_record
@@ -205,7 +205,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
 
       context "a domain with an MX record" do
-        before { allow(subject).to receive(:dns) { [a_packet, mx_packet] } }
+        before(:each) { allow(subject).to receive(:dns) { [a_packet, mx_packet] } }
         let(:domain) { "blog.parkermoore.de" }
 
         it "knows it should be an a record" do
@@ -222,8 +222,21 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "only MX records" do
+      before(:each) { allow(subject).to receive(:dns) { [mx_packet] } }
+      let(:domain) { "pages.invalid" }
+
+      it "must not be valid" do
+        expect(subject).not_to be_valid
+      end
+
+      it "does not think it forwards to a Fastly IP" do
+        expect(subject).not_to be_a_fastly_ip
+      end
+    end
+
     context "CNAMEs to Pages" do
-      before { allow(subject).to receive(:dns) { [cname_packet] } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 
       ["parkr.github.io", "mattr-.github.com"].each do |cname|
         context cname do
@@ -248,7 +261,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
     context "CNAMEs" do
       let(:domain) { "foo.github.biz" }
-      before { allow(subject).to receive(:dns) { [cname_packet] } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 
       it "detects invalid CNAMEs" do
         expect(subject).to be_a_valid_domain
@@ -338,7 +351,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
   context "cloudflare" do
     let(:ip) { "108.162.196.20" }
-    before { allow(subject).to receive(:dns) { [a_packet] } }
+    before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
     it "knows when the domain is on cloudflare" do
       expect(subject).to be_a_cloudflare_ip
@@ -357,6 +370,8 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     context "apex domains" do
       context "pointed to Pages IP" do
         let(:domain) { "fontawesome.io" }
+        let(:ip) { "192.30.252.153" }
+        before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
         it "Knows it's a Pages IP" do
           expect(subject).to be_pointed_to_github_pages_ip
@@ -481,8 +496,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "domains with underscores" do
-      let(:domain) { "this_domain_is_valid.github.io" }
+      let(:domain) { "this_domain_is_valid.example.com" }
+      let(:cname)  { "something.example.com" }
       let(:headers) { { :server => "GitHub.com" } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 
       it "doesn't error out on domains with underscores" do
         expect(subject).to be_served_by_pages
@@ -520,10 +537,13 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       let(:cname_error) do
         GitHubPages::HealthCheck::Errors::InvalidCNAMEError
       end
+      let(:cname) { "netflix.com" }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 
       it "returns the error" do
         expect(subject.valid?).to be_falsy
         expect(subject.mx_records_present?).to be_falsy
+        expect(subject.should_be_cname_record?).to be_truthy
         expect(subject.reason).to be_a(cname_error)
         regex = /not set up with a correct CNAME record/i
         expect(subject.reason.message).to match(regex)
@@ -533,7 +553,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
   context "proxies" do
     context "by IP" do
-      before { allow(subject).to receive(:dns) { [a_packet] } }
+      before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
       context "cloudflare" do
         let(:ip) { "108.162.196.20" }
@@ -553,7 +573,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "by cname" do
-      before { allow(subject).to receive(:dns) { [cname_packet] } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 
       context "pointed to pages" do
         let(:cname) { "foo.github.io" }
@@ -681,7 +701,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
     context "with DNS stubbed" do
       let(:ip) { "1.2.3.4" }
-      before { allow(subject).to receive(:dns) { [a_packet] } }
+      before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
       it "knows when the DNS resolves" do
         expect(subject.dns?).to be_truthy
@@ -689,7 +709,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "when DNS doesn't resolve" do
-      before { allow(subject).to receive(:dns) { nil } }
+      before(:each) { allow(subject).to receive(:dns) { nil } }
 
       it "knows when the DNS doesn't resolve" do
         expect(subject.dns?).to be_falsy
