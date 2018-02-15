@@ -385,8 +385,11 @@ module GitHubPages
       # Does the domain resolve to a CDN-owned IP
       def cdn_ip?(cdn)
         return unless dns?
-        dns.all? do |answer|
-          next true unless answer.class == Net::DNS::RR::A
+
+        a_records = dns.select { |answer| answer.class == Net::DNS::RR::A }
+        return false if !a_records || a_records.empty?
+
+        a_records.all? do |answer|
           cdn.controls_ip?(answer.address)
         end
       end
