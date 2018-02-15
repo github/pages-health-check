@@ -14,6 +14,7 @@
 #   https://github.com/bbatsov/rubocop/blob/master/config/default.yml
 #
 # If you disable a check, document why.
+#
 
 AllCops:
   Exclude:
@@ -25,16 +26,8 @@ AllCops:
 Lint/EndAlignment:
   Severity: error
 
-Lint/RescueException:
-  Exclude:
-    - lib/pages_jekyll.rb
-
 Lint/UnreachableCode:
   Severity: error
-
-Lint/AmbiguousRegexpLiteral:
-  Exclude:
-    - 'features/step_definitions/pages_steps.rb'
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
@@ -47,10 +40,10 @@ Style/HashSyntax:
   EnforcedStyle: hash_rockets
   Severity: error
 
-Style/AlignHash:
+Layout/AlignHash:
   SupportedLastArgumentHashStyles: always_ignore
 
-Style/AlignParameters:
+Layout/AlignParameters:
   Enabled: false # This is usually true, but we often want to roll back to
                  # the start of a line.
 
@@ -75,14 +68,14 @@ Metrics/LineLength:
 
 Metrics/BlockLength:
   Enabled: false
-  
+
 Style/MultilineTernaryOperator:
   Severity: error
 
 Style/AndOr:
   Severity: error
 
-Style/IndentationWidth:
+Layout/IndentationWidth:
   Severity: error
 
 Metrics/MethodLength:
@@ -101,20 +94,20 @@ Style/RedundantSelf:
 Style/IfUnlessModifier:
   Enabled: false
 
-Style/FileName: #Rubocop doesn't like the Git*H*ub namespace
+Naming/FileName: #Rubocop doesn't like the Git*H*ub namespace
   Enabled: false
 
 Metrics/ParameterLists: { Max: 4 }
 Metrics/AbcSize: { Max: 20 }
 
-Style/IndentHash: { EnforcedStyle: consistent }
+Layout/IndentHash: { EnforcedStyle: consistent }
+Layout/MultilineMethodCallIndentation: { EnforcedStyle: indented }
+Layout/MultilineOperationIndentation: { EnforcedStyle: indented }
+Layout/FirstParameterIndentation: { EnforcedStyle: consistent }
+Layout/IndentArray: { EnforcedStyle: consistent }
+Layout/ExtraSpacing: { AllowForAlignment: true }
 Style/SignalException: { EnforcedStyle: only_raise }
-Style/MultilineMethodCallIndentation: { EnforcedStyle: indented }
-Style/MultilineOperationIndentation: { EnforcedStyle: indented }
-Style/FirstParameterIndentation: { EnforcedStyle: consistent }
 Style/StringLiterals: { EnforcedStyle: double_quotes }
-Style/IndentArray: { EnforcedStyle: consistent }
-Style/ExtraSpacing: { AllowForAlignment: true }
 
 Style/PercentLiteralDelimiters:
   PreferredDelimiters:
@@ -153,5 +146,6 @@ Metrics/AbcSize:
 Style/DoubleNegation:
   Enabled: false
 
-Style/FileName:
-  Enabled: false
+Layout/EmptyLineAfterMagicComment:
+  Exclude:
+    - script/*
