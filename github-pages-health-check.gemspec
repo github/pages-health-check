@@ -3,7 +3,7 @@
 require File.expand_path("../lib/github-pages-health-check/version", __FILE__)
 
 Gem::Specification.new do |s|
-  s.required_ruby_version = ">= 1.9.3"
+  s.required_ruby_version = ">= 2.2.0"
 
   s.name                  = "github-pages-health-check"
   s.version               = GitHubPages::HealthCheck::VERSION
