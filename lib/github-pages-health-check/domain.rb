@@ -131,16 +131,12 @@ module GitHubPages
         return @apex_domain if defined?(@apex_domain)
         return unless valid_domain?
 
-        answers = begin
-          Resolv::DNS.open do |dns|
-            dns.timeouts = TIMEOUT
-            dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
-          end
-        rescue Timeout::Error, NoMethodError
-          []
-        end
-
-        @apex_domain = answers.any?
+        # PublicSuffix.domain pulls out the apex-level domain name.
+        # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
+        # It's aware of multi-step top-level domain names:
+        # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
+        # For apex-level domain names, DNS providers do not support CNAME records.
+        PublicSuffix.domain(host) == host
       end
 
       # Should the domain be an apex record?
