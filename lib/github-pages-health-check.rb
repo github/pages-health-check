@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "net/dns"
 require "net/dns/resolver"
 require "addressable/uri"

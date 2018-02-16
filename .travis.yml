@@ -6,4 +6,4 @@ before_install: bundle update
 install:
   - sudo bash -c 'echo search github.com >> /etc/resolv.conf'
 cache: bundler
-rvm: 2.3.1
+rvm: 2.4.2

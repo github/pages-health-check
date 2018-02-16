@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GitHubPages
   module HealthCheck
     # Instance of the Fastly CDN for checking IP ownership
@@ -10,7 +11,7 @@ module GitHubPages
         github.map.fastly.net.
         sni.github.map.fastly.net
         sni.github.map.fastly.net.
-      )
+      ).freeze
     end
   end
 end

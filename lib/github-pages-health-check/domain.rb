@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GitHubPages
   module HealthCheck
     class Domain < Checkable
@@ -70,13 +71,13 @@ module GitHubPages
         192.30.252.154
       ).freeze
 
-      HASH_METHODS = [
-        :host, :uri, :dns_resolves?, :proxied?, :cloudflare_ip?, :fastly_ip?,
-        :old_ip_address?, :a_record?, :cname_record?, :mx_records_present?,
-        :valid_domain?, :apex_domain?, :should_be_a_record?,
-        :cname_to_github_user_domain?, :cname_to_pages_dot_github_dot_com?,
-        :cname_to_fastly?, :pointed_to_github_pages_ip?, :pages_domain?,
-        :served_by_pages?, :valid_domain?, :https?, :enforces_https?, :https_error
+      HASH_METHODS = %i[
+        host uri dns_resolves? proxied? cloudflare_ip? fastly_ip?
+        old_ip_address? a_record? cname_record? mx_records_present?
+        valid_domain? apex_domain? should_be_a_record?
+        cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
+        cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
+        served_by_pages? valid_domain? https? enforces_https? https_error
       ].freeze
 
       def initialize(host)
@@ -131,16 +132,12 @@ module GitHubPages
         return @apex_domain if defined?(@apex_domain)
         return unless valid_domain?
 
-        answers = begin
-          Resolv::DNS.open do |dns|
-            dns.timeouts = TIMEOUT
-            dns.getresources(absolute_domain, Resolv::DNS::Resource::IN::NS)
-          end
-        rescue Timeout::Error, NoMethodError
-          []
-        end
-
-        @apex_domain = answers.any?
+        # PublicSuffix.domain pulls out the apex-level domain name.
+        # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
+        # It's aware of multi-step top-level domain names:
+        # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
+        # For apex-level domain names, DNS providers do not support CNAME records.
+        PublicSuffix.domain(host) == host
       end
 
       # Should the domain be an apex record?
@@ -389,8 +386,11 @@ module GitHubPages
       # Does the domain resolve to a CDN-owned IP
       def cdn_ip?(cdn)
         return unless dns?
-        dns.all? do |answer|
-          next true unless answer.class == Net::DNS::RR::A
+
+        a_records = dns.select { |answer| answer.class == Net::DNS::RR::A }
+        return false if !a_records || a_records.empty?
+
+        a_records.all? do |answer|
           cdn.controls_ip?(answer.address)
         end
       end

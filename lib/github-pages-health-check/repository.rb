@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GitHubPages
   module HealthCheck
     class Repository < Checkable
@@ -6,8 +7,8 @@ module GitHubPages
 
       REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
 
-      HASH_METHODS = [
-        :name_with_owner, :built?, :last_built, :build_duration, :build_error
+      HASH_METHODS = %i[
+        name_with_owner built? last_built build_duration build_error
       ].freeze
 
       def initialize(name_with_owner, access_token: nil)
