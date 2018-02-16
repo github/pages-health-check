@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "bundler/setup"
 require "webmock/rspec"
 require_relative "../lib/github-pages-health-check"

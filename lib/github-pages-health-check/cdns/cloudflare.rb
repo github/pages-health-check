@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GitHubPages
   module HealthCheck
     # Instance of the CloudFlare CDN for checking IP ownership
