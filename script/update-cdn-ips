@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# / Usage script/update-ips
-# / updates config/cloudflare-ips.txt and config/fastly-ips.txt
+#
+# Usage script/update-ips
+# updates config/cloudflare-ips.txt and config/fastly-ips.txt
 
 require "open-uri"
 require "json"
