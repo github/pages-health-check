@@ -327,7 +327,7 @@ module GitHubPages
 
       # Any errors querying CAA records
       def caa_error
-        return nil if caa.error.nil?
+        return nil unless caa.errored?
         caa.error.class.name
       end
 
