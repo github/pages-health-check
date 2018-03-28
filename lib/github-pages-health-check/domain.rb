@@ -78,6 +78,7 @@ module GitHubPages
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
         cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
         served_by_pages? valid_domain? https? enforces_https? https_error
+        https_eligible? caa_error
       ].freeze
 
       def initialize(host)
@@ -318,7 +319,22 @@ module GitHubPages
         redirect.scheme == "https" && redirect.host == host
       end
 
+      # Can an HTTPS certificate be issued for this domain?
+      def https_eligible?
+        (cname_to_github_user_domain? || fastly_ip?) && caa.lets_encrypt_allowed?
+      end
+
+      # Any errors querying CAA records
+      def caa_error
+        return nil if caa.error.nil?
+        caa.error.class.name
+      end
+
       private
+
+      def caa
+        @caa ||= GitHubPages::HealthCheck::CAA.new(host)
+      end
 
       # The domain's response to HTTP(S) requests, following redirects
       def response

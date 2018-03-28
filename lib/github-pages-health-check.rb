@@ -25,6 +25,7 @@ module GitHubPages
     autoload :Fastly,     "github-pages-health-check/cdns/fastly"
     autoload :Error,      "github-pages-health-check/error"
     autoload :Errors,     "github-pages-health-check/errors"
+    autoload :CAA,        "github-pages-health-check/caa"
     autoload :Checkable,  "github-pages-health-check/checkable"
     autoload :Domain,     "github-pages-health-check/domain"
     autoload :Repository, "github-pages-health-check/repository"
