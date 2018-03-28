@@ -33,6 +33,8 @@ module GitHubPages
         @records ||= (get_caa_records(host) | get_caa_records(PublicSuffix.domain(host)))
       end
 
+      private
+
       def get_caa_records(domain)
         resolver = Dnsruby::Resolver.new
         resolver.retry_times = 2
