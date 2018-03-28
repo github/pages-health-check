@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.require_paths         = ["lib"]
 
   s.add_dependency("addressable", "~> 2.3")
-  s.add_dependency("dnsruby", "~> 1.60.2")
+  s.add_dependency("dnsruby", "~> 1.60")
   s.add_dependency("octokit", "~> 4.0")
   s.add_dependency("public_suffix", "~> 2.0")
   s.add_dependency("typhoeus", "~> 1.3")
