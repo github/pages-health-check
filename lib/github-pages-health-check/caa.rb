@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "dnsruby"
 require "public_suffix"
 
