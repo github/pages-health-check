@@ -1,5 +1,5 @@
-require 'dnsruby'
-require 'public_suffix'
+require "dnsruby"
+require "public_suffix"
 
 module GitHubPages
   module HealthCheck
@@ -19,7 +19,7 @@ module GitHubPages
       def lets_encrypt_allowed?
         return false if errored?
         return true unless records_present?
-        records.any? { |r| r.property_value == 'letsencrypt.org' }
+        records.any? { |r| r.property_value == "letsencrypt.org" }
       end
 
       def records_present?
@@ -36,12 +36,12 @@ module GitHubPages
         resolver.retry_times = 2
         resolver.query_timeout = 2
         nspack = begin
-          resolver.query(domain, 'CAA', 'IN')
-        rescue Exception => e
+          resolver.query(domain, "CAA", "IN")
+        rescue StandardError => e
           @error = e
           return []
         end
-        nspack.answer.select {|r| r.type == 'CAA' && r.property_tag == 'issue' }
+        nspack.answer.select { |r| r.type == "CAA" && r.property_tag == "issue" }
       end
     end
   end
