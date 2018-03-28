@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "net/dns"
-require "net/dns/resolver"
+require "dnsruby"
 require "addressable/uri"
 require "ipaddr"
 require "public_suffix"
@@ -35,9 +34,9 @@ module GitHubPages
     # DNS and HTTP timeout, in seconds
     TIMEOUT = 5
 
-    HUMAN_NAME = "GitHub Pages Health Check".freeze
-    URL = "https://github.com/github/pages-health-check".freeze
-    USER_AGENT = "Mozilla/5.0 (compatible; #{HUMAN_NAME}/#{VERSION}; +#{URL})".freeze
+    HUMAN_NAME = "GitHub Pages Health Check"
+    URL = "https://github.com/github/pages-health-check"
+    USER_AGENT = "Mozilla/5.0 (compatible; #{HUMAN_NAME}/#{VERSION}; +#{URL})"
 
     TYPHOEUS_OPTIONS = {
       :followlocation => true,

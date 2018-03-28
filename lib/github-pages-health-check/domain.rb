@@ -152,7 +152,7 @@ module GitHubPages
 
       # Is the domain's first response an A record to a valid GitHub Pages IP?
       def pointed_to_github_pages_ip?
-        a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.value)
+        a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.address.to_s)
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -227,10 +227,8 @@ module GitHubPages
         return unless valid_domain?
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
-            unless host.nil?
-              resolver.search(absolute_domain, Net::DNS::A).answer +
-                resolver.search(absolute_domain, Net::DNS::MX).answer
-            end
+            next if host.nil?
+            resolver.query(absolute_domain, Dnsruby::Types::ANY).answer
           end
         end
       rescue StandardError
@@ -238,7 +236,10 @@ module GitHubPages
       end
 
       def resolver
-        @resolver ||= Net::DNS::Resolver.new
+        @resolver ||= Dnsruby::Resolver.new
+        @resolver.retry_times = 2
+        @resolver.query_timeout = 2
+        @resolver
       end
 
       # Are we even able to get the DNS record?
@@ -252,14 +253,14 @@ module GitHubPages
         return unless dns?
 
         dns.any? do |answer|
-          answer.is_a?(Net::DNS::RR::A) && legacy_ip?(answer.address.to_s)
+          answer.type == Dnsruby::Types::A && legacy_ip?(answer.address.to_s)
         end
       end
 
       # Is this domain's first response an A record?
       def a_record?
         return unless dns?
-        dns.first.class == Net::DNS::RR::A
+        dns.first.type == Dnsruby::Types::A
       end
 
       # Is this domain's first response a CNAME record?
@@ -273,13 +274,13 @@ module GitHubPages
       # The domain to which this domain's CNAME resolves
       # Returns nil if the domain is not a CNAME
       def cname
-        return unless dns.first.class == Net::DNS::RR::CNAME
+        return unless dns.first.type == Dnsruby::Types::CNAME
         @cname ||= Domain.new(dns.first.cname.to_s)
       end
 
       def mx_records_present?
         return unless dns?
-        dns.any? { |answer| answer.class == Net::DNS::RR::MX }
+        dns.any? { |answer| answer.type == Dnsruby::Types::MX }
       end
 
       def served_by_pages?
@@ -333,7 +334,7 @@ module GitHubPages
       private
 
       def caa
-        @caa ||= GitHubPages::HealthCheck::CAA.new(host)
+        @caa ||= GitHubPages::HealthCheck::CAA.new(absolute_domain)
       end
 
       # The domain's response to HTTP(S) requests, following redirects
@@ -403,7 +404,7 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
 
-        a_records = dns.select { |answer| answer.class == Net::DNS::RR::A }
+        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
         return false if !a_records || a_records.empty?
 
         a_records.all? do |answer|
@@ -411,8 +412,8 @@ module GitHubPages
         end
       end
 
-      def legacy_ip?(ip)
-        LEGACY_IP_ADDRESSES.include?(ip)
+      def legacy_ip?(ip_addr)
+        LEGACY_IP_ADDRESSES.include?(ip_addr)
       end
     end
   end

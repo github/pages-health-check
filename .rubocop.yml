@@ -17,13 +17,14 @@
 #
 
 AllCops:
+  TargetRubyVersion: 2.4
   Exclude:
     - 'bin/**/*'
     - 'script/**/*'
     - 'vendor/**/*'
     - 'test-site/**/*'
 
-Lint/EndAlignment:
+Layout/EndAlignment:
   Severity: error
 
 Lint/UnreachableCode:
@@ -119,9 +120,6 @@ Style/PercentLiteralDelimiters:
     '%W': '()'
     '%x': '()'
 
-AllCops:
-  TargetRubyVersion: 2.2
-
 Style/Documentation:
   Enabled: false
 
@@ -149,3 +147,10 @@ Style/DoubleNegation:
 Layout/EmptyLineAfterMagicComment:
   Exclude:
     - script/*
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  Severity: error
+
+Gemspec/RequiredRubyVersion:
+  Enabled: false

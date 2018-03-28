@@ -21,7 +21,7 @@ module GitHubPages
 
       # Internal: Does this CDN control this address?
       def controls_ip?(address)
-        ranges.any? { |range| range.include?(address) }
+        ranges.any? { |range| range.include?(address.to_s) }
       end
 
       private

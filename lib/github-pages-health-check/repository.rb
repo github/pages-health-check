@@ -12,7 +12,7 @@ module GitHubPages
       ].freeze
 
       def initialize(name_with_owner, access_token: nil)
-        unless name_with_owner =~ REPO_REGEX
+        unless name_with_owner.match?(REPO_REGEX)
           raise Errors::InvalidRepositoryError
         end
         parts = name_with_owner.split("/")
@@ -45,11 +45,11 @@ module GitHubPages
       alias reason build_error
 
       def build_duration
-        last_build.duration if last_build
+        last_build&.duration
       end
 
       def last_built
-        last_build.updated_at if last_build
+        last_build&.updated_at
       end
 
       def domain

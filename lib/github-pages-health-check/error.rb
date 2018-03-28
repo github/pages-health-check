@@ -3,8 +3,8 @@
 module GitHubPages
   module HealthCheck
     class Error < StandardError
-      DOCUMENTATION_BASE = "https://help.github.com".freeze
-      DOCUMENTATION_PATH = "/categories/github-pages-basics/".freeze
+      DOCUMENTATION_BASE = "https://help.github.com"
+      DOCUMENTATION_PATH = "/categories/github-pages-basics/"
       LOCAL_ONLY = false # Error is only used when running locally
 
       attr_reader :repository, :domain
@@ -30,7 +30,7 @@ module GitHubPages
       # Error message, with get more info URL appended
       def message_with_url
         msg = message.gsub(/\s+/, " ").squeeze(" ").strip
-        msg << "." unless msg =~ /\.$/ # add trailing period if not there
+        msg << "." unless msg.match?(/\.$/) # add trailing period if not there
         "#{msg} #{more_info}"
       end
       alias message_formatted message_with_url

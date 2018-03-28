@@ -28,7 +28,7 @@ module GitHubPages
       end
 
       def to_hash
-        @hash ||= begin
+        @to_hash ||= begin
           hash = {}
           self.class::HASH_METHODS.each do |method|
             hash[method] = public_send(method)
