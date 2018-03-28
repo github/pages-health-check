@@ -7,19 +7,14 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:cname) { domain }
   subject { described_class.new(domain) }
   let(:cname_packet) do
-    Net::DNS::RR::CNAME.new(:name => domain,
-                            :cname => cname,
-                            :ttl => 1000)
+    Dnsruby::RR.create("#{domain}. 1000 IN CNAME #{cname}.")
   end
   let(:mx_packet) do
-    Net::DNS::RR::MX.new(:name => domain,
-                         :exchange => "mail.example.com",
-                         :preference => 10,
-                         :ttl => 1000)
+    Dnsruby::RR.create("#{domain}. 1000 IN MX 10 mail.example.com.")
   end
   let(:ip) { "127.0.0.1" }
   let(:a_packet) do
-    Net::DNS::RR::A.new(:name => domain, :address => ip, :ttl => 1000)
+    Dnsruby::RR.create("#{domain}. 1000 IN A #{ip}")
   end
 
   context "constructor" do
@@ -153,7 +148,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     context "broken CNAMEs" do
       before do
         allow(subject).to receive(:dns) do
-          [cname_packet.tap { |c| c.instance_variable_set(:@cname, "@.") }]
+          [Dnsruby::RR.create("#{domain}. 300 IN CNAME @.")]
         end
       end
 
@@ -523,7 +518,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "a random domain" do
-      let(:domain) { "http://google.com" }
+      let(:domain) { "google.com" }
 
       it "knows when a domain isn't served by pages" do
         expect(subject).to_not be_served_by_pages
@@ -534,7 +529,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "a non-CNAME" do
-      let(:domain) { "http://techblog.netflix.com" }
+      let(:domain) { "techblog.netflix.com" }
       let(:cname_error) do
         GitHubPages::HealthCheck::Errors::InvalidCNAMEError
       end
@@ -664,7 +659,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     let(:domain) { "this-domain-does-not-exist-and-should-not-ever-exist.io" }
 
     it "does not resolve domains that do not exist" do
-      expect(subject.dns).to be_empty
+      expect(subject.dns).to be_nil
     end
 
     context "a valid domain" do
@@ -697,7 +692,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     let(:domain) { "pages.github.com" }
 
     it "retrieves a site's dns record" do
-      expect(subject.dns.first).to be_a(Net::DNS::RR::CNAME)
+      expect(subject.dns.first).to be_a(Dnsruby::RR::CNAME)
     end
 
     context "with DNS stubbed" do

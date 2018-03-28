@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require File.expand_path("../lib/github-pages-health-check/version", __FILE__)
+require File.expand_path("lib/github-pages-health-check/version", __dir__)
 
 Gem::Specification.new do |s|
   s.required_ruby_version = ">= 2.2.0"
@@ -17,8 +17,7 @@ Gem::Specification.new do |s|
   s.require_paths         = ["lib"]
 
   s.add_dependency("addressable", "~> 2.3")
-  s.add_dependency("dnsruby")
-  s.add_dependency("net-dns", "~> 0.8")
+  s.add_dependency("dnsruby", "~> 1.60.2")
   s.add_dependency("octokit", "~> 4.0")
   s.add_dependency("public_suffix", "~> 2.0")
   s.add_dependency("typhoeus", "~> 1.3")
@@ -27,6 +26,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency("gem-release", "~> 0.7")
   s.add_development_dependency("pry", "~> 0.10")
   s.add_development_dependency("rspec", "~> 3.0")
-  s.add_development_dependency("rubocop", "~> 0.52.0")
+  s.add_development_dependency("rubocop", "~> 0.52")
   s.add_development_dependency("webmock", "~> 1.21")
 end
