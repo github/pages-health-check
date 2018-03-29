@@ -221,6 +221,12 @@ module GitHubPages
         served_by_pages?
       end
 
+      REQUESTED_RECORD_TYPES = [
+        Dnsruby::Types::A,
+        Dnsruby::Types::CNAME,
+        Dnsruby::Types::MX
+      ].freeze
+
       # Returns an array of DNS answers
       def dns
         return @dns if defined? @dns
@@ -228,7 +234,9 @@ module GitHubPages
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
             next if host.nil?
-            resolver.query(absolute_domain, Dnsruby::Types::ANY).answer
+            REQUESTED_RECORD_TYPES
+              .map { |type| resolver.query(absolute_domain, type).answer }
+              .flatten.uniq
           end
         end
       rescue StandardError
