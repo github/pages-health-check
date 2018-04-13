@@ -336,7 +336,7 @@ module GitHubPages
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || fastly_ip?) && caa.lets_encrypt_allowed?
+        (cname_to_github_user_domain? || pointed_to_github_pages_ip?) && caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records
