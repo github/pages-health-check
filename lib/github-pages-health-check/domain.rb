@@ -5,6 +5,11 @@ module GitHubPages
     class Domain < Checkable
       attr_reader :host
 
+      GITHUB_DATACENTER_ADDRESSES = %w(
+        192.30.252.153
+        192.30.252.154
+      ).freeze
+
       LEGACY_IP_ADDRESSES = [
         # Legacy GitHub Datacenter
         "207.97.227.245",
@@ -63,12 +68,16 @@ module GitHubPages
         "43.249.72.133",
         "43.249.73.133",
         "43.249.74.133",
-        "43.249.75.133"
+        "43.249.75.133",
+
+        *GITHUB_DATACENTER_ADDRESSES
       ].freeze
 
       CURRENT_IP_ADDRESSES = %w(
-        192.30.252.153
-        192.30.252.154
+        185.199.108.153
+        185.199.109.153
+        185.199.110.153
+        185.199.111.153
       ).freeze
 
       HASH_METHODS = %i[
@@ -330,7 +339,8 @@ module GitHubPages
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || fastly_ip?) && caa.lets_encrypt_allowed?
+        (cname_to_github_user_domain? || pointed_to_github_pages_ip?) &&
+          caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records

@@ -16,6 +16,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:a_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN A #{ip}")
   end
+  let(:caa_domain) { "" }
+  let(:caa_packet) do
+    Dnsruby::RR.create("#{domain}. 1000 IN CAA 0 issue #{caa_domain.inspect}")
+  end
 
   context "constructor" do
     it "can handle bare domains" do
@@ -97,7 +101,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
     context "old IP addresses" do
-      %w(204.232.175.78 207.97.227.245).each do |ip_address|
+      %w(204.232.175.78 207.97.227.245 192.30.252.153 192.30.252.154).each do |ip_address|
         context ip_address do
           let(:ip) { ip_address }
 
@@ -366,7 +370,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     context "apex domains" do
       context "pointed to Pages IP" do
         let(:domain) { "fontawesome.io" }
-        let(:ip) { "192.30.252.153" }
+        let(:ip) { "185.199.108.153" }
         before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
         it "Knows it's a Pages IP" do
@@ -560,7 +564,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
 
       context "a pages IP" do
-        let(:ip) { "192.30.252.153" }
+        let(:ip) { "185.199.108.153" }
 
         it "knows a site pointed to a Pages IP isn't proxied" do
           expect(subject).to_not be_proxied
@@ -785,6 +789,78 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       it "knows it doesn't enforce https" do
         expect(subject.enforces_https?).to be_falsy
+      end
+    end
+  end
+
+  context "https eligibility" do
+    context "A records pointed to old IPs" do
+      let(:ip) { "192.30.252.153" }
+      before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
+
+      it { is_expected.not_to be_https_eligible }
+    end
+
+    context "A records pointed to new IPs" do
+      let(:ip) { "185.199.108.153" }
+      before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
+
+      it { is_expected.to be_https_eligible }
+
+      context "with bad CAA records" do
+        let(:caa_domain) { "digicert.com" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with good CAA records" do
+        let(:caa_domain) { "letsencrypt.org" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.to be_https_eligible }
+      end
+    end
+
+    context "CNAME record pointed to username" do
+      let(:cname) { "foobar.github.io" }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+      it { is_expected.to be_https_eligible }
+
+      context "with bad CAA records" do
+        let(:caa_domain) { "digicert.com" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with good CAA records" do
+        let(:caa_domain) { "letsencrypt.org" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.to be_https_eligible }
+      end
+    end
+
+    context "CNAME record pointed elsewhere" do
+      let(:cname) { "jinglebells.com" }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+      it { is_expected.not_to be_https_eligible }
+
+      context "with bad CAA records" do
+        let(:caa_domain) { "digicert.com" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with good CAA records" do
+        let(:caa_domain) { "letsencrypt.org" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.not_to be_https_eligible }
       end
     end
   end

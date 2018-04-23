@@ -14,8 +14,8 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
 
   context "a domain without CAA records" do
     before(:each) do
-      expect(subject).to receive(:get_caa_records).with(domain).and_return([])
-      expect(subject).to receive(:get_caa_records).with("githubtest.com").and_return([])
+      expect(subject).to receive(:query).with(domain).and_return([])
+      expect(subject).to receive(:query).with("githubtest.com").and_return([])
     end
 
     it "knows no records exist" do
@@ -33,8 +33,8 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
 
   context "a domain with LE CAA record" do
     before(:each) do
-      expect(subject).to receive(:get_caa_records).with(domain).and_return([])
-      expect(subject).to receive(:get_caa_records)
+      expect(subject).to receive(:query).with(domain).and_return([])
+      expect(subject).to receive(:query)
         .with("githubtest.com").and_return([caa_packet_le])
     end
 
@@ -53,9 +53,8 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
 
   context "a domain without LE CAA record" do
     before(:each) do
-      expect(subject).to receive(:get_caa_records)
-        .with(domain).and_return([caa_packet_other])
-      expect(subject).to receive(:get_caa_records).with("githubtest.com").and_return([])
+      expect(subject).to receive(:query).with(domain).and_return([caa_packet_other])
+      expect(subject).to receive(:query).with("githubtest.com").and_return([])
     end
 
     it "knows records exist" do
@@ -73,8 +72,8 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
 
   context "a domain which errors" do
     before(:each) do
-      expect(subject).to receive(:get_caa_records).with(domain).and_return([])
-      expect(subject).to receive(:get_caa_records).with("githubtest.com").and_return([])
+      expect(subject).to receive(:query).with(domain).and_return([])
+      expect(subject).to receive(:query).with("githubtest.com").and_return([])
       subject.instance_variable_set(:@error, Dnsruby::ServFail.new)
     end
 
