@@ -101,13 +101,25 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
     context "old IP addresses" do
-      %w(204.232.175.78 207.97.227.245 192.30.252.153 192.30.252.154).each do |ip_address|
+      %w(204.232.175.78 207.97.227.245).each do |ip_address|
         context ip_address do
           let(:ip) { ip_address }
 
           it "knows it's a deprecated IP" do
             expect(subject).to be_a_old_ip_address
             expect(subject).to be_a_deprecated_ip
+          end
+        end
+      end
+
+      %w(192.30.252.153 192.30.252.154).each do |ip_address|
+        context ip_address do
+          let(:ip) { ip_address }
+
+          it "knows it's not an old IP" do
+            expect(subject).not_to be_a_old_ip_address
+            expect(subject).not_to be_a_deprecated_ip
+            expect(subject).to be_pointed_to_github_pages_ip
           end
         end
       end
