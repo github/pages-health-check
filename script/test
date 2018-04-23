@@ -3,4 +3,4 @@
 set -e
 
 bundle exec rspec $@
-bundle exec rubocop -D -S $@
+script/fmt $@
