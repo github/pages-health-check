@@ -5,11 +5,6 @@ module GitHubPages
     class Domain < Checkable
       attr_reader :host
 
-      GITHUB_DATACENTER_ADDRESSES = %w(
-        192.30.252.153
-        192.30.252.154
-      ).freeze
-
       LEGACY_IP_ADDRESSES = [
         # Legacy GitHub Datacenter
         "207.97.227.245",
@@ -68,17 +63,21 @@ module GitHubPages
         "43.249.72.133",
         "43.249.73.133",
         "43.249.74.133",
-        "43.249.75.133",
-
-        *GITHUB_DATACENTER_ADDRESSES
+        "43.249.75.133"
       ].freeze
 
-      CURRENT_IP_ADDRESSES = %w(
+      NEW_PRIMARY_IPS = %w(
         185.199.108.153
         185.199.109.153
         185.199.110.153
         185.199.111.153
       ).freeze
+
+      CURRENT_IP_ADDRESSES = [
+        "192.30.252.153",
+        "192.30.252.154",
+        *NEW_PRIMARY_IPS
+      ].freeze
 
       HASH_METHODS = %i[
         host uri dns_resolves? proxied? cloudflare_ip? fastly_ip?
@@ -162,6 +161,11 @@ module GitHubPages
       # Is the domain's first response an A record to a valid GitHub Pages IP?
       def pointed_to_github_pages_ip?
         a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.address.to_s)
+      end
+
+      # Is the domain's first response an A record to the new primary IPs?
+      def pointed_to_new_primary_ips?
+        a_record? && NEW_PRIMARY_IPS.include?(dns.first.address.to_s)
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -339,7 +343,7 @@ module GitHubPages
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || pointed_to_github_pages_ip?) &&
+        (cname_to_github_user_domain? || pointed_to_new_primary_ips?) &&
           caa.lets_encrypt_allowed?
       end
 
