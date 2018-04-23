@@ -5,6 +5,11 @@ module GitHubPages
     class Domain < Checkable
       attr_reader :host
 
+      GITHUB_DATACENTER_ADDRESSES = %w(
+        192.30.252.153
+        192.30.252.154
+      ).freeze
+
       LEGACY_IP_ADDRESSES = [
         # Legacy GitHub Datacenter
         "207.97.227.245",
@@ -65,9 +70,7 @@ module GitHubPages
         "43.249.74.133",
         "43.249.75.133",
 
-        # Legacy GitHub datacenter
-        "192.30.252.153",
-        "192.30.252.154"
+        *GITHUB_DATACENTER_ADDRESSES
       ].freeze
 
       CURRENT_IP_ADDRESSES = %w(

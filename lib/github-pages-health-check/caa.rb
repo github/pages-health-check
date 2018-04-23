@@ -36,16 +36,19 @@ module GitHubPages
       private
 
       def get_caa_records(domain)
+        query(domain).select { |r| r.type == "CAA" && r.property_tag == "issue" }
+      end
+
+      def query(domain)
         resolver = Dnsruby::Resolver.new
         resolver.retry_times = 2
         resolver.query_timeout = 2
-        nspack = begin
-          resolver.query(domain, "CAA", "IN")
+        begin
+          resolver.query(domain, "CAA", "IN").answer
         rescue StandardError => e
           @error = e
-          return []
+          []
         end
-        nspack.answer.select { |r| r.type == "CAA" && r.property_tag == "issue" }
       end
     end
   end
