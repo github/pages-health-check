@@ -39,9 +39,9 @@ module GitHubPages
       alias [] to_hash
       alias to_h to_hash
 
-      def to_json
+      def to_json(state = nil)
         require "json"
-        to_hash.to_json
+        to_hash.to_json(state)
       end
 
       def to_s
