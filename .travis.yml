@@ -7,7 +7,6 @@ rvm:
 
 before_install:
   - gem install bundler
-  - bundle update
 
 script: "script/cibuild"
 
