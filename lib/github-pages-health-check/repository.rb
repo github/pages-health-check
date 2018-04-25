@@ -12,7 +12,7 @@ module GitHubPages
       ].freeze
 
       def initialize(name_with_owner, access_token: nil)
-        unless name_with_owner.match?(REPO_REGEX)
+        unless name_with_owner.match(REPO_REGEX)
           raise Errors::InvalidRepositoryError
         end
         parts = name_with_owner.split("/")
