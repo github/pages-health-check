@@ -50,15 +50,15 @@ RSpec.describe(GitHubPages::HealthCheck::Error) do
   end
 
   it "builds the more info string" do
-    msg = +"For more information, "
-    msg << "see https://help.github.com/categories/github-pages-basics/."
+    msg = "For more information, " \
+      "see https://help.github.com/categories/github-pages-basics/."
     expect(subject.send(:more_info)).to eql(msg)
   end
 
   it "returns the message with URL" do
-    msg = +"Something's wrong with your GitHub Pages site. "
-    msg << "For more information, "
-    msg << "see https://help.github.com/categories/github-pages-basics/."
+    msg = "Something's wrong with your GitHub Pages site. " \
+      "For more information, " \
+      "see https://help.github.com/categories/github-pages-basics/."
     expect(subject.message_with_url).to eql(msg)
   end
 end
