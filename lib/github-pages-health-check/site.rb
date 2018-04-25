@@ -14,7 +14,7 @@ module GitHubPages
       end
 
       def check!
-        [domain, repository].each { |check| check&.check! }
+        [domain, repository].compact.each(&:check!)
         true
       end
 
