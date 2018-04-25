@@ -30,7 +30,7 @@ module GitHubPages
       # Error message, with get more info URL appended
       def message_with_url
         msg = message.gsub(/\s+/, " ").squeeze(" ").strip
-        msg << "." unless msg.match?(/\.$/) # add trailing period if not there
+        msg << "." unless msg.end_with?(".") # add trailing period if not there
         "#{msg} #{more_info}"
       end
       alias message_formatted message_with_url
