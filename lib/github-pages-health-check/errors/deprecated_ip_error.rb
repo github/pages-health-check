@@ -4,7 +4,7 @@ module GitHubPages
   module HealthCheck
     module Errors
       class DeprecatedIPError < GitHubPages::HealthCheck::Error
-        DOCUMENTATION_PATH = "/articles/setting-up-a-custom-domain-with-github-pages/"
+        DOCUMENTATION_PATH = "/articles/setting-up-a-custom-domain-with-github-pages/".freeze
 
         def message
           <<-MSG
