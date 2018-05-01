@@ -10,6 +10,8 @@ module GitHubPages
       attr_reader :error
 
       def initialize(host)
+        raise ArgumentError, "host cannot be nil" if host.nil?
+
         @host = host
       end
 
@@ -36,7 +38,8 @@ module GitHubPages
       private
 
       def get_caa_records(domain)
-        query(domain).select { |r| r.type == "CAA" && r.property_tag == "issue" }
+        return [] if domain.nil?
+        query(domain).select { |r| r.type == Dnsruby::Types::CAA && r.property_tag == "issue" }
       end
 
       def query(domain)
@@ -44,8 +47,8 @@ module GitHubPages
         resolver.retry_times = 2
         resolver.query_timeout = 2
         begin
-          resolver.query(domain, "CAA", "IN").answer
-        rescue StandardError => e
+          resolver.query(domain, Dnsruby::Types::CAA).answer
+        rescue Dnsruby::ResolvError => e
           @error = e
           []
         end
