@@ -151,7 +151,7 @@ module GitHubPages
 
       # Should the domain use an A record?
       def should_be_a_record?
-        apex_domain? || mx_records_present?
+        !pages_io_domain? && (apex_domain? || mx_records_present?)
       end
 
       def should_be_cname_record?
@@ -187,6 +187,11 @@ module GitHubPages
       end
 
       # Is the host a *.github.io domain?
+      def pages_io_domain?
+        !!host.match(/\A[\w-]+\.github\.(io)\.?\z/i)
+      end
+
+      # Is the host a *.github.(io|com) domain?
       def pages_domain?
         !!host.match(/\A[\w-]+\.github\.(io|com)\.?\z/i)
       end
