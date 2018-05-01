@@ -217,19 +217,20 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
 
       context "a domain with an MX record" do
-        before(:each) { allow(subject).to receive(:dns) { [a_packet, mx_packet] } }
         let(:domain) { "blog.parkermoore.de" }
-
-        it "knows it should be an a record" do
-          expect(subject.should_be_a_record?).to be_truthy
+        before(:each) do
+          allow(subject).to receive(:dns) { [a_packet, mx_packet] }
+          stub_request(:head, "http://#{domain}")
+            .to_return(:status => 200, :headers => { "Server" => "GitHub.com" })
         end
+
+        it { is_expected.to be_should_be_a_record }
+        it { is_expected.to be_valid }
 
         context "pointed to Fastly" do
           let(:ip) { "151.101.33.147" }
 
-          it "notes it as a Fastly IP" do
-            expect(subject).to be_a_fastly_ip
-          end
+          it { is_expected.to be_a_fastly_ip }
         end
       end
     end
