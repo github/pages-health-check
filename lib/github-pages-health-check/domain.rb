@@ -356,7 +356,7 @@ module GitHubPages
       private
 
       def caa
-        @caa ||= GitHubPages::HealthCheck::CAA.new(absolute_domain)
+        @caa ||= GitHubPages::HealthCheck::CAA.new(host)
       end
 
       # The domain's response to HTTP(S) requests, following redirects
