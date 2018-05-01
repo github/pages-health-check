@@ -39,7 +39,11 @@ module GitHubPages
 
       def get_caa_records(domain)
         return [] if domain.nil?
-        query(domain).select { |r| r.type == Dnsruby::Types::CAA && r.property_tag == "issue" }
+        query(domain).select { |r| issue_caa_record?(r) }
+      end
+
+      def issue_caa_record?(record)
+        record.type == Dnsruby::Types::CAA && record.property_tag == "issue"
       end
 
       def query(domain)
