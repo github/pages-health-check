@@ -149,9 +149,9 @@ module GitHubPages
         PublicSuffix.domain(host) == host
       end
 
-      # Should the domain be an apex record?
+      # Should the domain use an A record?
       def should_be_a_record?
-        !pages_domain? && (apex_domain? || mx_records_present?)
+        apex_domain? || mx_records_present?
       end
 
       def should_be_cname_record?
