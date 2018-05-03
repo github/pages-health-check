@@ -262,10 +262,7 @@ module GitHubPages
       end
 
       def resolver
-        @resolver ||= Dnsruby::Resolver.new
-        @resolver.retry_times = 2
-        @resolver.query_timeout = 2
-        @resolver
+        @resolver ||= GitHubPages::HealthCheck.build_resolver(host)
       end
 
       # Are we even able to get the DNS record?
