@@ -9,7 +9,7 @@ module GitHubPages
         :dnssec => true
       }.freeze
 
-      REQUIRES_AUTHORITATIVE_ANSWER = [
+      PREFERS_AUTHORITATIVE_ANSWER = [
         Dnsruby::Types::A,
         Dnsruby::Types::CAA,
         Dnsruby::Types::MX
@@ -29,7 +29,7 @@ module GitHubPages
 
       # rubocop:disable Metrics/AbcSize
       def query(type)
-        if REQUIRES_AUTHORITATIVE_ANSWER.include?(type)
+        if PREFERS_AUTHORITATIVE_ANSWER.include?(type)
           answer = authoritative_resolver.query(domain, type).answer
           return answer unless answer.empty?
         end
