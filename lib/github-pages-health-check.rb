@@ -28,11 +28,12 @@ module GitHubPages
     autoload :Checkable,  "github-pages-health-check/checkable"
     autoload :Domain,     "github-pages-health-check/domain"
     autoload :Repository, "github-pages-health-check/repository"
+    autoload :Resolver,   "github-pages-health-check/resolver"
     autoload :Site,       "github-pages-health-check/site"
     autoload :Printer,    "github-pages-health-check/printer"
 
     # DNS and HTTP timeout, in seconds
-    TIMEOUT = 5
+    TIMEOUT = 7
 
     HUMAN_NAME = "GitHub Pages Health Check".freeze
     URL = "https://github.com/github/pages-health-check".freeze
@@ -47,31 +48,6 @@ module GitHubPages
         "User-Agent" => USER_AGENT
       }
     }.freeze
-
-    class << self
-      def default_resolver
-        Dnsruby::Resolver.new(
-          retry_times: 2,
-          query_timeout: 2,
-          dnssec: true,
-        )
-      end
-
-      def nameservers_for_domain(domain)
-        default_resolver.query(domain, Dnsruby::Types::NS).answer.map do |answer|
-          next answer.nsdname if answer.type == Dnsruby::Types::NS
-        end.compact
-      end
-
-      def build_resolver(domain)
-        Dnsruby::Resolver.new(
-          nameservers: nameservers_for_domain(domain),
-          retry_times: 2,
-          query_timeout: 2,
-          dnssec: true,
-        )
-      end
-    end
 
     # surpress warn-level feedback due to unsupported record types
     def self.without_warnings(&block)
