@@ -47,15 +47,10 @@ module GitHubPages
       end
 
       def query(domain)
-        resolver = Dnsruby::Resolver.new
-        resolver.retry_times = 2
-        resolver.query_timeout = 2
-        begin
-          resolver.query(domain, Dnsruby::Types::CAA).answer
-        rescue Dnsruby::ResolvError => e
-          @error = e
-          []
-        end
+        GitHubPages::HealthCheck::Resolver.new(domain).query(Dnsruby::Types::CAA)
+      rescue Dnsruby::ResolvError, Dnsruby::ResolvTimeout => e
+        @error = e
+        []
       end
     end
   end

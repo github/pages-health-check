@@ -253,7 +253,7 @@ module GitHubPages
           GitHubPages::HealthCheck.without_warnings do
             next if host.nil?
             REQUESTED_RECORD_TYPES
-              .map { |type| resolver.query(absolute_domain, type).answer }
+              .map { |type| resolver.query(type) }
               .flatten.uniq
           end
         end
@@ -262,10 +262,7 @@ module GitHubPages
       end
 
       def resolver
-        @resolver ||= Dnsruby::Resolver.new
-        @resolver.retry_times = 2
-        @resolver.query_timeout = 2
-        @resolver
+        @resolver ||= GitHubPages::HealthCheck::Resolver.new(absolute_domain)
       end
 
       # Are we even able to get the DNS record?

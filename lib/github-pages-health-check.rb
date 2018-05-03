@@ -28,11 +28,12 @@ module GitHubPages
     autoload :Checkable,  "github-pages-health-check/checkable"
     autoload :Domain,     "github-pages-health-check/domain"
     autoload :Repository, "github-pages-health-check/repository"
+    autoload :Resolver,   "github-pages-health-check/resolver"
     autoload :Site,       "github-pages-health-check/site"
     autoload :Printer,    "github-pages-health-check/printer"
 
     # DNS and HTTP timeout, in seconds
-    TIMEOUT = 5
+    TIMEOUT = 7
 
     HUMAN_NAME = "GitHub Pages Health Check".freeze
     URL = "https://github.com/github/pages-health-check".freeze
