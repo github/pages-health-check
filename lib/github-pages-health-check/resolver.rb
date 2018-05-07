@@ -6,7 +6,7 @@ module GitHubPages
       DEFAULT_RESOLVER_OPTIONS = {
         :retry_times => 2,
         :query_timeout => 5,
-        :dnssec => true
+        :dnssec => false
       }.freeze
 
       PREFERS_AUTHORITATIVE_ANSWER = [
