@@ -105,6 +105,7 @@ module GitHubPages
         return true if proxied?
         raise Errors::InvalidARecordError, :domain => self    if invalid_a_record?
         raise Errors::InvalidCNAMEError, :domain => self      if invalid_cname?
+        raise Errors::InvalidAAAARecordError, :domain => self if invalid_aaaa_record?
         raise Errors::NotServedByPagesError, :domain => self  unless served_by_pages?
         true
       end
@@ -112,6 +113,12 @@ module GitHubPages
       def deprecated_ip?
         return @deprecated_ip if defined? @deprecated_ip
         @deprecated_ip = (valid_domain? && a_record? && old_ip_address?)
+      end
+
+      def invalid_aaaa_record?
+        return @invalid_aaaa_record if defined? @invalid_aaaa_record
+        @invalid_aaaa_record = (valid_domain? && should_be_a_record? &&
+                                aaaa_record_present?)
       end
 
       def invalid_a_record?
@@ -241,6 +248,7 @@ module GitHubPages
 
       REQUESTED_RECORD_TYPES = [
         Dnsruby::Types::A,
+        Dnsruby::Types::AAAA,
         Dnsruby::Types::CNAME,
         Dnsruby::Types::MX
       ].freeze
@@ -284,6 +292,11 @@ module GitHubPages
       def a_record?
         return unless dns?
         dns.first.type == Dnsruby::Types::A
+      end
+
+      def aaaa_record_present?
+        return unless dns?
+        dns.any? { |answer| answer.type == Dnsruby::Types::AAAA }
       end
 
       # Is this domain's first response a CNAME record?

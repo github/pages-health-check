@@ -16,6 +16,9 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:a_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN A #{ip}")
   end
+  let(:aaaa_packet) do
+    Dnsruby::RR.create("#{domain}. 1000 IN AAAA #{ip6}")
+  end
   let(:caa_domain) { "" }
   let(:caa_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN CAA 0 issue #{caa_domain.inspect}")
@@ -150,6 +153,26 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       expect(subject).to be_a_valid_domain
       expect(subject.should_be_a_record?).to be_falsy
       expect(subject).to be_a_invalid_a_record
+    end
+
+    context "AAAA records" do
+      let(:domain) { "parkermoore.de" }
+      let(:ip) { "185.199.108.153" }
+      let(:ip6) { "::1" }
+      before(:each) { allow(subject).to receive(:dns) { [a_packet, aaaa_packet] } }
+      it "knows that AAAA records are not allowed" do
+        expect(subject).to be_an_a_record
+        expect(subject).to be_a_valid_domain
+        expect(subject.invalid_aaaa_record?).to be_truthy
+      end
+      it "raises InvalidAAAARecordError" do
+        stub_request(:head, "http://#{domain}")
+          .to_return(:status => 200, :headers => { "Server" => "GitHub.com" })
+        expect(subject.invalid_aaaa_record?).to be_truthy
+        expect(-> { subject.check! }).to raise_error(
+          GitHubPages::HealthCheck::Errors::InvalidAAAARecordError
+        )
+      end
     end
   end
 
@@ -535,7 +558,9 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "a random domain" do
-      let(:domain) { "google.com" }
+      let(:domain) { "geogle.com" }
+      let(:ip) { "127.0.0.1" }
+      before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
       it "knows when a domain isn't served by pages" do
         expect(subject).to_not be_served_by_pages
