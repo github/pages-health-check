@@ -128,16 +128,17 @@ Metrics/ClassLength:
     - lib/github-pages-health-check/domain.rb
 
 Metrics/CyclomaticComplexity:
-  Max: 8
+  Max: 9
   Exclude:
     - lib/github-pages-health-check/printer.rb
 
 Metrics/PerceivedComplexity:
-  Max: 8
+  Max: 9
   Exclude:
     - lib/github-pages-health-check/printer.rb
 
 Metrics/AbcSize:
+  Max: 17
   Exclude:
     - lib/github-pages-health-check/printer.rb
 

@@ -27,7 +27,6 @@ module GitHubPages
         @domain = domain
       end
 
-      # rubocop:disable Metrics/AbcSize
       def query(type)
         if PREFERS_AUTHORITATIVE_ANSWER.include?(type)
           answer = authoritative_resolver.query(domain, type).answer
@@ -38,7 +37,6 @@ module GitHubPages
       rescue Dnsruby::ResolvTimeout, Dnsruby::ResolvError
         self.class.default_resolver.query(domain, type).answer
       end
-      # rubocop:enable Metrics/AbcSize
 
       private
 
