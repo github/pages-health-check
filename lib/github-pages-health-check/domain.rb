@@ -85,8 +85,8 @@ module GitHubPages
         valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
         cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
-        served_by_pages? valid_domain? https? enforces_https? https_error
-        https_eligible? caa_error
+        served_by_pages? valid? reason valid_domain?
+        https? enforces_https? https_error https_eligible? caa_error
       ].freeze
 
       def initialize(host)
