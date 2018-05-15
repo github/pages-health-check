@@ -462,6 +462,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     let(:headers) { {} }
 
     before do
+      allow(subject).to receive(:dns) { [a_packet] }
       stub_request(:head, domain)
         .to_return(:status => status, :headers => headers)
     end

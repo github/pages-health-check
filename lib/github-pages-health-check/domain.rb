@@ -3,7 +3,7 @@
 module GitHubPages
   module HealthCheck
     class Domain < Checkable
-      attr_reader :host
+      attr_reader :host, :resolver, :nameservers
 
       LEGACY_IP_ADDRESSES = [
         # Legacy GitHub Datacenter
@@ -89,12 +89,15 @@ module GitHubPages
         https_eligible? caa_error
       ].freeze
 
-      def initialize(host)
+      def initialize(host, nameservers: :default)
         unless host.is_a? String
           raise ArgumentError, "Expected string, got #{host.class}"
         end
 
         @host = normalize_host(host)
+        @nameservers = nameservers
+        @resolver = GitHubPages::HealthCheck::Resolver.new(host,
+          :nameservers => nameservers)
       end
 
       # Runs all checks, raises an error if invalid
@@ -269,10 +272,6 @@ module GitHubPages
         @dns = nil
       end
 
-      def resolver
-        @resolver ||= GitHubPages::HealthCheck::Resolver.new(absolute_domain)
-      end
-
       # Are we even able to get the DNS record?
       def dns?
         !(dns.nil? || dns.empty?)
@@ -371,7 +370,7 @@ module GitHubPages
       private
 
       def caa
-        @caa ||= GitHubPages::HealthCheck::CAA.new(host)
+        @caa ||= GitHubPages::HealthCheck::CAA.new(host, :nameservers => nameservers)
       end
 
       # The domain's response to HTTP(S) requests, following redirects
