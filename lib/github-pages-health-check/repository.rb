@@ -54,7 +54,7 @@ module GitHubPages
 
       def domain
         return if cname.nil?
-        @domain ||= GitHubPages::HealthCheck::Domain.new(cname)
+        @domain ||= GitHubPages::HealthCheck::Domain.redundant(cname)
       end
 
       private

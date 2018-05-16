@@ -10,7 +10,7 @@ module GitHubPages
         @domain = @repository.domain
       rescue GitHubPages::HealthCheck::Errors::InvalidRepositoryError
         @repository = nil
-        @domain = Domain.new(repository_or_domain)
+        @domain = Domain.redundant(repository_or_domain)
       end
 
       def check!

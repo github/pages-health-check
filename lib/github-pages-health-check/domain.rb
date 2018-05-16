@@ -89,6 +89,10 @@ module GitHubPages
         https_eligible? caa_error
       ].freeze
 
+      def self.redundant(host)
+        GitHubPages::HealthCheck::RedundantCheck.new(host).check
+      end
+
       def initialize(host, nameservers: :default)
         unless host.is_a? String
           raise ArgumentError, "Expected string, got #{host.class}"
