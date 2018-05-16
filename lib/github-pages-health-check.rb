@@ -19,18 +19,19 @@ end
 
 module GitHubPages
   module HealthCheck
-    autoload :CDN,        "github-pages-health-check/cdn"
-    autoload :CloudFlare, "github-pages-health-check/cdns/cloudflare"
-    autoload :Fastly,     "github-pages-health-check/cdns/fastly"
-    autoload :Error,      "github-pages-health-check/error"
-    autoload :Errors,     "github-pages-health-check/errors"
-    autoload :CAA,        "github-pages-health-check/caa"
-    autoload :Checkable,  "github-pages-health-check/checkable"
-    autoload :Domain,     "github-pages-health-check/domain"
-    autoload :Repository, "github-pages-health-check/repository"
-    autoload :Resolver,   "github-pages-health-check/resolver"
-    autoload :Site,       "github-pages-health-check/site"
-    autoload :Printer,    "github-pages-health-check/printer"
+    autoload :CDN,            "github-pages-health-check/cdn"
+    autoload :CloudFlare,     "github-pages-health-check/cdns/cloudflare"
+    autoload :Fastly,         "github-pages-health-check/cdns/fastly"
+    autoload :Error,          "github-pages-health-check/error"
+    autoload :Errors,         "github-pages-health-check/errors"
+    autoload :CAA,            "github-pages-health-check/caa"
+    autoload :Checkable,      "github-pages-health-check/checkable"
+    autoload :Domain,         "github-pages-health-check/domain"
+    autoload :RedundantCheck, "github-pages-health-check/redundant_check"
+    autoload :Repository,     "github-pages-health-check/repository"
+    autoload :Resolver,       "github-pages-health-check/resolver"
+    autoload :Site,           "github-pages-health-check/site"
+    autoload :Printer,        "github-pages-health-check/printer"
 
     # DNS and HTTP timeout, in seconds
     TIMEOUT = 7
