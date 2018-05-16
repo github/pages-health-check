@@ -4,16 +4,10 @@ module GitHubPages
   module HealthCheck
     class Resolver
       DEFAULT_RESOLVER_OPTIONS = {
-        :retry_times => 2,
+        :retry_times   => 2,
         :query_timeout => 5,
-        :dnssec => false
+        :dnssec        => false
       }.freeze
-
-      PREFERS_AUTHORITATIVE_ANSWER = [
-        Dnsruby::Types::A,
-        Dnsruby::Types::CAA,
-        Dnsruby::Types::MX
-      ].freeze
 
       class << self
         def default_resolver
@@ -21,33 +15,42 @@ module GitHubPages
         end
       end
 
-      attr_reader :domain
+      attr_reader :domain, :nameservers
 
-      def initialize(domain)
+      # Create a new resolver.
+      #
+      # domain - the domain we're getting answers for
+      # nameserver - (optional) a case
+      def initialize(domain, nameservers: :default)
         @domain = domain
+        @nameservers = nameservers
       end
 
       def query(type)
-        if PREFERS_AUTHORITATIVE_ANSWER.include?(type)
-          answer = authoritative_resolver.query(domain, type).answer
-          return answer unless answer.empty?
-        end
-
-        self.class.default_resolver.query(domain, type).answer
-      rescue Dnsruby::ResolvTimeout, Dnsruby::ResolvError
-        self.class.default_resolver.query(domain, type).answer
+        resolver.query(domain, type).answer
       end
 
       private
 
-      def authoritative_resolver
-        return self.class.default_resolver if nameservers.nil? || nameservers.empty?
-
-        Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(:nameservers => nameservers))
+      def resolver
+        @resolver ||= case nameservers
+                      when :default
+                        self.class.default_resolver
+                      when :authoritative
+                        Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
+                          :nameservers => authoritative_nameservers
+                        ))
+                      when Array
+                        Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
+                          :nameservers => nameservers
+                        ))
+                      else
+                        raise "Invalid nameserver type: #{nameservers.inspect}"
+                      end
       end
 
-      def nameservers
-        @nameservers ||= begin
+      def authoritative_nameservers
+        @authoritative_nameservers ||= begin
           self.class.default_resolver.query(domain, Dnsruby::Types::NS).answer.map do |rr|
             next rr.nsdname.to_s if rr.type == Dnsruby::Types::NS
           end.compact

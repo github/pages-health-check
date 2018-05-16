@@ -8,6 +8,10 @@ RSpec.describe(GitHubPages::HealthCheck::Repository) do
   let(:repo) { "#{owner}/#{repo_name}" }
   let(:access_token) { nil }
   subject { described_class.new(repo, :access_token => access_token) }
+  before(:each) do
+    stub_request(:head, "https://#{repo_name}/")
+      .to_return(:status => 200, :body => "", :headers => { "Server" => "GitHub.com" })
+  end
 
   context "constructor" do
     context "an invalid repository" do

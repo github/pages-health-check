@@ -2,17 +2,18 @@
 
 require "dnsruby"
 require "public_suffix"
+require "github-pages-health-check/resolver"
 
 module GitHubPages
   module HealthCheck
     class CAA
-      attr_reader :host
-      attr_reader :error
+      attr_reader :host, :error, :nameservers
 
-      def initialize(host)
+      def initialize(host, nameservers: nil)
         raise ArgumentError, "host cannot be nil" if host.nil?
 
         @host = host
+        @nameservers = nameservers
       end
 
       def errored?
@@ -47,10 +48,14 @@ module GitHubPages
       end
 
       def query(domain)
-        GitHubPages::HealthCheck::Resolver.new(domain).query(Dnsruby::Types::CAA)
+        resolver(domain).query(Dnsruby::Types::CAA)
       rescue Dnsruby::ResolvError, Dnsruby::ResolvTimeout => e
         @error = e
         []
+      end
+
+      def resolver(domain)
+        GitHubPages::HealthCheck::Resolver.new(domain, :nameservers => nameservers)
       end
     end
   end

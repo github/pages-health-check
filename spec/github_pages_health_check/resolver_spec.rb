@@ -3,43 +3,38 @@
 require "spec_helper"
 
 RSpec.describe(GitHubPages::HealthCheck::Resolver) do
-  let(:domain) { "www.example.com" }
-  subject { described_class.new(domain) }
+  let(:domain) { "example.com" }
+  let(:nameservers) { :default }
+  subject { described_class.new(domain, :nameservers => nameservers) }
 
-  it "uses authoritative NS servers to query A records" do
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::NS).and_call_original
-    expect(subject.send(:authoritative_resolver)).to \
-      receive(:query).with(domain, Dnsruby::Types::A).and_call_original
-    subject.query(Dnsruby::Types::A)
+  context "default" do
+    it "uses the default resolver" do
+      expect(described_class.default_resolver).to \
+        receive(:query).with(domain, Dnsruby::Types::A).and_call_original
+      subject.query(Dnsruby::Types::A)
+    end
   end
 
-  it "uses authoritative NS servers to query CAA records, but falls back" do
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::NS).and_call_original
-    expect(subject.send(:authoritative_resolver)).to \
-      receive(:query).with(domain, Dnsruby::Types::CAA).and_call_original
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::CAA).and_call_original
-    subject.query(Dnsruby::Types::CAA)
+  context "authoritative" do
+    let(:nameservers) { :authoritative }
+
+    it "uses an authoritative resolver" do
+      expect(described_class.default_resolver).to \
+        receive(:query).with(domain, Dnsruby::Types::NS).and_call_original
+      expect(subject.send(:resolver)).to \
+        receive(:query).with(domain, Dnsruby::Types::A).and_call_original
+      subject.query(Dnsruby::Types::A)
+    end
   end
 
-  it "uses authoritative NS servers to query MX records, but falls back" do
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::NS).and_call_original
-    expect(subject.send(:authoritative_resolver)).to \
-      receive(:query).with(domain, Dnsruby::Types::MX).and_call_original
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::MX).and_call_original
-    subject.query(Dnsruby::Types::MX)
-  end
+  context "custom" do
+    let(:nameservers) { ["8.8.8.8", "8.8.4.4"] }
 
-  it "uses the default resolver for CNAME records" do
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::NS).and_call_original
-    expect(described_class.default_resolver).to \
-      receive(:query).with(domain, Dnsruby::Types::CNAME).and_call_original
-    expect(subject.send(:authoritative_resolver)).not_to receive(:query)
-    subject.query(Dnsruby::Types::CNAME)
+    it "uses the custom resolver" do
+      expect(subject.send(:resolver).config.nameserver).to eq(nameservers)
+      expect(subject.send(:resolver)).to \
+        receive(:query).with(domain, Dnsruby::Types::A).and_call_original
+      subject.query(Dnsruby::Types::A)
+    end
   end
 end
