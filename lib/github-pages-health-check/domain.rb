@@ -362,7 +362,7 @@ module GitHubPages
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
         (cname_to_github_user_domain? || pointed_to_new_primary_ips?) &&
-          caa.lets_encrypt_allowed?
+          !aaaa_record_present? && caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records
