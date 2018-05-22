@@ -74,7 +74,7 @@ RSpec.describe(GitHubPages::HealthCheck::Site) do
         end
 
         context "hash" do
-          let(:valid_values) { [true, false, nil] }
+          let(:valid_values) { [true, false, nil, :default] }
 
           it "returns a valid values" do
             hash = subject.to_hash
