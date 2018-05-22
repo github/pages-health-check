@@ -8,6 +8,10 @@ module GitHubPages
         :query_timeout => 5,
         :dnssec        => false
       }.freeze
+      PUBLIC_NAMESERVERS = %w(
+        8.8.8.8
+        1.1.1.1
+      ).freeze
 
       class << self
         def default_resolver
@@ -39,6 +43,10 @@ module GitHubPages
                       when :authoritative
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
                           :nameservers => authoritative_nameservers
+                        ))
+                      when :public
+                        Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
+                          :nameservers => PUBLIC_NAMESERVERS
                         ))
                       when Array
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
