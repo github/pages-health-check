@@ -27,13 +27,17 @@ module GitHubPages
       private
 
       def checks
-        @checks ||= %i[default authoritative].map do |ns|
+        @checks ||= %i[default authoritative public].map do |ns|
           GitHubPages::HealthCheck::Domain.new(domain, :nameservers => ns)
         end
       end
 
       def check_with_default_nameservers
         @check_with_default_nameservers ||= checks.find { |c| c.nameservers == :default }
+      end
+
+      def check_with_public_nameservers
+        @check_with_public_nameservers ||= checks.find { |c| c.nameservers == :public }
       end
     end
   end
