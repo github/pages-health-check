@@ -3,7 +3,7 @@
 module GitHubPages
   module HealthCheck
     class Domain < Checkable
-      attr_reader :host, :resolver, :nameservers
+      attr_reader :host, :resolver, :nameservers, :https_eligibility_error
 
       LEGACY_IP_ADDRESSES = [
         # Legacy GitHub Datacenter
@@ -85,8 +85,9 @@ module GitHubPages
         mx_records_present? valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
         cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
-        served_by_pages? valid? reason valid_domain? https?
-        enforces_https? https_error https_eligible? caa_error
+        served_by_pages? valid? reason valid_domain?
+        https? enforces_https? https_error
+        https_eligible? https_eligibility_error caa_error
       ].freeze
 
       def self.redundant(host)
@@ -269,7 +270,7 @@ module GitHubPages
             next if host.nil?
             REQUESTED_RECORD_TYPES
               .map { |type| resolver.query(type) }
-              .flatten.uniq
+              .flatten.compact.uniq
           end
         end
       rescue StandardError
@@ -313,6 +314,7 @@ module GitHubPages
       # The domain to which this domain's CNAME resolves
       # Returns nil if the domain is not a CNAME
       def cname
+        return unless dns?
         return unless dns.first.type == Dnsruby::Types::CNAME
         @cname ||= Domain.new(dns.first.cname.to_s)
       end
@@ -361,8 +363,23 @@ module GitHubPages
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || pointed_to_new_primary_ips?) &&
-          !aaaa_record_present? && caa.lets_encrypt_allowed?
+        https_check!
+        true
+      rescue GitHubPages::HealthCheck::Error => e
+        @https_eligibility_error = e
+        false
+      end
+
+      def https_check!
+        raise Errors::InvalidAAAARecordError, :domain => self if aaaa_record_present?
+        raise Errors::InvalidCAARecordError, :domain => self unless caa.lets_encrypt_allowed?
+        pointed_to_correct_octet = (cname_to_github_user_domain? || pointed_to_new_primary_ips?)
+        raise Errors::RecordsIneligibleForHTTPSError, :domain => self unless pointed_to_correct_octet
+        nil
+      end
+
+      def caa_records
+        caa.records
       end
 
       # Any errors querying CAA records

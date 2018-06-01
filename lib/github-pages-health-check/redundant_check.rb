@@ -24,6 +24,8 @@ module GitHubPages
         checks.any?(&:https_eligible?)
       end
 
+      def_delegator :check, :https_eligibility_error, :https_eligibility_error
+
       private
 
       def checks
@@ -34,6 +36,10 @@ module GitHubPages
 
       def check_with_default_nameservers
         @check_with_default_nameservers ||= checks.find { |c| c.nameservers == :default }
+      end
+
+      def check_with_authoritative_nameservers
+        @check_with_authoritative_nameservers ||= checks.find { |c| c.nameservers == :authoritative }
       end
 
       def check_with_public_nameservers

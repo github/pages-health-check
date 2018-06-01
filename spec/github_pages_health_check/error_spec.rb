@@ -23,7 +23,7 @@ RSpec.describe(GitHubPages::HealthCheck::Error) do
       end
 
       it "the documentation path has a trailing slash" do
-        expect(klass::DOCUMENTATION_PATH).to match(%r{/$})
+        expect(Addressable::URI.parse(klass::DOCUMENTATION_PATH).path).to end_with("/")
       end
     end
   end
