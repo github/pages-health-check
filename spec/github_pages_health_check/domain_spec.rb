@@ -115,7 +115,8 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         end
       end
 
-      %w(185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153).each do |ip_address|
+      %w(185.199.108.153 185.199.109.153 185.199.110.153
+         185.199.111.153).each do |ip_address|
         context ip_address do
           let(:ip) { ip_address }
 
