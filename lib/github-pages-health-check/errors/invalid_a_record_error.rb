@@ -11,7 +11,7 @@ module GitHubPages
              Your site's DNS settings are using a custom subdomain, #{domain.host},
              that's set up as an A record. We recommend you change this to a CNAME
              record pointing at #{username}.github.io.
-           MSG
+          MSG
         end
       end
     end
