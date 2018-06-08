@@ -859,6 +859,18 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
         it { is_expected.to be_https_eligible }
       end
+
+      context "with good additional A record" do
+        let(:ip) { "185.199.109.153" }
+
+        it { is_expected.to be_https_eligible }
+      end
+
+      context "with bad additional A record" do
+        let(:ip) { "192.30.252.153" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
     end
 
     context "CNAME record pointed to username" do

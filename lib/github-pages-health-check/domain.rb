@@ -84,7 +84,8 @@ module GitHubPages
         fastly_ip? old_ip_address? a_record? cname_record?
         mx_records_present? valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
-        cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
+        cname_to_fastly? pointed_to_github_pages_ip?
+        pointed_to_new_primary_ips? non_new_primary_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
         enforces_https? https_error https_eligible? caa_error
       ].freeze
@@ -180,6 +181,19 @@ module GitHubPages
       # Is the domain's first response an A record to the new primary IPs?
       def pointed_to_new_primary_ips?
         a_record? && NEW_PRIMARY_IPS.include?(dns.first.address.to_s)
+      end
+
+      # Are any of the domain's A records pointing elsewhere?
+      def non_new_primary_ip_present?
+        return unless dns?
+        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
+
+        a_records.all? do |answer|
+          return true unless new_primary_ip?(answer.address.to_s)
+        end
+        # rubocop:disable Style/RedundantReturn Tests fail without the return
+        return false
+        # rubocop:enable Style/RedundantReturn
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -362,7 +376,8 @@ module GitHubPages
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
         (cname_to_github_user_domain? || pointed_to_new_primary_ips?) &&
-          !aaaa_record_present? && caa.lets_encrypt_allowed?
+          !aaaa_record_present? && !non_new_primary_ip_present? &&
+          caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records
@@ -454,6 +469,10 @@ module GitHubPages
 
       def legacy_ip?(ip_addr)
         LEGACY_IP_ADDRESSES.include?(ip_addr)
+      end
+
+      def new_primary_ip?(ip_addr)
+        NEW_PRIMARY_IPS.include?(ip_addr)
       end
     end
   end
