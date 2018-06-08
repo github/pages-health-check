@@ -10,7 +10,7 @@ module GitHubPages
           <<-MSG
             The custom domain for your GitHub Pages site is pointed at an outdated IP address.
             You must update your site's DNS records if you'd like it to be available via your custom domain.
-           MSG
+          MSG
         end
       end
     end

@@ -11,7 +11,7 @@ module GitHubPages
              Your site's DNS settings are using a custom subdomain, #{domain.host},
              that's set up with an AAAA record. GitHub Pages currently does not support
              IPv6.
-           MSG
+          MSG
         end
       end
     end
