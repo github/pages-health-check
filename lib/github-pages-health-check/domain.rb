@@ -147,7 +147,8 @@ module GitHubPages
       # Used as an escape hatch to prevent false positives on DNS checkes
       def valid_domain?
         return @valid if defined? @valid
-        @valid = PublicSuffix.valid?(host, :default_rule => nil)
+        unicode_host = Addressable::IDNA.to_unicode(host)
+        @valid = PublicSuffix.valid?(unicode_host, :default_rule => nil)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
@@ -160,7 +161,8 @@ module GitHubPages
         # It's aware of multi-step top-level domain names:
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
         # For apex-level domain names, DNS providers do not support CNAME records.
-        PublicSuffix.domain(host) == host
+        unicode_host = Addressable::IDNA.to_unicode(host)
+        PublicSuffix.domain(unicode_host) == unicode_host
       end
 
       # Should the domain use an A record?
