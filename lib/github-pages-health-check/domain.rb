@@ -181,12 +181,9 @@ module GitHubPages
         return unless dns?
         a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
 
-        a_records.all? do |answer|
-          return true unless github_pages_ip?(answer.address.to_s)
-        end
-        # rubocop:disable Style/RedundantReturn Tests fail without the return
-        return false
-        # rubocop:enable Style/RedundantReturn
+        a_records.any? { |answer| !github_pages_ip?(answer.address.to_s) }
+
+        false
       end
 
       # Is the domain's first response a CNAME to a pages domain?
