@@ -100,7 +100,7 @@ module GitHubPages
 
         @host = normalize_host(host)
         @nameservers = nameservers
-        @resolver = GitHubPages::HealthCheck::Resolver.new(host,
+        @resolver = GitHubPages::HealthCheck::Resolver.new(@host,
           :nameservers => nameservers)
       end
 
