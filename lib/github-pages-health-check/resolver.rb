@@ -32,7 +32,7 @@ module GitHubPages
       end
 
       def query(type)
-        resolver.query(domain, type).answer
+        resolver.query(Addressable::IDNA.to_ascii(domain), type).answer
       end
 
       private
