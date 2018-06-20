@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "dnsruby"
+require "addressable/idna"
 require "addressable/uri"
 require "ipaddr"
 require "public_suffix"
