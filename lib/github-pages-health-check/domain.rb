@@ -63,28 +63,27 @@ module GitHubPages
         "43.249.72.133",
         "43.249.73.133",
         "43.249.74.133",
-        "43.249.75.133"
+        "43.249.75.133",
+
+        # 2018 Move to GitHub assigned IP space
+        "192.30.252.153",
+        "192.30.252.154"
       ].freeze
 
-      NEW_PRIMARY_IPS = %w(
+      CURRENT_IP_ADDRESSES = %w(
         185.199.108.153
         185.199.109.153
         185.199.110.153
         185.199.111.153
       ).freeze
 
-      CURRENT_IP_ADDRESSES = [
-        "192.30.252.153",
-        "192.30.252.154",
-        *NEW_PRIMARY_IPS
-      ].freeze
-
       HASH_METHODS = %i[
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
         fastly_ip? old_ip_address? a_record? cname_record?
         mx_records_present? valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
-        cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
+        cname_to_fastly? pointed_to_github_pages_ip?
+        non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
         enforces_https? https_error https_eligible? caa_error
       ].freeze
@@ -179,9 +178,14 @@ module GitHubPages
         a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.address.to_s)
       end
 
-      # Is the domain's first response an A record to the new primary IPs?
-      def pointed_to_new_primary_ips?
-        a_record? && NEW_PRIMARY_IPS.include?(dns.first.address.to_s)
+      # Are any of the domain's A records pointing elsewhere?
+      def non_github_pages_ip_present?
+        return unless dns?
+        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
+
+        a_records.any? { |answer| !github_pages_ip?(answer.address.to_s) }
+
+        false
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -363,8 +367,9 @@ module GitHubPages
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || pointed_to_new_primary_ips?) &&
-          !aaaa_record_present? && caa.lets_encrypt_allowed?
+        (cname_to_github_user_domain? || pointed_to_github_pages_ip?) &&
+          !aaaa_record_present? && !non_github_pages_ip_present? &&
+          caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records
@@ -456,6 +461,10 @@ module GitHubPages
 
       def legacy_ip?(ip_addr)
         LEGACY_IP_ADDRESSES.include?(ip_addr)
+      end
+
+      def github_pages_ip?(ip_addr)
+        CURRENT_IP_ADDRESSES.include?(ip_addr)
       end
     end
   end
