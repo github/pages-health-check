@@ -33,9 +33,8 @@ module GitHubPages
       end
 
       def records
-        unicode_host = Addressable::IDNA.to_unicode(host)
         @records ||= begin
-          get_caa_records(host) | get_caa_records(PublicSuffix.domain(unicode_host))
+          get_caa_records(host) | get_caa_records(host.split(".").drop(1).join("."))
         end
       end
 
