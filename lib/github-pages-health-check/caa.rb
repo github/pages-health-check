@@ -14,6 +14,9 @@ module GitHubPages
 
         @host = host
         @nameservers = nameservers
+
+        raise "Host cannot be blank" if host.nil? || host.empty?
+        raise "Nameservers cannot be nil" if nameservers.nil?
       end
 
       def errored?

@@ -61,7 +61,7 @@ Style/PercentLiteralDelimiters:
     '%r': '{}'
 
 Metrics/LineLength:
-  Max: 90
+  Max: 95
   Severity: warning
   Exclude:
     - github-pages-health-check.gemspec

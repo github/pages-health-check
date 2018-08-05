@@ -953,22 +953,30 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "CNAME record pointed to username" do
+      let(:domain) { "example.dc.gov" }
       let(:cname) { "foobar.github.io" }
-      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
-      before(:each) { allow(subject.send(:caa)).to receive(:query) { [cname_packet] } }
+      before(:each) do
+        allow(subject).to receive(:dns) { [cname_packet] }
+        allow(subject.send(:caa)).to receive(:query).with(cname).and_return([])
+        allow(subject.send(:caa)).to receive(:query).with("github.io").and_return([])
+      end
 
       it { is_expected.to be_https_eligible }
 
       context "with bad CAA records" do
         let(:caa_domain) { "digicert.com" }
-        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+        before(:each) do
+          allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+        end
 
         it { is_expected.not_to be_https_eligible }
       end
 
       context "with good CAA records" do
         let(:caa_domain) { "letsencrypt.org" }
-        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+        before(:each) do
+          allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+        end
 
         it { is_expected.to be_https_eligible }
       end
@@ -980,14 +988,18 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
         context "with bad CAA records" do
           let(:caa_domain) { "digicert.com" }
-          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+          before(:each) do
+            allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+          end
 
           it { is_expected.not_to be_https_eligible }
         end
 
         context "with good CAA records" do
           let(:caa_domain) { "letsencrypt.org" }
-          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+          before(:each) do
+            allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+          end
 
           it { is_expected.to be_https_eligible }
         end
@@ -1000,14 +1012,18 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
         context "with bad CAA records" do
           let(:caa_domain) { "digicert.com" }
-          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+          before(:each) do
+            allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+          end
 
           it { is_expected.not_to be_https_eligible }
         end
 
         context "with good CAA records" do
           let(:caa_domain) { "letsencrypt.org" }
-          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+          before(:each) do
+            allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+          end
 
           it { is_expected.to be_https_eligible }
         end
@@ -1016,21 +1032,27 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
     context "CNAME record pointed elsewhere" do
       let(:cname) { "jinglebells.com" }
-      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
-      before(:each) { allow(subject.send(:caa)).to receive(:query) { [cname_packet] } }
+      before(:each) do
+        allow(subject).to receive(:dns) { [cname_packet] }
+        allow(subject.send(:caa)).to receive(:query).with(cname).and_return([])
+      end
 
       it { is_expected.not_to be_https_eligible }
 
       context "with bad CAA records" do
         let(:caa_domain) { "digicert.com" }
-        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+        before(:each) do
+          allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+        end
 
         it { is_expected.not_to be_https_eligible }
       end
 
       context "with good CAA records" do
         let(:caa_domain) { "letsencrypt.org" }
-        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+        before(:each) do
+          allow(subject.send(:caa)).to receive(:query).with(cname).and_return([caa_packet])
+        end
 
         it { is_expected.not_to be_https_eligible }
       end

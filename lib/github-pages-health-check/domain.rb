@@ -381,7 +381,11 @@ module GitHubPages
       private
 
       def caa
-        @caa ||= GitHubPages::HealthCheck::CAA.new(host, :nameservers => nameservers)
+        @caa ||= if cname?
+                   GitHubPages::HealthCheck::CAA.new(cname.host, :nameservers => :default)
+                 else
+                   GitHubPages::HealthCheck::CAA.new(host, :nameservers => nameservers)
+                 end
       end
 
       # The domain's response to HTTP(S) requests, following redirects
