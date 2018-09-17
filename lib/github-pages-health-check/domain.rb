@@ -1,8 +1,15 @@
 # frozen_string_literal: true
 
+require "forwardable"
+
 module GitHubPages
   module HealthCheck
     class Domain < Checkable
+      extend Forwardable
+
+      def_delegator :https_eligibility_checker, :valid?, :https_eligible?
+      def_delegator :https_eligibility_checker, :caa_error
+
       attr_reader :host, :resolver, :nameservers
 
       LEGACY_IP_ADDRESSES = [
@@ -365,24 +372,7 @@ module GitHubPages
         redirect.scheme == "https" && redirect.host == host
       end
 
-      # Can an HTTPS certificate be issued for this domain?
-      def https_eligible?
-        (cname_to_github_user_domain? || pointed_to_github_pages_ip?) &&
-          !aaaa_record_present? && !non_github_pages_ip_present? &&
-          caa.lets_encrypt_allowed?
-      end
-
-      # Any errors querying CAA records
-      def caa_error
-        return nil unless caa.errored?
-        caa.error.class.name
-      end
-
       private
-
-      def caa
-        @caa ||= GitHubPages::HealthCheck::CAA.new(host, :nameservers => nameservers)
-      end
 
       # The domain's response to HTTP(S) requests, following redirects
       def response
@@ -409,6 +399,13 @@ module GitHubPages
       def https_response
         options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
         @https_response ||= Typhoeus.head(uri(:scheme => "https"), options)
+      end
+
+      def https_eligibility_checker
+        @https_eligibility_checker ||= GitHubPages::HealthCheck::HTTPSDomain.new(
+          host,
+          :nameservers => nameservers
+        )
       end
 
       # Parse the URI. Accept either domain names or full URI's.

@@ -28,6 +28,7 @@ module GitHubPages
     autoload :CAA,            "github-pages-health-check/caa"
     autoload :Checkable,      "github-pages-health-check/checkable"
     autoload :Domain,         "github-pages-health-check/domain"
+    autoload :HTTPSDomain,    "github-pages-health-check/https_domain"
     autoload :RedundantCheck, "github-pages-health-check/redundant_check"
     autoload :Repository,     "github-pages-health-check/repository"
     autoload :Resolver,       "github-pages-health-check/resolver"

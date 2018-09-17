@@ -20,8 +20,11 @@ module GitHubPages
       def_delegator :check, :reason, :reason
       def_delegator :check, :valid?, :valid?
 
-      def https_eligible?
-        checks.any?(&:https_eligible?)
+      def_delegator :https_check, :reason, :https_reason
+      def_delegator :https_check, :valid?, :https_eligible?
+
+      def https_check
+        @https_check ||= (https_checks.find(&:valid?) || https_check_with_default_nameservers)
       end
 
       private
@@ -38,6 +41,24 @@ module GitHubPages
 
       def check_with_public_nameservers
         @check_with_public_nameservers ||= checks.find { |c| c.nameservers == :public }
+      end
+
+      #
+      # HTTPS
+      #
+
+      def https_checks
+        @https_checks ||= %i[default authoritative public].map do |ns|
+          GitHubPages::HealthCheck::HTTPSDomain.new(domain, :nameservers => ns)
+        end
+      end
+
+      def https_check_with_default_nameservers
+        @https_check_with_default_nameservers ||= checks.find { |c| c.nameservers == :default }
+      end
+
+      def https_check_with_public_nameservers
+        @https_check_with_public_nameservers ||= checks.find { |c| c.nameservers == :public }
       end
     end
   end
