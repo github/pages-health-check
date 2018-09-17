@@ -2,6 +2,6 @@
 
 module GitHubPages
   module HealthCheck
-    VERSION = "1.13.0".freeze
+    VERSION = "1.14.0".freeze
   end
 end
