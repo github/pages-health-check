@@ -545,6 +545,18 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "private tlds in the public suffix list" do
+      let(:domain) { "githubusercontent.com" }
+      let(:cname)  { "something.example.com" }
+      let(:headers) { { :server => "GitHub.com" } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+      it "doesn't error out on private tlds in the public suffix list" do
+        expect(subject).to be_served_by_pages
+        expect(subject).to be_valid
+      end
+    end
+
     context "domains with unicode encoding" do
       let(:domain) { "dómain.example.com" }
       let(:cname)  { "sómething.example.com" }
