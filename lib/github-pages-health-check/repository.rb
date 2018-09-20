@@ -15,6 +15,7 @@ module GitHubPages
         unless name_with_owner.match(REPO_REGEX)
           raise Errors::InvalidRepositoryError
         end
+
         parts = name_with_owner.split("/")
         @owner = parts.first
         @name  = parts.last
@@ -28,6 +29,7 @@ module GitHubPages
 
       def check!
         raise Errors::BuildError.new(:repository => self), build_error unless built?
+
         true
       end
 
@@ -54,6 +56,7 @@ module GitHubPages
 
       def domain
         return if cname.nil?
+
         @domain ||= GitHubPages::HealthCheck::Domain.redundant(cname)
       end
 
@@ -61,6 +64,7 @@ module GitHubPages
 
       def client
         raise Errors::MissingAccessTokenError if @access_token.nil?
+
         @client ||= Octokit::Client.new(:access_token => @access_token)
       end
 

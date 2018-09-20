@@ -113,31 +113,37 @@ module GitHubPages
         raise Errors::InvalidCNAMEError, :domain => self      if invalid_cname?
         raise Errors::InvalidAAAARecordError, :domain => self if invalid_aaaa_record?
         raise Errors::NotServedByPagesError, :domain => self  unless served_by_pages?
+
         true
       end
 
       def deprecated_ip?
         return @deprecated_ip if defined? @deprecated_ip
+
         @deprecated_ip = (valid_domain? && a_record? && old_ip_address?)
       end
 
       def invalid_aaaa_record?
         return @invalid_aaaa_record if defined? @invalid_aaaa_record
+
         @invalid_aaaa_record = (valid_domain? && should_be_a_record? &&
                                 aaaa_record_present?)
       end
 
       def invalid_a_record?
         return @invalid_a_record if defined? @invalid_a_record
+
         @invalid_a_record = (valid_domain? && a_record? && !should_be_a_record?)
       end
 
       def invalid_cname?
         return @invalid_cname if defined? @invalid_cname
+
         @invalid_cname = begin
           return false unless valid_domain?
           return false if github_domain? || apex_domain?
           return true  if cname_to_pages_dot_github_dot_com? || cname_to_fastly?
+
           !cname_to_github_user_domain? && should_be_cname_record?
         end
       end
@@ -146,8 +152,11 @@ module GitHubPages
       # Used as an escape hatch to prevent false positives on DNS checkes
       def valid_domain?
         return @valid if defined? @valid
+
         unicode_host = Addressable::IDNA.to_unicode(host)
-        @valid = PublicSuffix.valid?(unicode_host, :default_rule => nil)
+        @valid = PublicSuffix.valid?(unicode_host,
+                                     :default_rule => nil,
+                                     :ignore_private => true)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
@@ -161,7 +170,9 @@ module GitHubPages
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
         # For apex-level domain names, DNS providers do not support CNAME records.
         unicode_host = Addressable::IDNA.to_unicode(host)
-        PublicSuffix.domain(unicode_host) == unicode_host
+        PublicSuffix.domain(unicode_host,
+                            :default_rule => nil,
+                            :ignore_private => true) == unicode_host
       end
 
       # Should the domain use an A record?
@@ -181,6 +192,7 @@ module GitHubPages
       # Are any of the domain's A records pointing elsewhere?
       def non_github_pages_ip_present?
         return unless dns?
+
         a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
 
         a_records.any? { |answer| !github_pages_ip?(answer.address.to_s) }
@@ -256,6 +268,7 @@ module GitHubPages
         return false if cname_to_github_user_domain?
         return false if cname_to_pages_dot_github_dot_com?
         return false if cname_to_fastly? || fastly_ip?
+
         served_by_pages?
       end
 
@@ -270,9 +283,11 @@ module GitHubPages
       def dns
         return @dns if defined? @dns
         return unless valid_domain?
+
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
             next if host.nil?
+
             REQUESTED_RECORD_TYPES
               .map { |type| resolver.query(type) }
               .flatten.uniq
@@ -300,11 +315,13 @@ module GitHubPages
       # Is this domain's first response an A record?
       def a_record?
         return unless dns?
+
         dns.first.type == Dnsruby::Types::A
       end
 
       def aaaa_record_present?
         return unless dns?
+
         dns.any? { |answer| answer.type == Dnsruby::Types::AAAA }
       end
 
@@ -312,6 +329,7 @@ module GitHubPages
       def cname_record?
         return unless dns?
         return false unless cname
+
         cname.valid_domain?
       end
       alias cname? cname_record?
@@ -320,11 +338,13 @@ module GitHubPages
       # Returns nil if the domain is not a CNAME
       def cname
         return unless dns.first.type == Dnsruby::Types::CNAME
+
         @cname ||= Domain.new(dns.first.cname.to_s)
       end
 
       def mx_records_present?
         return unless dns?
+
         dns.any? { |answer| answer.type == Dnsruby::Types::MX }
       end
 
@@ -361,6 +381,7 @@ module GitHubPages
       # Does this domain redirect HTTP requests to HTTPS?
       def enforces_https?
         return false unless https? && http_response.headers["Location"]
+
         redirect = Addressable::URI.parse(http_response.headers["Location"])
         redirect.scheme == "https" && redirect.host == host
       end
@@ -375,6 +396,7 @@ module GitHubPages
       # Any errors querying CAA records
       def caa_error
         return nil unless caa.errored?
+
         caa.error.class.name
       end
 

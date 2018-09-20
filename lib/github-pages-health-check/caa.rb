@@ -24,11 +24,13 @@ module GitHubPages
       def lets_encrypt_allowed?
         return false if errored?
         return true unless records_present?
+
         records.any? { |r| r.property_value == "letsencrypt.org" }
       end
 
       def records_present?
         return false if errored?
+
         records && !records.empty?
       end
 
@@ -42,6 +44,7 @@ module GitHubPages
 
       def get_caa_records(domain)
         return [] if domain.nil?
+
         query(domain).select { |r| issue_caa_record?(r) }
       end
 
