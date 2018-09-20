@@ -147,7 +147,9 @@ module GitHubPages
       def valid_domain?
         return @valid if defined? @valid
         unicode_host = Addressable::IDNA.to_unicode(host)
-        @valid = PublicSuffix.valid?(unicode_host, :default_rule => nil)
+        @valid = PublicSuffix.valid?(unicode_host,
+                                     :default_rule => nil,
+                                     :ignore_private => true)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
@@ -161,7 +163,9 @@ module GitHubPages
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
         # For apex-level domain names, DNS providers do not support CNAME records.
         unicode_host = Addressable::IDNA.to_unicode(host)
-        PublicSuffix.domain(unicode_host) == unicode_host
+        PublicSuffix.domain(unicode_host,
+                            :default_rule => nil,
+                            :ignore_private => true) == unicode_host
       end
 
       # Should the domain use an A record?
