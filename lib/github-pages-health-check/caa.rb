@@ -9,7 +9,7 @@ module GitHubPages
     class CAA
       attr_reader :host, :error, :nameservers
 
-      def initialize(host, nameservers: nil)
+      def initialize(host, nameservers: :default)
         raise ArgumentError, "host cannot be nil" if host.nil?
 
         @host = host
@@ -39,7 +39,10 @@ module GitHubPages
       end
 
       def parent_domain_allows_lets_encrypt?
-        self.class.new(host.split(".").drop(1).join("."), nameservers: nameservers).lets_encrypt_allowed?
+        @parent_domain_allows_lets_encrypt ||= begin
+          self.class.new(host.split(".").drop(1).join("."), :nameservers => nameservers)
+            .lets_encrypt_allowed?
+        end
       end
 
       private

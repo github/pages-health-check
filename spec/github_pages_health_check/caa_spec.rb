@@ -4,6 +4,7 @@ require "spec_helper"
 
 RSpec.describe(GitHubPages::HealthCheck::CAA) do
   let(:domain) { "foo.sub.githubtest.com" }
+  let(:parent_domain) { "sub.githubtest.com" }
   subject { described_class.new(domain) }
   let(:caa_packet_le) do
     Dnsruby::RR.create("sub.githubtest.com. IN CAA 0 issue \"letsencrypt.org\"")
@@ -18,7 +19,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a domain without CAA records" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
-      expect(subject).to receive(:query).with("sub.githubtest.com").and_return([])
     end
 
     it "knows no records exist" do
@@ -37,8 +37,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a domain with LE CAA record" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
-      expect(subject).to receive(:query)
-        .with("sub.githubtest.com").and_return([caa_packet_le])
     end
 
     it "knows records exist" do
@@ -57,7 +55,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a domain without LE CAA record" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([caa_packet_other])
-      expect(subject).to receive(:query).with("sub.githubtest.com").and_return([])
     end
 
     it "knows records exist" do
@@ -76,8 +73,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a sub-subdomain with an apex CAA record" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
-      expect(subject).to receive(:query).with("sub.githubtest.com").and_return([])
-      expect(subject).to_not receive(:query).with("githubtest.com")
     end
 
     it "knows no records exist" do
@@ -96,7 +91,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a domain which errors" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
-      expect(subject).to receive(:query).with("sub.githubtest.com").and_return([])
       subject.instance_variable_set(:@error, Dnsruby::ServFail.new)
     end
 
@@ -112,5 +106,23 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
       expect(subject).to be_errored
       expect(subject.error.class.name).to eql("Dnsruby::ServFail")
     end
+  end
+
+  context "a domain with a parent domain" do
+    it "allows no records" do
+      expect(subject).to receive(:query).with(parent_domain).and_return([])
+      expect(subject.parent_domain_allows_lets_encrypt?).to be_truthy
+    end
+
+    it "allows an LE record" do
+      expect(subject).to receive(:query).with(parent_domain).and_return([caa_packet_other, caa_packet_le])
+      expect(subject.parent_domain_allows_lets_encrypt?).to be_truthy
+    end
+
+    it "disallows when no LE record is present" do
+      expect(subject).to receive(:query).with(parent_domain).and_return([caa_packet_other])
+      expect(subject.parent_domain_allows_lets_encrypt?).to be_falsey
+    end
+
   end
 end
