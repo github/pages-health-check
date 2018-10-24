@@ -35,9 +35,11 @@ module GitHubPages
       end
 
       def records
-        @records ||= begin
-          get_caa_records(host) | get_caa_records(host.split(".").drop(1).join("."))
-        end
+        @records ||= get_caa_records(host)
+      end
+
+      def parent_domain_allows_lets_encrypt?
+        self.class.new(host.split(".").drop(1).join("."), nameservers: nameservers).lets_encrypt_allowed?
       end
 
       private
