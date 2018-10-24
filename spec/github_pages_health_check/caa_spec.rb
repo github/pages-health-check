@@ -36,7 +36,7 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
 
   context "a domain with LE CAA record" do
     before(:each) do
-      expect(subject).to receive(:query).with(domain).and_return([])
+      expect(subject).to receive(:query).with(domain).and_return([caa_packet_le])
     end
 
     it "knows records exist" do
@@ -70,24 +70,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
     end
   end
 
-  context "a sub-subdomain with an apex CAA record" do
-    before(:each) do
-      expect(subject).to receive(:query).with(domain).and_return([])
-    end
-
-    it "knows no records exist" do
-      expect(subject).not_to be_records_present
-    end
-
-    it "allows let's encrypt" do
-      expect(subject).to be_lets_encrypt_allowed
-    end
-
-    it "does not encounter an error" do
-      expect(subject).not_to be_errored
-    end
-  end
-
   context "a domain which errors" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
@@ -109,20 +91,28 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   end
 
   context "a domain with a parent domain" do
-    it "allows no records" do
-      expect(subject).to receive(:query).with(parent_domain).and_return([])
+    it "truthy when no CAA records for parent domain" do
+      expect(GitHubPages::HealthCheck::Resolver.default_resolver).to \
+        receive(:query)
+        .with(parent_domain, Dnsruby::Types::CAA)
+        .and_return(Struct.new(:answer).new([]))
       expect(subject.parent_domain_allows_lets_encrypt?).to be_truthy
     end
 
-    it "allows an LE record" do
-      expect(subject).to receive(:query).with(parent_domain).and_return([caa_packet_other, caa_packet_le])
+    it "truthy when LE CAA record for parent domain" do
+      expect(GitHubPages::HealthCheck::Resolver.default_resolver).to \
+        receive(:query)
+        .with(parent_domain, Dnsruby::Types::CAA)
+        .and_return(Struct.new(:answer).new([caa_packet_other, caa_packet_le]))
       expect(subject.parent_domain_allows_lets_encrypt?).to be_truthy
     end
 
-    it "disallows when no LE record is present" do
-      expect(subject).to receive(:query).with(parent_domain).and_return([caa_packet_other])
+    it "falsey when only non-LE CAA records for parent domain" do
+      expect(GitHubPages::HealthCheck::Resolver.default_resolver).to \
+        receive(:query)
+        .with(parent_domain, Dnsruby::Types::CAA)
+        .and_return(Struct.new(:answer).new([caa_packet_other]))
       expect(subject.parent_domain_allows_lets_encrypt?).to be_falsey
     end
-
   end
 end
