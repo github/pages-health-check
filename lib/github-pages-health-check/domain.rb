@@ -398,9 +398,7 @@ module GitHubPages
         return true if cname_to_github_user_domain?
 
         # Check CAA records for the full domain and its parent domain.
-        pointed_to_github_pages_ip? &&
-          caa.lets_encrypt_allowed? &&
-          caa.parent_domain_allows_lets_encrypt?
+        pointed_to_github_pages_ip? && caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records

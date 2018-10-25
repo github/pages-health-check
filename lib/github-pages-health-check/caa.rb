@@ -35,14 +35,12 @@ module GitHubPages
       end
 
       def records
-        @records ||= get_caa_records(host)
-      end
+        return @records if defined?(@records)
 
-      def parent_domain_allows_lets_encrypt?
-        @parent_domain_allows_lets_encrypt ||= begin
-          self.class.new(host.split(".").drop(1).join("."), :nameservers => nameservers)
-            .lets_encrypt_allowed?
-        end
+        @records = get_caa_records(host)
+        @records = get_caa_records(parent_host) if @records.nil? || @records.empty?
+
+        @records
       end
 
       private
@@ -66,6 +64,10 @@ module GitHubPages
 
       def resolver(domain)
         GitHubPages::HealthCheck::Resolver.new(domain, :nameservers => nameservers)
+      end
+
+      def parent_host
+        host.split(".").drop(1).join(".")
       end
     end
   end

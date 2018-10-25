@@ -19,6 +19,7 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a domain without CAA records" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
+      expect(subject).to receive(:query).with(parent_domain).and_return([])
     end
 
     it "knows no records exist" do
@@ -73,6 +74,7 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
   context "a domain which errors" do
     before(:each) do
       expect(subject).to receive(:query).with(domain).and_return([])
+      expect(subject).to receive(:query).with(parent_domain).and_return([])
       subject.instance_variable_set(:@error, Dnsruby::ServFail.new)
     end
 
@@ -87,32 +89,6 @@ RSpec.describe(GitHubPages::HealthCheck::CAA) do
     it "surfaces the error" do
       expect(subject).to be_errored
       expect(subject.error.class.name).to eql("Dnsruby::ServFail")
-    end
-  end
-
-  context "a domain with a parent domain" do
-    it "truthy when no CAA records for parent domain" do
-      expect(GitHubPages::HealthCheck::Resolver.default_resolver).to \
-        receive(:query)
-        .with(parent_domain, Dnsruby::Types::CAA)
-        .and_return(Struct.new(:answer).new([]))
-      expect(subject.parent_domain_allows_lets_encrypt?).to be_truthy
-    end
-
-    it "truthy when LE CAA record for parent domain" do
-      expect(GitHubPages::HealthCheck::Resolver.default_resolver).to \
-        receive(:query)
-        .with(parent_domain, Dnsruby::Types::CAA)
-        .and_return(Struct.new(:answer).new([caa_packet_other, caa_packet_le]))
-      expect(subject.parent_domain_allows_lets_encrypt?).to be_truthy
-    end
-
-    it "falsey when only non-LE CAA records for parent domain" do
-      expect(GitHubPages::HealthCheck::Resolver.default_resolver).to \
-        receive(:query)
-        .with(parent_domain, Dnsruby::Types::CAA)
-        .and_return(Struct.new(:answer).new([caa_packet_other]))
-      expect(subject.parent_domain_allows_lets_encrypt?).to be_falsey
     end
   end
 end
