@@ -395,7 +395,7 @@ module GitHubPages
         # Must be a CNAME or point to our IPs.
 
         # Only check the one domain if a CNAME. Don't check the parent domain.
-        return caa.lets_encrypt_allowed? if cname_to_github_user_domain?
+        return true if cname_to_github_user_domain?
 
         # Check CAA records for the full domain and its parent domain.
         pointed_to_github_pages_ip? &&
