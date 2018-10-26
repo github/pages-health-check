@@ -975,7 +975,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         let(:caa_domain) { "digicert.com" }
         before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
 
-        it { is_expected.not_to be_https_eligible }
+        it { is_expected.to be_https_eligible }
       end
 
       context "with good CAA records" do
@@ -994,7 +994,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
           let(:caa_domain) { "digicert.com" }
           before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
 
-          it { is_expected.not_to be_https_eligible }
+          it { is_expected.to be_https_eligible }
         end
 
         context "with good CAA records" do
@@ -1014,7 +1014,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
           let(:caa_domain) { "digicert.com" }
           before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
 
-          it { is_expected.not_to be_https_eligible }
+          it { is_expected.to be_https_eligible }
         end
 
         context "with good CAA records" do

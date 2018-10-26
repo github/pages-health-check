@@ -9,7 +9,7 @@ module GitHubPages
     class CAA
       attr_reader :host, :error, :nameservers
 
-      def initialize(host, nameservers: nil)
+      def initialize(host, nameservers: :default)
         raise ArgumentError, "host cannot be nil" if host.nil?
 
         @host = host
@@ -35,9 +35,12 @@ module GitHubPages
       end
 
       def records
-        @records ||= begin
-          get_caa_records(host) | get_caa_records(host.split(".").drop(1).join("."))
-        end
+        return @records if defined?(@records)
+
+        @records = get_caa_records(host)
+        @records = get_caa_records(parent_host) if @records.nil? || @records.empty?
+
+        @records
       end
 
       private
@@ -61,6 +64,10 @@ module GitHubPages
 
       def resolver(domain)
         GitHubPages::HealthCheck::Resolver.new(domain, :nameservers => nameservers)
+      end
+
+      def parent_host
+        host.split(".").drop(1).join(".")
       end
     end
   end

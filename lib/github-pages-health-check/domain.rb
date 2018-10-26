@@ -388,9 +388,17 @@ module GitHubPages
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || pointed_to_github_pages_ip?) &&
-          !aaaa_record_present? && !non_github_pages_ip_present? &&
-          caa.lets_encrypt_allowed?
+        # Can't have any IP's which aren't GitHub's present.
+        return false if non_github_pages_ip_present?
+        # Can't have any AAAA records present
+        return false if aaaa_record_present?
+        # Must be a CNAME or point to our IPs.
+
+        # Only check the one domain if a CNAME. Don't check the parent domain.
+        return true if cname_to_github_user_domain?
+
+        # Check CAA records for the full domain and its parent domain.
+        pointed_to_github_pages_ip? && caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records
