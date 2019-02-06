@@ -185,6 +185,23 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       expect(subject).to_not be_an_a_record
     end
 
+    context "multiple CNAMEs" do
+      let(:cname) { "github.example.com" }
+      before do
+        allow(subject).to receive(:dns) do
+          [
+            cname_packet,
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME example.github.io."),
+            Dnsruby::RR.create("example.github.io 1000 IN A 192.168.0.1")
+          ]
+        end
+      end
+
+      it "follows the CNAMEs all the way down" do
+        expect(subject.cname.host).to eq("example.github.io")
+      end
+    end
+
     context "broken CNAMEs" do
       before do
         allow(subject).to receive(:dns) do
