@@ -337,9 +337,9 @@ module GitHubPages
       # The domain to which this domain's CNAME resolves
       # Returns nil if the domain is not a CNAME
       def cname
-        return unless dns.first.type == Dnsruby::Types::CNAME
-
-        @cname ||= Domain.new(dns.first.cname.to_s)
+        cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
+        return if cnames.empty?
+        @cname ||= Domain.new(cnames.last.cname.to_s)
       end
 
       def mx_records_present?
