@@ -4,10 +4,10 @@ module GitHubPages
   module HealthCheck
     class Resolver
       DEFAULT_RESOLVER_OPTIONS = {
-        :retry_times   => 2,
+        :retry_times => 2,
         :query_timeout => 5,
-        :dnssec        => false,
-        :do_caching    => false
+        :dnssec => false,
+        :do_caching => false
       }.freeze
       PUBLIC_NAMESERVERS = %w(
         8.8.8.8
