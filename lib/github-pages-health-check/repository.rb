@@ -5,7 +5,7 @@ module GitHubPages
     class Repository < Checkable
       attr_reader :name, :owner
 
-      REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i.freeze
+      REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
 
       HASH_METHODS = %i[
         name_with_owner built? last_built build_duration build_error
