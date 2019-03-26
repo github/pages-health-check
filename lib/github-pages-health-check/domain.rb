@@ -172,7 +172,7 @@ module GitHubPages
         unicode_host = Addressable::IDNA.to_unicode(host)
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,
-                            :ignore_private => true) == unicode_host
+                            :ignore_private => false) == unicode_host
       end
 
       # Should the domain use an A record?
