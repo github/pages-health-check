@@ -236,7 +236,8 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "apex records" do
-      ["parkermoore.de", "bbc.co.uk"].each do |apex_domain|
+      ["parkermoore.de", "bbc.co.uk",
+       "foo.githubusercontent.com"].each do |apex_domain|
         context "given #{apex_domain}" do
           let(:domain) { apex_domain }
 
