@@ -104,18 +104,20 @@ module GitHubPages
       end
 
       # Runs all checks, raises an error if invalid
+      # rubocop:disable Metrics/AbcSize
       def check!
-        raise Errors::InvalidDomainError, :domain => self unless valid_domain?
-        raise Errors::InvalidDNSError, :domain => self    unless dns_resolves?
-        raise Errors::DeprecatedIPError, :domain => self if deprecated_ip?
+        raise Errors::InvalidDomainError.new :domain => self unless valid_domain?
+        raise Errors::InvalidDNSError.new :domain => self    unless dns_resolves?
+        raise Errors::DeprecatedIPError.new :domain => self if deprecated_ip?
         return true if proxied?
-        raise Errors::InvalidARecordError, :domain => self    if invalid_a_record?
-        raise Errors::InvalidCNAMEError, :domain => self      if invalid_cname?
-        raise Errors::InvalidAAAARecordError, :domain => self if invalid_aaaa_record?
-        raise Errors::NotServedByPagesError, :domain => self  unless served_by_pages?
+        raise Errors::InvalidARecordError.new :domain => self    if invalid_a_record?
+        raise Errors::InvalidCNAMEError.new :domain => self      if invalid_cname?
+        raise Errors::InvalidAAAARecordError.new :domain => self if invalid_aaaa_record?
+        raise Errors::NotServedByPagesError.new :domain => self  unless served_by_pages?
 
         true
       end
+      # rubocop:enable Metrics/AbcSize
 
       def deprecated_ip?
         return @deprecated_ip if defined? @deprecated_ip
