@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-Dir[File.expand_path("errors/*_error.rb", __dir__)].each do |f|
+Dir[File.expand_path("errors/*_error.rb", __dir__)].sort.each do |f|
   require f
 end
 

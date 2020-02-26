@@ -43,16 +43,16 @@ module GitHubPages
                         self.class.default_resolver
                       when :authoritative
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
-                          :nameservers => authoritative_nameservers
-                        ))
+                                                :nameservers => authoritative_nameservers
+                                              ))
                       when :public
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
-                          :nameservers => PUBLIC_NAMESERVERS
-                        ))
+                                                :nameservers => PUBLIC_NAMESERVERS
+                                              ))
                       when Array
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
-                          :nameservers => nameservers
-                        ))
+                                                :nameservers => nameservers
+                                              ))
                       else
                         raise "Invalid nameserver type: #{nameservers.inspect}"
                       end

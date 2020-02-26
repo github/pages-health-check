@@ -4,7 +4,7 @@ module GitHubPages
   module HealthCheck
     module Errors
       class InvalidDNSError < GitHubPages::HealthCheck::Error
-        DOCUMENTATION_PATH = "/articles/setting-up-a-custom-domain-with-github-pages/".freeze
+        DOCUMENTATION_PATH = "/articles/setting-up-a-custom-domain-with-github-pages/"
 
         def message
           "Domain's DNS record could not be retrieved"
