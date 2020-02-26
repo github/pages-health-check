@@ -47,11 +47,11 @@ module GitHubPages
       alias reason build_error
 
       def build_duration
-        last_build && last_build.duration
+        last_build&.duration
       end
 
       def last_built
-        last_build && last_build.updated_at
+        last_build&.updated_at
       end
 
       def domain
