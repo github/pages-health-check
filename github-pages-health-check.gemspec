@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.add_dependency("public_suffix", ">= 2.0.2", "< 5.0")
   s.add_dependency("typhoeus", "~> 1.3")
 
-  s.add_development_dependency("dotenv", "~> 1.0")
+  s.add_development_dependency("dotenv", "~> 2.7")
   s.add_development_dependency("gem-release", "~> 0.7")
   s.add_development_dependency("pry", "~> 0.10")
   s.add_development_dependency("rspec", "~> 3.0")
