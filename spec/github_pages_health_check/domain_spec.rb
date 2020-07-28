@@ -648,9 +648,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     context "proxying" do
       let(:headers) { { :server => "GitHub.com" } }
       let(:status) { 200 }
-      before do
+      before(:each) do
         stub_request(:head, domain)
           .to_return(:status => status, :headers => headers)
+        allow(subject).to receive(:dns) { [a_packet] }
       end
 
       context "a site that returns GitHub.com headers" do

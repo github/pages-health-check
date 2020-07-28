@@ -3,4 +3,4 @@
 set -e
 
 bundle exec rspec $@
-script/fmt $@
+script/fmt

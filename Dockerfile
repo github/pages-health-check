@@ -1,6 +1,18 @@
-FROM ruby:2.5.1-alpine3.7
-RUN apk add --update --no-cache build-base libcurl \
- && gem install github-pages-health-check \
- && apk del build-base \
- && echo "require 'github-pages-health-check'; puts GitHubPages::HealthCheck::Site.new(ARGV[0]).to_json" > to_json.rb
-ENTRYPOINT [ "ruby", "to_json.rb" ]
+ARG RUBY_VERSION
+FROM ruby:$RUBY_VERSION-slim
+RUN set -ex \
+  && gem update --system --silent --quiet \
+  && apt-get update -y \
+  && apt-get upgrade -y \
+  && apt-get install -y \
+    build-essential \
+    git \
+    libcurl4-openssl-dev \
+  && apt-get clean
+WORKDIR /app/github-pages-health-check
+COPY Gemfile .
+COPY github-pages-health-check.gemspec .
+COPY lib/github-pages-health-check/version.rb lib/github-pages-health-check/version.rb
+RUN bundle install
+COPY . .
+ENTRYPOINT [ "/bin/bash" ]
