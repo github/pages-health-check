@@ -314,6 +314,15 @@ module GitHubPages
         end
       end
 
+      # Does this domain have *any* A records that point to a banned IP space?
+      def banned_ip?
+        return unless dns?
+
+        dns.any? do |answer|
+          answer.type == Dnsruby::Types::A && banned_ip_address?(answer.address.to_s)
+        end
+      end
+
       # Is this domain's first response an A record?
       def a_record?
         return unless dns?
@@ -419,6 +428,7 @@ module GitHubPages
 
       # The domain's response to HTTP(S) requests, following redirects
       def response
+        return nil if banned_ip?
         return @response if defined? @response
 
         @response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
@@ -434,12 +444,14 @@ module GitHubPages
 
       # The domain's response to HTTP requests, without following redirects
       def http_response
+        return nil if banned_ip?
         options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
         @http_response ||= Typhoeus.head(uri(:scheme => "http"), options)
       end
 
       # The domain's response to HTTPS requests, without following redirects
       def https_response
+        return nil if banned_ip?
         options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
         @https_response ||= Typhoeus.head(uri(:scheme => "https"), options)
       end
@@ -498,6 +510,10 @@ module GitHubPages
 
       def github_pages_ip?(ip_addr)
         CURRENT_IP_ADDRESSES.include?(ip_addr)
+      end
+
+      def banned_ip_address?(ip_addr)
+        false # TODO
       end
     end
   end
