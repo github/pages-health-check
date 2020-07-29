@@ -9,7 +9,7 @@ module GitHubPages
     class CAA
       attr_reader :host, :error, :nameservers
 
-      def initialize(host, nameservers: :default)
+      def initialize(host:, nameservers: :default)
         raise ArgumentError, "host cannot be nil" if host.nil?
 
         @host = host

@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe(GitHubPages::HealthCheck::CAA) do
   let(:domain) { "foo.sub.githubtest.com" }
   let(:parent_domain) { "sub.githubtest.com" }
-  subject { described_class.new(domain) }
+  subject { described_class.new(:host => domain) }
   let(:caa_packet_le) do
     Dnsruby::RR.create("sub.githubtest.com. IN CAA 0 issue \"letsencrypt.org\"")
   end
