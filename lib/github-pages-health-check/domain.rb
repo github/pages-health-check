@@ -108,7 +108,7 @@ module GitHubPages
       def check!
         raise Errors::InvalidDomainError.new :domain => self unless valid_domain?
         raise Errors::InvalidDNSError.new :domain => self    unless dns_resolves?
-        raise Errors::DeprecatedIPError.new :domain => self if deprecated_ip?
+        raise Errors::DeprecatedIPError.new :domain => self  if deprecated_ip?
         return true if proxied?
         raise Errors::InvalidARecordError.new :domain => self    if invalid_a_record?
         raise Errors::InvalidCNAMEError.new :domain => self      if invalid_cname?
@@ -360,7 +360,7 @@ module GitHubPages
           return true if response.headers["Server"] == "GitHub.com"
 
           # Typhoeus mangles the case of the header, compare insensitively
-          response.headers.any? { |k, _v| k =~ /X-GitHub-Request-Id/i }
+          response.headers.any? { |k, _v| k.downcase == "x-github-request-id" }
         end
       end
 
@@ -414,7 +414,10 @@ module GitHubPages
       private
 
       def caa
-        @caa ||= GitHubPages::HealthCheck::CAA.new(host, :nameservers => nameservers)
+        @caa ||= GitHubPages::HealthCheck::CAA.new(
+          :host => cname&.host || host,
+          :nameservers => nameservers
+        )
       end
 
       # The domain's response to HTTP(S) requests, following redirects
