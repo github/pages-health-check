@@ -736,6 +736,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     let(:domain) { "pages.github.com" }
 
     it "retrieves a site's dns record" do
+      expect(subject).to be_dns_resolves
       expect(subject.dns.first).to be_a(Dnsruby::RR::CNAME)
     end
 
