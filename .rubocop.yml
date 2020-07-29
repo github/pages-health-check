@@ -17,7 +17,7 @@
 #
 
 AllCops:
-  TargetRubyVersion: 2.2
+  TargetRubyVersion: 2.6
   Exclude:
     - 'bin/**/*'
     - 'script/**/*'
@@ -30,10 +30,6 @@ Layout/EndAlignment:
 Lint/UnreachableCode:
   Severity: error
 
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
-  Severity: error
-
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
@@ -41,10 +37,10 @@ Style/HashSyntax:
   EnforcedStyle: hash_rockets
   Severity: error
 
-Layout/AlignHash:
+Layout/HashAlignment:
   SupportedLastArgumentHashStyles: always_ignore
 
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false # This is usually true, but we often want to roll back to
                  # the start of a line.
 
@@ -55,12 +51,7 @@ Style/Attr:
 Style/ClassAndModuleChildren:
   Enabled: false # module X<\n>module Y is just as good as module X::Y.
 
-Style/PercentLiteralDelimiters:
-  PreferredDelimiters:
-    '%w': '{}'
-    '%r': '{}'
-
-Metrics/LineLength:
+Layout/LineLength:
   Max: 90
   Severity: warning
   Exclude:
@@ -99,13 +90,12 @@ Naming/FileName: #Rubocop doesn't like the Git*H*ub namespace
   Enabled: false
 
 Metrics/ParameterLists: { Max: 4 }
-Metrics/AbcSize: { Max: 20 }
 
-Layout/IndentHash: { EnforcedStyle: consistent }
+Layout/FirstHashElementIndentation: { EnforcedStyle: consistent }
 Layout/MultilineMethodCallIndentation: { EnforcedStyle: indented }
 Layout/MultilineOperationIndentation: { EnforcedStyle: indented }
 Layout/FirstParameterIndentation: { EnforcedStyle: consistent }
-Layout/IndentArray: { EnforcedStyle: consistent }
+Layout/FirstArrayElementIndentation: { EnforcedStyle: consistent }
 Layout/ExtraSpacing: { AllowForAlignment: true }
 Style/SignalException: { EnforcedStyle: only_raise }
 Style/StringLiterals: { EnforcedStyle: double_quotes }
@@ -154,4 +144,11 @@ Style/FrozenStringLiteralComment:
   Severity: error
 
 Gemspec/RequiredRubyVersion:
+  Enabled: false
+
+Style/HashEachMethods:
+  Enabled: false
+Style/HashTransformKeys:
+  Enabled: false
+Style/HashTransformValues:
   Enabled: false

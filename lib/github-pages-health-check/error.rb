@@ -3,8 +3,8 @@
 module GitHubPages
   module HealthCheck
     class Error < StandardError
-      DOCUMENTATION_BASE = "https://help.github.com".freeze
-      DOCUMENTATION_PATH = "/categories/github-pages-basics/".freeze
+      DOCUMENTATION_BASE = "https://help.github.com"
+      DOCUMENTATION_PATH = "/categories/github-pages-basics/"
       LOCAL_ONLY = false # Error is only used when running locally
 
       attr_reader :repository, :domain

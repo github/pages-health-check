@@ -104,7 +104,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
     context "old IP addresses" do
-      %w(204.232.175.78 207.97.227.245).each do |ip_address|
+      %w(204.232.175.78 207.97.227.245 192.30.252.153 192.30.252.154).each do |ip_address|
         context ip_address do
           let(:ip) { ip_address }
 
@@ -115,7 +115,8 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         end
       end
 
-      %w(192.30.252.153 192.30.252.154).each do |ip_address|
+      %w(185.199.108.153 185.199.109.153 185.199.110.153
+         185.199.111.153).each do |ip_address|
         context ip_address do
           let(:ip) { ip_address }
 
@@ -182,6 +183,23 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     it "known when a domain is a CNAME record" do
       expect(subject).to be_a_cname_record
       expect(subject).to_not be_an_a_record
+    end
+
+    context "multiple CNAMEs" do
+      let(:cname) { "github.example.com" }
+      before do
+        allow(subject).to receive(:dns) do
+          [
+            cname_packet,
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME example.github.io."),
+            Dnsruby::RR.create("example.github.io 1000 IN A 192.168.0.1")
+          ]
+        end
+      end
+
+      it "follows the CNAMEs all the way down" do
+        expect(subject.cname.host).to eq("example.github.io")
+      end
     end
 
     context "broken CNAMEs" do
@@ -543,6 +561,42 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         expect(subject).to be_valid
       end
     end
+
+    context "private tlds in the public suffix list" do
+      let(:domain) { "githubusercontent.com" }
+      let(:cname)  { "something.example.com" }
+      let(:headers) { { :server => "GitHub.com" } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+      it "doesn't error out on private tlds in the public suffix list" do
+        expect(subject).to be_served_by_pages
+        expect(subject).to be_valid
+      end
+    end
+
+    context "domains with unicode encoding" do
+      let(:domain) { "dómain.example.com" }
+      let(:cname)  { "sómething.example.com" }
+      let(:headers) { { :server => "GitHub.com" } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+      it "doesn't error out on domains with unicode encoding" do
+        expect(subject).to be_served_by_pages
+        expect(subject).to be_valid
+      end
+    end
+
+    context "domains with punycode encoding" do
+      let(:domain) { "xn--dmain-0ta.example.com" }
+      let(:cname)  { "xn--smething-v3a.example.com" }
+      let(:headers) { { :server => "GitHub.com" } }
+      before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+      it "doesn't error out on domains with punycode encoding" do
+        expect(subject).to be_served_by_pages
+        expect(subject).to be_valid
+      end
+    end
   end
 
   context "not served by pages" do
@@ -838,13 +892,27 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     context "A records pointed to old IPs" do
       let(:ip) { "192.30.252.153" }
       before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
+      before(:each) { allow(subject.send(:caa)).to receive(:query) { [a_packet] } }
 
       it { is_expected.not_to be_https_eligible }
+
+      context "with unicode encoded domain" do
+        let(:domain) { "dómain.example.com" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with punycode encoded domain" do
+        let(:domain) { "xn--dmain-0ta.example.com" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
     end
 
     context "A records pointed to new IPs" do
       let(:ip) { "185.199.108.153" }
       before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
+      before(:each) { allow(subject.send(:caa)).to receive(:query) { [a_packet] } }
 
       it { is_expected.to be_https_eligible }
 
@@ -860,12 +928,65 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
 
         it { is_expected.to be_https_eligible }
+      end
+
+      context "with good additional A record" do
+        let(:ip) { "185.199.109.153" }
+
+        it { is_expected.to be_https_eligible }
+      end
+
+      context "with bad additional A record" do
+        let(:ip) { "192.30.252.153" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with unicode encoded domain" do
+        let(:domain) { "dómain.example.com" }
+
+        it { is_expected.to be_https_eligible }
+
+        context "with bad CAA records" do
+          let(:caa_domain) { "digicert.com" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.not_to be_https_eligible }
+        end
+
+        context "with good CAA records" do
+          let(:caa_domain) { "letsencrypt.org" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
+      end
+
+      context "with punycode encoded domain" do
+        let(:domain) { "xn--dmain-0ta.example.com" }
+
+        it { is_expected.to be_https_eligible }
+
+        context "with bad CAA records" do
+          let(:caa_domain) { "digicert.com" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.not_to be_https_eligible }
+        end
+
+        context "with good CAA records" do
+          let(:caa_domain) { "letsencrypt.org" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
       end
     end
 
     context "CNAME record pointed to username" do
       let(:cname) { "foobar.github.io" }
       before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+      before(:each) { allow(subject.send(:caa)).to receive(:query) { [cname_packet] } }
 
       it { is_expected.to be_https_eligible }
 
@@ -873,7 +994,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         let(:caa_domain) { "digicert.com" }
         before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
 
-        it { is_expected.not_to be_https_eligible }
+        it { is_expected.to be_https_eligible }
       end
 
       context "with good CAA records" do
@@ -882,11 +1003,52 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
         it { is_expected.to be_https_eligible }
       end
+
+      context "with unicode encoded domain" do
+        let(:domain) { "dómain.example.com" }
+
+        it { is_expected.to be_https_eligible }
+
+        context "with bad CAA records" do
+          let(:caa_domain) { "digicert.com" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
+
+        context "with good CAA records" do
+          let(:caa_domain) { "letsencrypt.org" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
+      end
+
+      context "with punycode encoded domain" do
+        let(:domain) { "xn--dmain-0ta.example.com" }
+
+        it { is_expected.to be_https_eligible }
+
+        context "with bad CAA records" do
+          let(:caa_domain) { "digicert.com" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
+
+        context "with good CAA records" do
+          let(:caa_domain) { "letsencrypt.org" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
+      end
     end
 
     context "CNAME record pointed elsewhere" do
       let(:cname) { "jinglebells.com" }
       before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+      before(:each) { allow(subject.send(:caa)).to receive(:query) { [cname_packet] } }
 
       it { is_expected.not_to be_https_eligible }
 
@@ -900,6 +1062,18 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       context "with good CAA records" do
         let(:caa_domain) { "letsencrypt.org" }
         before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with unicode encoded domain" do
+        let(:domain) { "dómain.example.com" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with punycode encoded domain" do
+        let(:domain) { "xn--dmain-0ta.example.com" }
 
         it { is_expected.not_to be_https_eligible }
       end

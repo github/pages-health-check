@@ -9,7 +9,7 @@ module GitHubPages
     class CAA
       attr_reader :host, :error, :nameservers
 
-      def initialize(host, nameservers: nil)
+      def initialize(host, nameservers: :default)
         raise ArgumentError, "host cannot be nil" if host.nil?
 
         @host = host
@@ -24,22 +24,30 @@ module GitHubPages
       def lets_encrypt_allowed?
         return false if errored?
         return true unless records_present?
+
         records.any? { |r| r.property_value == "letsencrypt.org" }
       end
 
       def records_present?
         return false if errored?
+
         records && !records.empty?
       end
 
       def records
-        @records ||= (get_caa_records(host) | get_caa_records(PublicSuffix.domain(host)))
+        return @records if defined?(@records)
+
+        @records = get_caa_records(host)
+        @records = get_caa_records(parent_host) if @records.nil? || @records.empty?
+
+        @records
       end
 
       private
 
       def get_caa_records(domain)
         return [] if domain.nil?
+
         query(domain).select { |r| issue_caa_record?(r) }
       end
 
@@ -56,6 +64,10 @@ module GitHubPages
 
       def resolver(domain)
         GitHubPages::HealthCheck::Resolver.new(domain, :nameservers => nameservers)
+      end
+
+      def parent_host
+        host.split(".").drop(1).join(".")
       end
     end
   end

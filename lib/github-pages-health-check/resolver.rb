@@ -4,9 +4,10 @@ module GitHubPages
   module HealthCheck
     class Resolver
       DEFAULT_RESOLVER_OPTIONS = {
-        :retry_times   => 2,
+        :retry_times => 2,
         :query_timeout => 5,
-        :dnssec        => false
+        :dnssec => false,
+        :do_caching => false
       }.freeze
       PUBLIC_NAMESERVERS = %w(
         8.8.8.8
@@ -31,7 +32,7 @@ module GitHubPages
       end
 
       def query(type)
-        resolver.query(domain, type).answer
+        resolver.query(Addressable::IDNA.to_ascii(domain), type).answer
       end
 
       private
@@ -42,16 +43,16 @@ module GitHubPages
                         self.class.default_resolver
                       when :authoritative
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
-                          :nameservers => authoritative_nameservers
-                        ))
+                                                :nameservers => authoritative_nameservers
+                                              ))
                       when :public
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
-                          :nameservers => PUBLIC_NAMESERVERS
-                        ))
+                                                :nameservers => PUBLIC_NAMESERVERS
+                                              ))
                       when Array
                         Dnsruby::Resolver.new(DEFAULT_RESOLVER_OPTIONS.merge(
-                          :nameservers => nameservers
-                        ))
+                                                :nameservers => nameservers
+                                              ))
                       else
                         raise "Invalid nameserver type: #{nameservers.inspect}"
                       end

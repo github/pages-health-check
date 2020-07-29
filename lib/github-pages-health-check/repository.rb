@@ -5,7 +5,7 @@ module GitHubPages
     class Repository < Checkable
       attr_reader :name, :owner
 
-      REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i
+      REPO_REGEX = %r{\A[a-z0-9_\-]+/[a-z0-9_\-\.]+\z}i.freeze
 
       HASH_METHODS = %i[
         name_with_owner built? last_built build_duration build_error
@@ -15,6 +15,7 @@ module GitHubPages
         unless name_with_owner.match(REPO_REGEX)
           raise Errors::InvalidRepositoryError
         end
+
         parts = name_with_owner.split("/")
         @owner = parts.first
         @name  = parts.last
@@ -28,6 +29,7 @@ module GitHubPages
 
       def check!
         raise Errors::BuildError.new(:repository => self), build_error unless built?
+
         true
       end
 
@@ -45,15 +47,16 @@ module GitHubPages
       alias reason build_error
 
       def build_duration
-        last_build && last_build.duration
+        last_build&.duration
       end
 
       def last_built
-        last_build && last_build.updated_at
+        last_build&.updated_at
       end
 
       def domain
         return if cname.nil?
+
         @domain ||= GitHubPages::HealthCheck::Domain.redundant(cname)
       end
 
@@ -61,6 +64,7 @@ module GitHubPages
 
       def client
         raise Errors::MissingAccessTokenError if @access_token.nil?
+
         @client ||= Octokit::Client.new(:access_token => @access_token)
       end
 

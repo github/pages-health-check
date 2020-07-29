@@ -63,28 +63,27 @@ module GitHubPages
         "43.249.72.133",
         "43.249.73.133",
         "43.249.74.133",
-        "43.249.75.133"
+        "43.249.75.133",
+
+        # 2018 Move to GitHub assigned IP space
+        "192.30.252.153",
+        "192.30.252.154"
       ].freeze
 
-      NEW_PRIMARY_IPS = %w(
+      CURRENT_IP_ADDRESSES = %w(
         185.199.108.153
         185.199.109.153
         185.199.110.153
         185.199.111.153
       ).freeze
 
-      CURRENT_IP_ADDRESSES = [
-        "192.30.252.153",
-        "192.30.252.154",
-        *NEW_PRIMARY_IPS
-      ].freeze
-
       HASH_METHODS = %i[
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
         fastly_ip? old_ip_address? a_record? cname_record?
         mx_records_present? valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
-        cname_to_fastly? pointed_to_github_pages_ip? pages_domain?
+        cname_to_fastly? pointed_to_github_pages_ip?
+        non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
         enforces_https? https_error https_eligible? caa_error
       ].freeze
@@ -100,45 +99,53 @@ module GitHubPages
 
         @host = normalize_host(host)
         @nameservers = nameservers
-        @resolver = GitHubPages::HealthCheck::Resolver.new(host,
-          :nameservers => nameservers)
+        @resolver = GitHubPages::HealthCheck::Resolver.new(self.host,
+                                                           :nameservers => nameservers)
       end
 
       # Runs all checks, raises an error if invalid
+      # rubocop:disable Metrics/AbcSize
       def check!
-        raise Errors::InvalidDomainError, :domain => self unless valid_domain?
-        raise Errors::InvalidDNSError, :domain => self    unless dns_resolves?
-        raise Errors::DeprecatedIPError, :domain => self  if deprecated_ip?
+        raise Errors::InvalidDomainError.new :domain => self unless valid_domain?
+        raise Errors::InvalidDNSError.new :domain => self    unless dns_resolves?
+        raise Errors::DeprecatedIPError.new :domain => self  if deprecated_ip?
         return true if proxied?
-        raise Errors::InvalidARecordError, :domain => self    if invalid_a_record?
-        raise Errors::InvalidCNAMEError, :domain => self      if invalid_cname?
-        raise Errors::InvalidAAAARecordError, :domain => self if invalid_aaaa_record?
-        raise Errors::NotServedByPagesError, :domain => self  unless served_by_pages?
+        raise Errors::InvalidARecordError.new :domain => self    if invalid_a_record?
+        raise Errors::InvalidCNAMEError.new :domain => self      if invalid_cname?
+        raise Errors::InvalidAAAARecordError.new :domain => self if invalid_aaaa_record?
+        raise Errors::NotServedByPagesError.new :domain => self  unless served_by_pages?
+
         true
       end
+      # rubocop:enable Metrics/AbcSize
 
       def deprecated_ip?
         return @deprecated_ip if defined? @deprecated_ip
+
         @deprecated_ip = (valid_domain? && a_record? && old_ip_address?)
       end
 
       def invalid_aaaa_record?
         return @invalid_aaaa_record if defined? @invalid_aaaa_record
+
         @invalid_aaaa_record = (valid_domain? && should_be_a_record? &&
                                 aaaa_record_present?)
       end
 
       def invalid_a_record?
         return @invalid_a_record if defined? @invalid_a_record
+
         @invalid_a_record = (valid_domain? && a_record? && !should_be_a_record?)
       end
 
       def invalid_cname?
         return @invalid_cname if defined? @invalid_cname
+
         @invalid_cname = begin
           return false unless valid_domain?
           return false if github_domain? || apex_domain?
           return true  if cname_to_pages_dot_github_dot_com? || cname_to_fastly?
+
           !cname_to_github_user_domain? && should_be_cname_record?
         end
       end
@@ -147,7 +154,11 @@ module GitHubPages
       # Used as an escape hatch to prevent false positives on DNS checkes
       def valid_domain?
         return @valid if defined? @valid
-        @valid = PublicSuffix.valid?(host, :default_rule => nil)
+
+        unicode_host = Addressable::IDNA.to_unicode(host)
+        @valid = PublicSuffix.valid?(unicode_host,
+                                     :default_rule => nil,
+                                     :ignore_private => true)
       end
 
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
@@ -160,7 +171,10 @@ module GitHubPages
         # It's aware of multi-step top-level domain names:
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
         # For apex-level domain names, DNS providers do not support CNAME records.
-        PublicSuffix.domain(host) == host
+        unicode_host = Addressable::IDNA.to_unicode(host)
+        PublicSuffix.domain(unicode_host,
+                            :default_rule => nil,
+                            :ignore_private => true) == unicode_host
       end
 
       # Should the domain use an A record?
@@ -177,9 +191,15 @@ module GitHubPages
         a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.address.to_s)
       end
 
-      # Is the domain's first response an A record to the new primary IPs?
-      def pointed_to_new_primary_ips?
-        a_record? && NEW_PRIMARY_IPS.include?(dns.first.address.to_s)
+      # Are any of the domain's A records pointing elsewhere?
+      def non_github_pages_ip_present?
+        return unless dns?
+
+        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
+
+        a_records.any? { |answer| !github_pages_ip?(answer.address.to_s) }
+
+        false
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -250,6 +270,7 @@ module GitHubPages
         return false if cname_to_github_user_domain?
         return false if cname_to_pages_dot_github_dot_com?
         return false if cname_to_fastly? || fastly_ip?
+
         served_by_pages?
       end
 
@@ -264,9 +285,11 @@ module GitHubPages
       def dns
         return @dns if defined? @dns
         return unless valid_domain?
+
         @dns = Timeout.timeout(TIMEOUT) do
           GitHubPages::HealthCheck.without_warnings do
             next if host.nil?
+
             REQUESTED_RECORD_TYPES
               .map { |type| resolver.query(type) }
               .flatten.uniq
@@ -294,11 +317,13 @@ module GitHubPages
       # Is this domain's first response an A record?
       def a_record?
         return unless dns?
+
         dns.first.type == Dnsruby::Types::A
       end
 
       def aaaa_record_present?
         return unless dns?
+
         dns.any? { |answer| answer.type == Dnsruby::Types::AAAA }
       end
 
@@ -306,6 +331,7 @@ module GitHubPages
       def cname_record?
         return unless dns?
         return false unless cname
+
         cname.valid_domain?
       end
       alias cname? cname_record?
@@ -313,12 +339,15 @@ module GitHubPages
       # The domain to which this domain's CNAME resolves
       # Returns nil if the domain is not a CNAME
       def cname
-        return unless dns.first.type == Dnsruby::Types::CNAME
-        @cname ||= Domain.new(dns.first.cname.to_s)
+        cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
+        return if cnames.empty?
+
+        @cname ||= Domain.new(cnames.last.cname.to_s)
       end
 
       def mx_records_present?
         return unless dns?
+
         dns.any? { |answer| answer.type == Dnsruby::Types::MX }
       end
 
@@ -355,19 +384,30 @@ module GitHubPages
       # Does this domain redirect HTTP requests to HTTPS?
       def enforces_https?
         return false unless https? && http_response.headers["Location"]
+
         redirect = Addressable::URI.parse(http_response.headers["Location"])
         redirect.scheme == "https" && redirect.host == host
       end
 
       # Can an HTTPS certificate be issued for this domain?
       def https_eligible?
-        (cname_to_github_user_domain? || pointed_to_new_primary_ips?) &&
-          !aaaa_record_present? && caa.lets_encrypt_allowed?
+        # Can't have any IP's which aren't GitHub's present.
+        return false if non_github_pages_ip_present?
+        # Can't have any AAAA records present
+        return false if aaaa_record_present?
+        # Must be a CNAME or point to our IPs.
+
+        # Only check the one domain if a CNAME. Don't check the parent domain.
+        return true if cname_to_github_user_domain?
+
+        # Check CAA records for the full domain and its parent domain.
+        pointed_to_github_pages_ip? && caa.lets_encrypt_allowed?
       end
 
       # Any errors querying CAA records
       def caa_error
         return nil unless caa.errored?
+
         caa.error.class.name
       end
 
@@ -421,8 +461,8 @@ module GitHubPages
       # Return the hostname.
       def normalize_host(domain)
         domain = domain.strip.chomp(".")
-        host = Addressable::URI.parse(domain).host
-        host ||= Addressable::URI.parse("http://#{domain}").host
+        host = Addressable::URI.parse(domain).normalized_host
+        host ||= Addressable::URI.parse("http://#{domain}").normalized_host
         host unless host.to_s.empty?
       rescue Addressable::URI::InvalidURIError
         nil
@@ -454,6 +494,10 @@ module GitHubPages
 
       def legacy_ip?(ip_addr)
         LEGACY_IP_ADDRESSES.include?(ip_addr)
+      end
+
+      def github_pages_ip?(ip_addr)
+        CURRENT_IP_ADDRESSES.include?(ip_addr)
       end
     end
   end
