@@ -356,7 +356,6 @@ module GitHubPages
         return unless dns_resolves?
 
         @served_by_pages = begin
-          return false unless response.mock? || response.return_code == :ok
           return true if response.headers["Server"] == "GitHub.com"
 
           # Typhoeus mangles the case of the header, compare insensitively
