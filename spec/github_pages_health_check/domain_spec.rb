@@ -483,6 +483,12 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       allow(subject).to receive(:dns) { [a_packet] }
       stub_request(:head, domain)
         .to_return(:status => status, :headers => headers)
+
+      stub_request(:head, "https://githubuniverse.com/")
+        .to_return(:status => 200, :headers => { :server => "GitHub.com" })
+
+      stub_request(:head, "https://github.com/login")
+        .to_return(:status => 200, :headers => { :server => "GitHub.com" })
     end
 
     context "with the Pages server header" do
@@ -504,6 +510,27 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         let(:domain) { "https://mac.github.com" }
 
         it "knows when a GitHub domain is served by pages" do
+          expect(subject).to be_served_by_pages
+        end
+      end
+
+      context "an alternate domain" do
+        let(:domain) { "http://www.githubuniverse.com" }
+        let(:status) { 301 }
+        let(:headers) { { :location => "https://githubuniverse.com" } }
+        before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
+
+        it "knows about domains that redirect to the primary domain on pages" do
+          expect(subject).to be_served_by_pages
+        end
+      end
+
+      context "a private page" do
+        let(:domain) { "http://private-page.githubapp.com" }
+        let(:status) { 302 }
+        let(:headers) { { :location => "https://github.com/login" } }
+
+        it "considers it valid if it redirects to github.com/login" do
           expect(subject).to be_served_by_pages
         end
       end
