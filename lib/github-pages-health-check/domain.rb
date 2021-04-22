@@ -164,7 +164,10 @@ module GitHubPages
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
+
         return unless valid_domain?
+
+        return true if dns_zone_soa?
 
         # PublicSuffix.domain pulls out the apex-level domain name.
         # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
@@ -175,6 +178,14 @@ module GitHubPages
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,
                             :ignore_private => true) == unicode_host
+      end
+
+      def dns_zone_soa?
+        return @soa_records if defined?(@soa_records)
+        return false unless dns?
+
+        soa_records = dns.select { |answer| answer.type == Dnsruby::Types::SOA }
+        soa_records.any?
       end
 
       # Should the domain use an A record?
@@ -278,7 +289,8 @@ module GitHubPages
         Dnsruby::Types::A,
         Dnsruby::Types::AAAA,
         Dnsruby::Types::CNAME,
-        Dnsruby::Types::MX
+        Dnsruby::Types::MX,
+        Dnsruby::Types::SOA
       ].freeze
 
       # Returns an array of DNS answers
