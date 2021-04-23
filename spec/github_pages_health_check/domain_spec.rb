@@ -836,6 +836,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       it "knows when the DNS doesn't resolve" do
         expect(subject.dns?).to be_falsy
       end
+
+      it "treats cname as nil if DNS doesn't resolve" do
+        expect(subject.cname).to be_nil
+      end
     end
 
     context "an invalid domain" do
