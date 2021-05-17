@@ -85,7 +85,7 @@ module GitHubPages
         cname_to_fastly? pointed_to_github_pages_ip?
         non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
-        enforces_https? https_error https_eligible? caa_error
+        enforces_https? https_error https_eligible? caa_error dns_zone_soa?
       ].freeze
 
       def self.redundant(host)
@@ -175,6 +175,18 @@ module GitHubPages
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,
                             :ignore_private => true) == unicode_host
+      end
+
+      # Does the domain have an SOA record published?
+      #
+      # Callers should be aware that this can return truthy for domains that
+      # are not apex-level (i.e. subdomain.apex.com).
+      def dns_zone_soa?
+        return @soa_records if defined?(@soa_records)
+        return false unless dns?
+
+        soa_records = dns.select { |answer| answer.type == Dnsruby::Types::SOA }
+        soa_records.any?
       end
 
       # Should the domain use an A record?

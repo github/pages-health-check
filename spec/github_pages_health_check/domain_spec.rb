@@ -257,6 +257,21 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         end
       end
 
+      ["private.dns.zone"].each do |soa_domain|
+        context "given #{soa_domain}" do
+          before(:each) { allow(subject).to receive(:dns) { [soa_packet] } }
+          let(:domain) { soa_domain }
+
+          it "disallows child zones with an SOA to be an Apex" do
+            expect(subject.should_be_a_record?).to be_falsy
+          end
+
+          it "reports whether child zones publish an SOA record" do
+            expect(subject.dns_zone_soa?).to be_truthy
+          end
+        end
+      end
+
       context "a domain with an MX record" do
         let(:domain) { "blog.parkermoore.de" }
         before(:each) do
