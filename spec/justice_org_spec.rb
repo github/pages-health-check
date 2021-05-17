@@ -27,5 +27,17 @@ RSpec.describe "justicecoin.org characterization test" do
       end
     end
   end
+
+  context "when given a domain of google.com" do
+    it "successfully returns DNS results" do
+      domain = GitHubPages::HealthCheck::Domain.new("google.com")
+      aggregate_failures do
+        expect(domain.resolver.query("A").first.to_s).to start_with("google.com.")
+        expect(domain.resolver.query("CNAME").first.to_s).to eq("")
+        expect(domain.resolver.query("MX").first.to_s).to start_with("google.com.")
+        expect(domain.resolver.query("AAAA").first.to_s).to start_with("google.com.")
+      end
+    end
+  end
 end
 
