@@ -85,7 +85,7 @@ module GitHubPages
         cname_to_fastly? pointed_to_github_pages_ip?
         non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
-        enforces_https? https_error https_eligible? caa_error
+        enforces_https? https_error https_eligible? caa_error dns_zone_soa?
       ].freeze
 
       def self.redundant(host)
@@ -161,17 +161,11 @@ module GitHubPages
                                      :ignore_private => true)
       end
 
-      # Is this domain an apex domain? Or is it a subdomain that behaves like
-      # an apex (i.e. SOA record present)?
-      #
-      # Callers should be aware that this can return truthy for domains that
-      # are not apex-level (i.e. subdomain.apex.com).
+      # Is this domain an apex domain, meaning a CNAME would be innapropriate
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
 
         return unless valid_domain?
-
-        return true if dns_zone_soa?
 
         # PublicSuffix.domain pulls out the apex-level domain name.
         # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
@@ -185,6 +179,9 @@ module GitHubPages
       end
 
       # Does the domain have an SOA record published?
+      #
+      # Callers should be aware that this can return truthy for domains that
+      # are not apex-level (i.e. subdomain.apex.com).
       def dns_zone_soa?
         return @soa_records if defined?(@soa_records)
         return false unless dns?
