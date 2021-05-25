@@ -353,6 +353,8 @@ module GitHubPages
       # The domain to which this domain's CNAME resolves
       # Returns nil if the domain is not a CNAME
       def cname
+        return unless dns?
+
         cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
         return if cnames.empty?
 
@@ -419,7 +421,7 @@ module GitHubPages
 
       # Any errors querying CAA records
       def caa_error
-        return nil unless caa.errored?
+        return nil unless caa&.errored?
 
         caa.error.class.name
       end
