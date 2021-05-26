@@ -186,8 +186,10 @@ module GitHubPages
         return @soa_records if defined?(@soa_records)
         return false unless dns?
 
-        soa_records = dns.select { |answer| answer.type == Dnsruby::Types::SOA }
-        soa_records.any?
+        @soa_records = begin
+          soa_records = dns.select { |answer| answer.type == Dnsruby::Types::SOA }
+          soa_records.any?
+        end
       end
 
       # Should the domain use an A record?
