@@ -85,7 +85,7 @@ module GitHubPages
         cname_to_fastly? pointed_to_github_pages_ip?
         non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
-        enforces_https? https_error https_eligible? caa_error
+        enforces_https? https_error https_eligible? caa_error dns_zone_soa?
       ].freeze
 
       def self.redundant(host)
@@ -164,6 +164,7 @@ module GitHubPages
       # Is this domain an apex domain, meaning a CNAME would be innapropriate
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
+
         return unless valid_domain?
 
         # PublicSuffix.domain pulls out the apex-level domain name.
@@ -175,6 +176,20 @@ module GitHubPages
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,
                             :ignore_private => true) == unicode_host
+      end
+
+      # Does the domain have an SOA record published?
+      #
+      # Callers should be aware that this can return truthy for domains that
+      # are not apex-level (i.e. subdomain.apex.com).
+      def dns_zone_soa?
+        return @soa_records if defined?(@soa_records)
+        return false unless dns?
+
+        @soa_records = begin
+          soa_records = dns.select { |answer| answer.type == Dnsruby::Types::SOA }
+          soa_records.any?
+        end
       end
 
       # Should the domain use an A record?
@@ -278,7 +293,8 @@ module GitHubPages
         Dnsruby::Types::A,
         Dnsruby::Types::AAAA,
         Dnsruby::Types::CNAME,
-        Dnsruby::Types::MX
+        Dnsruby::Types::MX,
+        Dnsruby::Types::SOA
       ].freeze
 
       # Returns an array of DNS answers
