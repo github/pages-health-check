@@ -135,7 +135,7 @@ module GitHubPages
       def invalid_a_record?
         return @invalid_a_record if defined? @invalid_a_record
 
-        @invalid_a_record = (valid_domain? && a_record? && !should_be_a_record?)
+        @invalid_a_record = (valid_domain? && a_record? && !should_be_a_record? && !dns_zone_soa?)
       end
 
       def invalid_cname?

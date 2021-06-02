@@ -159,6 +159,11 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       expect(subject).to be_a_invalid_a_record
     end
 
+    it "knows when a domain is not invalid if it has an SOA record" do
+      allow(subject).to receive(:dns) { [soa_packet] }
+      expect(subject).not_to be_a_invalid_a_record
+    end
+
     context "AAAA records" do
       let(:domain) { "parkermoore.de" }
       let(:ip) { "185.199.108.153" }
