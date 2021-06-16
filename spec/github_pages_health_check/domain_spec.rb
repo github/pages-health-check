@@ -26,6 +26,9 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:soa_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN SOA ns.example.com. #{domain.inspect}")
   end
+  let(:ns_packet) do
+    Dnsruby::RR.create("#{domain}. 1000 IN NS ns.example.com.")
+  end
 
   context "constructor" do
     it "can handle bare domains" do
@@ -239,8 +242,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "apex records" do
-      ["parkermoore.de", "bbc.co.uk"].each do |apex_domain|
-        context "given #{apex_domain}" do
+      ["parkermoore.de", "bbc.co.uk", "techblog.netflix.com"].each do |apex_domain|
+        context "given domain: #{apex_domain} with SOA" do
+          before(:each) { allow(subject).to receive(:dns) { [soa_packet, ns_packet] } }
+
           let(:domain) { apex_domain }
 
           it "knows it should be an a record" do
@@ -262,11 +267,11 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       ["private.dns.zone"].each do |soa_domain|
         context "given #{soa_domain}" do
-          before(:each) { allow(subject).to receive(:dns) { [soa_packet] } }
+          before(:each) { allow(subject).to receive(:dns) { [soa_packet, ns_packet] } }
           let(:domain) { soa_domain }
 
-          it "disallows child zones with an SOA to be an Apex" do
-            expect(subject.should_be_a_record?).to be_falsy
+          it "allows child zones with an SOA to be an Apex" do
+            expect(subject.should_be_a_record?).to eq(true)
           end
 
           it "reports whether child zones publish an SOA record" do
@@ -1125,6 +1130,47 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         let(:domain) { "xn--dmain-0ta.example.com" }
 
         it { is_expected.not_to be_https_eligible }
+      end
+    end
+  end
+
+  # TODO: Remove current examples but consider having live domains under github
+  # control to use for integration testing in the future.
+  context "integration" do
+    subject { described_class.new(domain) }
+
+    [
+      "techblog.netflix.com",
+      "child.jr4legacy.com"
+    ].each do |apex_domain|
+      context "with DNS as source of truth" do
+        before(:all) { WebMock.allow_net_connect! }
+        after(:all) { WebMock.disable_net_connect! }
+
+        context "given known apex domain: #{apex_domain}" do
+          let(:domain) { apex_domain }
+
+          it "is a valid apex domain" do
+            expect(subject.apex_domain?).to eq(true)
+          end
+        end
+      end
+
+      # I believe all of these should be seen as zone apexes.
+      # However, our exising behavior does not think so.
+      context "with public suffix parser as source of truth" do
+        before do
+          allow(subject).to receive(:dns_zone_soa?).and_return(false)
+          allow(subject).to receive(:dns_zone_ns?).and_return(false)
+        end
+
+        context "given known apex domain: #{apex_domain}" do
+          let(:domain) { apex_domain }
+
+          it "is incorrectly treated as an invalid apex domain" do
+            expect(subject.apex_domain?).to eq(false)
+          end
+        end
       end
     end
   end

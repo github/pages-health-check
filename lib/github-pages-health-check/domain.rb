@@ -85,7 +85,7 @@ module GitHubPages
         cname_to_fastly? pointed_to_github_pages_ip?
         non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
-        enforces_https? https_error https_eligible? caa_error dns_zone_soa?
+        enforces_https? https_error https_eligible? caa_error dns_zone_soa? dns_zone_ns?
       ].freeze
 
       def self.redundant(host)
@@ -165,30 +165,44 @@ module GitHubPages
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
 
-        return unless valid_domain?
+        return false unless valid_domain?
+
+        return true if dns_zone_soa? && dns_zone_ns?
 
         # PublicSuffix.domain pulls out the apex-level domain name.
         # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
         # It's aware of multi-step top-level domain names:
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
         # For apex-level domain names, DNS providers do not support CNAME records.
+        #
+        # TODO: Should we even use this here vs allowing DNS to be source of truth?
         unicode_host = Addressable::IDNA.to_unicode(host)
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,
                             :ignore_private => true) == unicode_host
       end
 
-      # Does the domain have an SOA record published?
       #
-      # Callers should be aware that this can return truthy for domains that
-      # are not apex-level (i.e. subdomain.apex.com).
+      # Does the domain have an associated SOA record?
+      #
       def dns_zone_soa?
         return @soa_records if defined?(@soa_records)
         return false unless dns?
 
-        @soa_records = begin
-          soa_records = dns.select { |answer| answer.type == Dnsruby::Types::SOA }
-          soa_records.any?
+        @soa_records = dns.any? do |answer|
+          answer.type == Dnsruby::Types::SOA && answer.name.to_s == host
+        end
+      end
+
+      #
+      # Does the domain have assoicated NS records?
+      #
+      def dns_zone_ns?
+        return @ns_records if defined?(@ns_records)
+        return false unless dns?
+
+        @ns_records = dns.any? do |answer|
+          answer.type == Dnsruby::Types::NS && answer.name.to_s == host
         end
       end
 
@@ -294,6 +308,7 @@ module GitHubPages
         Dnsruby::Types::AAAA,
         Dnsruby::Types::CNAME,
         Dnsruby::Types::MX,
+        Dnsruby::Types::NS,
         Dnsruby::Types::SOA
       ].freeze
 
