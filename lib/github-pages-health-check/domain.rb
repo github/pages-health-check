@@ -174,8 +174,6 @@ module GitHubPages
         # It's aware of multi-step top-level domain names:
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
         # For apex-level domain names, DNS providers do not support CNAME records.
-        #
-        # TODO: Should we even use this here vs allowing DNS to be source of truth?
         unicode_host = Addressable::IDNA.to_unicode(host)
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,

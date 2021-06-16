@@ -1133,45 +1133,4 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
   end
-
-  # TODO: Remove current examples but consider having live domains under github
-  # control to use for integration testing in the future.
-  context "integration" do
-    subject { described_class.new(domain) }
-
-    [
-      "techblog.netflix.com",
-      "child.jr4legacy.com"
-    ].each do |apex_domain|
-      context "with DNS as source of truth" do
-        before(:all) { WebMock.allow_net_connect! }
-        after(:all) { WebMock.disable_net_connect! }
-
-        context "given known apex domain: #{apex_domain}" do
-          let(:domain) { apex_domain }
-
-          it "is a valid apex domain" do
-            expect(subject.apex_domain?).to eq(true)
-          end
-        end
-      end
-
-      # I believe all of these should be seen as zone apexes.
-      # However, our exising behavior does not think so.
-      context "with public suffix parser as source of truth" do
-        before do
-          allow(subject).to receive(:dns_zone_soa?).and_return(false)
-          allow(subject).to receive(:dns_zone_ns?).and_return(false)
-        end
-
-        context "given known apex domain: #{apex_domain}" do
-          let(:domain) { apex_domain }
-
-          it "is incorrectly treated as an invalid apex domain" do
-            expect(subject.apex_domain?).to eq(false)
-          end
-        end
-      end
-    end
-  end
 end
