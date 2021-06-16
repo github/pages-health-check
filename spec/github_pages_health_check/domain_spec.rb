@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:domain) { "foo.github.io" }
   let(:cname) { domain }
-  subject { described_class.new(domain) }
+  subject { described_class.new(domain, :apex_domain_strategy => :public_suffix) }
   let(:cname_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN CNAME #{cname}.")
   end
@@ -242,6 +242,8 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "apex records" do
+      subject { described_class.new(domain, :apex_domain_strategy => :dns) }
+
       ["parkermoore.de", "bbc.co.uk", "techblog.netflix.com"].each do |apex_domain|
         context "given domain: #{apex_domain} with SOA" do
           before(:each) { allow(subject).to receive(:dns) { [soa_packet, ns_packet] } }

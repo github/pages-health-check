@@ -92,7 +92,7 @@ module GitHubPages
         GitHubPages::HealthCheck::RedundantCheck.new(host).check
       end
 
-      def initialize(host, nameservers: :default)
+      def initialize(host, nameservers: :default, apex_domain_strategy: :dns)
         unless host.is_a? String
           raise ArgumentError, "Expected string, got #{host.class}"
         end
@@ -101,6 +101,12 @@ module GitHubPages
         @nameservers = nameservers
         @resolver = GitHubPages::HealthCheck::Resolver.new(self.host,
                                                            :nameservers => nameservers)
+
+        @check_apex_domain = if apex_domain_strategy == :dns
+                               CheckApexDomainWithDns.new(:domain => self)
+                             else
+                               CheckApexDomainWithPublicSuffix.new
+                             end
       end
 
       # Runs all checks, raises an error if invalid
@@ -167,19 +173,7 @@ module GitHubPages
 
         return false unless valid_domain?
 
-        return true if dns_zone_soa? && dns_zone_ns?
-
-        # PublicSuffix.domain pulls out the apex-level domain name.
-        # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
-        # It's aware of multi-step top-level domain names:
-        # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
-        # For apex-level domain names, DNS providers do not support CNAME records.
-        #
-        # TODO: Should we even use this here vs allowing DNS to be source of truth?
-        unicode_host = Addressable::IDNA.to_unicode(host)
-        PublicSuffix.domain(unicode_host,
-                            :default_rule => nil,
-                            :ignore_private => true) == unicode_host
+        check_apex_domain.call(:host => host)
       end
 
       #
@@ -445,6 +439,8 @@ module GitHubPages
 
       private
 
+      attr_reader :check_apex_domain
+
       def caa
         @caa ||= GitHubPages::HealthCheck::CAA.new(
           :host => cname&.host || host,
@@ -534,6 +530,36 @@ module GitHubPages
       def github_pages_ip?(ip_addr)
         CURRENT_IP_ADDRESSES.include?(ip_addr)
       end
+    end
+
+    class CheckApexDomainWithPublicSuffix
+      def call(host:)
+        # PublicSuffix.domain pulls out the apex-level domain name.
+        # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
+        # It's aware of multi-step top-level domain names:
+        # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
+        # For apex-level domain names, DNS providers do not support CNAME records.
+        #
+        # TODO: Should we even use this here vs allowing DNS to be source of truth?
+        unicode_host = Addressable::IDNA.to_unicode(host)
+        PublicSuffix.domain(unicode_host,
+                            :default_rule => nil,
+                            :ignore_private => true) == unicode_host
+      end
+    end
+
+    class CheckApexDomainWithDns
+      def initialize(domain:)
+        @domain = domain
+      end
+
+      def call(*)
+        domain.dns_zone_soa? && domain.dns_zone_ns?
+      end
+
+      private
+
+      attr_reader :domain
     end
   end
 end
