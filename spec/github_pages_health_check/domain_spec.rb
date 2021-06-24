@@ -26,6 +26,9 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:soa_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN SOA ns.example.com. #{domain.inspect}")
   end
+  let(:ns_packet) do
+    Dnsruby::RR.create("#{domain}. 1000 IN NS ns.example.com.")
+  end
 
   context "constructor" do
     it "can handle bare domains" do
@@ -239,8 +242,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "apex records" do
-      ["parkermoore.de", "bbc.co.uk"].each do |apex_domain|
-        context "given #{apex_domain}" do
+      ["parkermoore.de", "bbc.co.uk", "techblog.netflix.com"].each do |apex_domain|
+        context "given domain: #{apex_domain} with SOA" do
+          before(:each) { allow(subject).to receive(:dns) { [soa_packet, ns_packet] } }
+
           let(:domain) { apex_domain }
 
           it "knows it should be an a record" do
@@ -262,11 +267,11 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       ["private.dns.zone"].each do |soa_domain|
         context "given #{soa_domain}" do
-          before(:each) { allow(subject).to receive(:dns) { [soa_packet] } }
+          before(:each) { allow(subject).to receive(:dns) { [soa_packet, ns_packet] } }
           let(:domain) { soa_domain }
 
-          it "disallows child zones with an SOA to be an Apex" do
-            expect(subject.should_be_a_record?).to be_falsy
+          it "allows child zones with an SOA to be an Apex" do
+            expect(subject.should_be_a_record?).to eq(true)
           end
 
           it "reports whether child zones publish an SOA record" do
