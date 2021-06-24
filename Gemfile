@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 group :development do
+  gem "dotenv", "~> 2.7"
   gem "gem-release", "~> 2.1"
   gem "pry", "~> 0.10"
   gem "rspec", "~> 3.0"
