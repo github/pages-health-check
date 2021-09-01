@@ -77,9 +77,19 @@ module GitHubPages
         185.199.111.153
       ).freeze
 
+      CURRENT_IPV6_ADDRESSES = %w(
+        2606:50c0:8000::1538
+        2606:50c0:8001::1538
+        2606:50c0:8002::1538
+        2606:50c0:8003::1538
+      ).freeze
+
+      CURRENT_IP_ADDRESSES_ALL =
+        (CURRENT_IP_ADDRESSES + CURRENT_IPV6_ADDRESSES).freeze
+
       HASH_METHODS = %i[
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
-        fastly_ip? old_ip_address? a_record? cname_record?
+        fastly_ip? old_ip_address? a_record? aaaa_record_present? cname_record?
         mx_records_present? valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
         cname_to_fastly? pointed_to_github_pages_ip?
@@ -128,8 +138,8 @@ module GitHubPages
       def invalid_aaaa_record?
         return @invalid_aaaa_record if defined? @invalid_aaaa_record
 
-        @invalid_aaaa_record = (valid_domain? && should_be_a_record? &&
-                                aaaa_record_present?)
+        @invalid_aaaa_record =
+          (valid_domain? && aaaa_record_present? && !should_be_a_record?)
       end
 
       def invalid_a_record?
@@ -204,7 +214,7 @@ module GitHubPages
         end
       end
 
-      # Should the domain use an A record?
+      # Should the domain use an A or AAAA record?
       def should_be_a_record?
         !pages_io_domain? && (apex_domain? || mx_records_present?)
       end
@@ -213,20 +223,20 @@ module GitHubPages
         !should_be_a_record?
       end
 
-      # Is the domain's first response an A record to a valid GitHub Pages IP?
+      # Is the domain's first response an A or AAAA record to a valid GitHub Pages IP?
       def pointed_to_github_pages_ip?
-        a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.address.to_s)
+        return false unless a_record?
+
+        CURRENT_IP_ADDRESSES_ALL.include?(dns.first.address.to_s.downcase)
       end
 
-      # Are any of the domain's A records pointing elsewhere?
+      # Are any of the domain's A or AAAA records pointing elsewhere?
       def non_github_pages_ip_present?
         return unless dns?
 
-        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
-
-        a_records.any? { |answer| !github_pages_ip?(answer.address.to_s) }
-
-        false
+        dns
+          .select { |a| A_RECORD_TYPES.include?(a.type) }
+          .any? { |a| !github_pages_ip?(a.address.to_s) }
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -343,11 +353,12 @@ module GitHubPages
         end
       end
 
-      # Is this domain's first response an A record?
+      # Is this domain's first response an A or AAAA record?
       def a_record?
+        return @is_a_record if defined?(@is_a_record)
         return unless dns?
 
-        dns.first.type == Dnsruby::Types::A
+        @is_a_record = A_RECORD_TYPES.include?(dns.first.type)
       end
 
       def aaaa_record_present?
@@ -423,8 +434,6 @@ module GitHubPages
       def https_eligible?
         # Can't have any IP's which aren't GitHub's present.
         return false if non_github_pages_ip_present?
-        # Can't have any AAAA records present
-        return false if aaaa_record_present?
         # Must be a CNAME or point to our IPs.
 
         # Only check the one domain if a CNAME. Don't check the parent domain.
@@ -442,6 +451,8 @@ module GitHubPages
       end
 
       private
+
+      A_RECORD_TYPES = [Dnsruby::Types::A, Dnsruby::Types::AAAA].freeze
 
       def caa
         @caa ||= GitHubPages::HealthCheck::CAA.new(
@@ -517,7 +528,7 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
 
-        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
+        a_records = dns.select { |answer| A_RECORD_TYPES.include?(answer.type) }
         return false if !a_records || a_records.empty?
 
         a_records.all? do |answer|
@@ -530,7 +541,7 @@ module GitHubPages
       end
 
       def github_pages_ip?(ip_addr)
-        CURRENT_IP_ADDRESSES.include?(ip_addr)
+        CURRENT_IP_ADDRESSES_ALL.include?(ip_addr&.to_s&.downcase)
       end
     end
   end

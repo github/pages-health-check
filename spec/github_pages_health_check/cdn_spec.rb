@@ -30,15 +30,16 @@ RSpec.describe(GitHubPages::HealthCheck::CDN) do
     end
 
     context "parses config" do
-      before { tempfile.write("199.27.128.0/21\n173.245.48.0/20") }
+      before { tempfile.write("199.27.128.0/21\n173.245.48.0/20\n2400:cb00::/32") }
 
-      it "has two IPs" do
-        expect(subject.send(:ranges).size).to eql(2)
+      it "has three IPs" do
+        expect(subject.send(:ranges).size).to eql(3)
       end
 
       it "loads the IP addresses" do
         expect(subject.send(:ranges)).to include(IPAddr.new("199.27.128.0/21"))
         expect(subject.send(:ranges)).to include(IPAddr.new("173.245.48.0/20"))
+        expect(subject.send(:ranges)).to include(IPAddr.new("2400:cb00::/32"))
       end
 
       it("controls? 199.27.128.55") do
@@ -49,20 +50,41 @@ RSpec.describe(GitHubPages::HealthCheck::CDN) do
         expect(subject.controls_ip?(IPAddr.new("173.245.48.55"))).to be_truthy
       end
 
+      it("controls? 2400:cb00:1000:2000:3000:4000:5000:6000") do
+        expect(
+          subject.controls_ip?(
+            IPAddr.new("2400:cb00:1000:2000:3000:4000:5000:6000")
+          )
+        ).to be_truthy
+      end
+
       it("controls? 200.27.128.55") do
         expect(subject.controls_ip?(IPAddr.new("200.27.128.55"))).to be_falsey
       end
     end
 
     {
-      "Fastly" => "151.101.32.133",
-      "CloudFlare" => "108.162.196.20"
-    }.each do |service, ip|
+      "Fastly" => {
+        :valid_ips => ["151.101.32.133", "2a04:4e40:1000:2000:3000:4000:5000:6000"],
+        :invalid_ips => ["108.162.196.20", "2400:cb00:7000:8000:9000:A000:B000:C000"]
+      },
+      "CloudFlare" => {
+        :valid_ips => ["108.162.196.20", "2400:cb00:7000:8000:9000:A000:B000:C000"],
+        :invalid_ips => ["151.101.32.133", "2a04:4e40:1000:2000:3000:4000:5000:6000"]
+      }
+    }.each do |service, ips|
       context service do
-        it "works as s singleton" do
+        it "works as a singleton" do
           const = "GitHubPages::HealthCheck::#{service}"
           klass = Kernel.const_get(const).send(:new)
-          expect(klass.controls_ip?(ip)).to be(true)
+
+          ips[:valid_ips].each do |ip|
+            expect(klass.controls_ip?(ip)).to eq(true), ip
+          end
+
+          ips[:invalid_ips].each do |ip|
+            expect(klass.controls_ip?(ip)).to eq(false), ip
+          end
 
           github_ips = GitHubPages::HealthCheck::Domain::CURRENT_IP_ADDRESSES
           expect(klass.controls_ip?(github_ips.first)).to be(false)
