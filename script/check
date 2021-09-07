@@ -3,6 +3,8 @@
 #
 # Usage: script/check [DOMAIN]
 
+require "rubygems"
+require "bundler/setup"
 require_relative "../lib/github-pages-health-check"
 
 if ARGV.count != 1

@@ -81,3 +81,40 @@ check = GitHubPages::HealthCheck::Site.new "github/pages-health-check", access_t
 ```
 
 You can also set `OCTOKIT_ACCESS_TOKEN` as an environmental variable, or via a `.env` file in your working directory.
+
+### Command Line
+
+```
+./script/check pages.github.com
+
+host: pages.github.com
+uri: https://pages.github.com/
+nameservers: :default
+dns_resolves?: true
+proxied?: false
+cloudflare_ip?: false
+fastly_ip?: false
+old_ip_address?: false
+a_record?: false
+cname_record?: true
+mx_records_present?: false
+valid_domain?: true
+apex_domain?: false
+should_be_a_record?: false
+cname_to_github_user_domain?: true
+cname_to_pages_dot_github_dot_com?: false
+cname_to_fastly?: false
+pointed_to_github_pages_ip?: false
+non_github_pages_ip_present?: false
+pages_domain?: true
+served_by_pages?: true
+valid?: true
+reason:
+https?: true
+enforces_https?: true
+https_error:
+https_eligible?: true
+caa_error:
+dns_zone_soa?: false
+dns_zone_ns?: false
+```
