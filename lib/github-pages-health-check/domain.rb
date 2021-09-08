@@ -89,7 +89,7 @@ module GitHubPages
 
       HASH_METHODS = %i[
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
-        fastly_ip? old_ip_address? a_record? aaaa_record_present? cname_record?
+        fastly_ip? old_ip_address? a_record? aaaa_record? cname_record?
         mx_records_present? valid_domain? apex_domain? should_be_a_record?
         cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
         cname_to_fastly? pointed_to_github_pages_ip?
@@ -214,7 +214,7 @@ module GitHubPages
         end
       end
 
-      # Should the domain use an A or AAAA record?
+      # Should the domain use an A record?
       def should_be_a_record?
         !pages_io_domain? && (apex_domain? || mx_records_present?)
       end
@@ -225,7 +225,7 @@ module GitHubPages
 
       # Is the domain's first response an A or AAAA record to a valid GitHub Pages IP?
       def pointed_to_github_pages_ip?
-        return false unless a_record?
+        return false unless address_record?
 
         CURRENT_IP_ADDRESSES_ALL.include?(dns.first.address.to_s.downcase)
       end
@@ -235,7 +235,7 @@ module GitHubPages
         return unless dns?
 
         dns
-          .select { |a| A_RECORD_TYPES.include?(a.type) }
+          .select { |a| Dnsruby::Types::A == a.type || Dnsruby::Types::AAAA == a.type }
           .any? { |a| !github_pages_ip?(a.address.to_s) }
       end
 
@@ -353,12 +353,20 @@ module GitHubPages
         end
       end
 
-      # Is this domain's first response an A or AAAA record?
+      # Is this domain's first response an A record?
       def a_record?
         return @is_a_record if defined?(@is_a_record)
         return unless dns?
 
-        @is_a_record = A_RECORD_TYPES.include?(dns.first.type)
+        @is_a_record = Dnsruby::Types::A == dns.first.type
+      end
+
+      # Is this domain's first response an AAAA record?
+      def aaaa_record?
+        return @is_aaaa_record if defined?(@is_aaaa_record)
+        return unless dns?
+
+        @is_aaaa_record = Dnsruby::Types::AAAA == dns.first.type
       end
 
       def aaaa_record_present?
@@ -452,7 +460,9 @@ module GitHubPages
 
       private
 
-      A_RECORD_TYPES = [Dnsruby::Types::A, Dnsruby::Types::AAAA].freeze
+      def address_record?
+        a_record? || aaaa_record?
+      end
 
       def caa
         @caa ||= GitHubPages::HealthCheck::CAA.new(
@@ -528,7 +538,9 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
 
-        a_records = dns.select { |answer| A_RECORD_TYPES.include?(answer.type) }
+        a_records = dns.select do |answer|
+          Dnsruby::Types::A == answer.type || Dnsruby::Types::AAAA == answer.type
+        end
         return false if !a_records || a_records.empty?
 
         a_records.all? do |answer|
