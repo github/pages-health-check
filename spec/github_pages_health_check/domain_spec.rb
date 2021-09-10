@@ -491,7 +491,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     context "apex domains" do
       context "pointed to Pages IPv6" do
         let(:domain) { "myipv6.io" }
-        let(:ip6) { "2606:50C0:8000::1538" }
+        let(:ip6) { "2606:50C0:8000::153" }
         before(:each) { allow(subject).to receive(:dns) { [aaaa_packet] } }
 
         it "Knows it's a Pages IP" do
@@ -1075,7 +1075,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
 
     context "AAAA records pointed to current IPs" do
-      let(:ip6) { "2606:50C0:8002::1538" }
+      let(:ip6) { "2606:50C0:8002::153" }
       before(:each) { allow(subject).to receive(:dns) { [aaaa_packet] } }
       before(:each) { allow(subject.send(:caa)).to receive(:query) { [aaaa_packet] } }
 
@@ -1096,7 +1096,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
 
       context "with good additional A record" do
-        let(:ip6) { "2606:50c0:8003::1538" }
+        let(:ip6) { "2606:50c0:8003::153" }
 
         it { is_expected.to be_https_eligible }
       end
