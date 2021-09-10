@@ -77,13 +77,23 @@ module GitHubPages
         185.199.111.153
       ).freeze
 
+      CURRENT_IPV6_ADDRESSES = %w(
+        2606:50c0:8000::153
+        2606:50c0:8001::153
+        2606:50c0:8002::153
+        2606:50c0:8003::153
+      ).freeze
+
+      CURRENT_IP_ADDRESSES_ALL =
+        (CURRENT_IP_ADDRESSES + CURRENT_IPV6_ADDRESSES).freeze
+
       HASH_METHODS = %i[
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
-        fastly_ip? old_ip_address? a_record? cname_record?
-        mx_records_present? valid_domain? apex_domain? should_be_a_record?
-        cname_to_github_user_domain? cname_to_pages_dot_github_dot_com?
-        cname_to_fastly? pointed_to_github_pages_ip?
-        non_github_pages_ip_present? pages_domain?
+        fastly_ip? old_ip_address? a_record? aaaa_record? aaaa_record_present?
+        cname_record? mx_records_present? valid_domain? apex_domain?
+        should_be_a_record? cname_to_github_user_domain?
+        cname_to_pages_dot_github_dot_com? cname_to_fastly?
+        pointed_to_github_pages_ip? non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
         enforces_https? https_error https_eligible? caa_error dns_zone_soa? dns_zone_ns?
       ].freeze
@@ -128,8 +138,8 @@ module GitHubPages
       def invalid_aaaa_record?
         return @invalid_aaaa_record if defined? @invalid_aaaa_record
 
-        @invalid_aaaa_record = (valid_domain? && should_be_a_record? &&
-                                aaaa_record_present?)
+        @invalid_aaaa_record =
+          (valid_domain? && aaaa_record_present? && !should_be_a_record?)
       end
 
       def invalid_a_record?
@@ -213,20 +223,20 @@ module GitHubPages
         !should_be_a_record?
       end
 
-      # Is the domain's first response an A record to a valid GitHub Pages IP?
+      # Is the domain's first response an A or AAAA record to a valid GitHub Pages IP?
       def pointed_to_github_pages_ip?
-        a_record? && CURRENT_IP_ADDRESSES.include?(dns.first.address.to_s)
+        return false unless address_record?
+
+        CURRENT_IP_ADDRESSES_ALL.include?(dns.first.address.to_s.downcase)
       end
 
-      # Are any of the domain's A records pointing elsewhere?
+      # Are any of the domain's A or AAAA records pointing elsewhere?
       def non_github_pages_ip_present?
         return unless dns?
 
-        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
-
-        a_records.any? { |answer| !github_pages_ip?(answer.address.to_s) }
-
-        false
+        dns
+          .select { |a| Dnsruby::Types::A == a.type || Dnsruby::Types::AAAA == a.type }
+          .any? { |a| !github_pages_ip?(a.address.to_s) }
       end
 
       # Is the domain's first response a CNAME to a pages domain?
@@ -345,9 +355,18 @@ module GitHubPages
 
       # Is this domain's first response an A record?
       def a_record?
+        return @is_a_record if defined?(@is_a_record)
         return unless dns?
 
-        dns.first.type == Dnsruby::Types::A
+        @is_a_record = Dnsruby::Types::A == dns.first.type
+      end
+
+      # Is this domain's first response an AAAA record?
+      def aaaa_record?
+        return @is_aaaa_record if defined?(@is_aaaa_record)
+        return unless dns?
+
+        @is_aaaa_record = Dnsruby::Types::AAAA == dns.first.type
       end
 
       def aaaa_record_present?
@@ -423,8 +442,6 @@ module GitHubPages
       def https_eligible?
         # Can't have any IP's which aren't GitHub's present.
         return false if non_github_pages_ip_present?
-        # Can't have any AAAA records present
-        return false if aaaa_record_present?
         # Must be a CNAME or point to our IPs.
 
         # Only check the one domain if a CNAME. Don't check the parent domain.
@@ -442,6 +459,10 @@ module GitHubPages
       end
 
       private
+
+      def address_record?
+        a_record? || aaaa_record?
+      end
 
       def caa
         @caa ||= GitHubPages::HealthCheck::CAA.new(
@@ -517,10 +538,12 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
 
-        a_records = dns.select { |answer| answer.type == Dnsruby::Types::A }
-        return false if !a_records || a_records.empty?
+        address_records = dns.select do |answer|
+          Dnsruby::Types::A == answer.type || Dnsruby::Types::AAAA == answer.type
+        end
+        return false if !address_records || address_records.empty?
 
-        a_records.all? do |answer|
+        address_records.all? do |answer|
           cdn.controls_ip?(answer.address)
         end
       end
@@ -530,7 +553,7 @@ module GitHubPages
       end
 
       def github_pages_ip?(ip_addr)
-        CURRENT_IP_ADDRESSES.include?(ip_addr)
+        CURRENT_IP_ADDRESSES_ALL.include?(ip_addr&.to_s&.downcase)
       end
     end
   end

@@ -16,6 +16,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   let(:a_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN A #{ip}")
   end
+  let(:ip6) { "::1" }
   let(:aaaa_packet) do
     Dnsruby::RR.create("#{domain}. 1000 IN AAAA #{ip6}")
   end
@@ -161,25 +162,21 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       expect(subject.should_be_a_record?).to be_falsy
       expect(subject).to be_a_invalid_a_record
     end
+  end
 
-    context "AAAA records" do
-      let(:domain) { "parkermoore.de" }
-      let(:ip) { "185.199.108.153" }
-      let(:ip6) { "::1" }
-      before(:each) { allow(subject).to receive(:dns) { [a_packet, aaaa_packet] } }
-      it "knows that AAAA records are not allowed" do
-        expect(subject).to be_an_a_record
-        expect(subject).to be_a_valid_domain
-        expect(subject.invalid_aaaa_record?).to be_truthy
-      end
-      it "raises InvalidAAAARecordError" do
-        stub_request(:head, "http://#{domain}")
-          .to_return(:status => 200, :headers => { "Server" => "GitHub.com" })
-        expect(subject.invalid_aaaa_record?).to be_truthy
-        expect(-> { subject.check! }).to raise_error(
-          GitHubPages::HealthCheck::Errors::InvalidAAAARecordError
-        )
-      end
+  context "AAAA records" do
+    before(:each) { allow(subject).to receive(:dns) { [aaaa_packet] } }
+
+    it "knows when a domain is an AAAA record" do
+      expect(subject).to be_an_aaaa_record_present
+      expect(subject).to_not be_a_cname_record
+    end
+
+    it "knows when a domain has an invalid AAAA record" do
+      expect(subject).to be_an_aaaa_record_present
+      expect(subject).to be_a_valid_domain
+      expect(subject.should_be_a_record?).to eq(false)
+      expect(subject).to be_a_invalid_aaaa_record
     end
   end
 
@@ -443,6 +440,23 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
+  context "cloudflare IPv6" do
+    let(:ip6) { "2405:b500:7000:8000:9000:A000:B000:C000" }
+    before(:each) { allow(subject).to receive(:dns) { [aaaa_packet] } }
+
+    it "knows when the domain is on cloudflare" do
+      expect(subject).to be_a_cloudflare_ip
+    end
+
+    context "a random IP" do
+      let(:ip6) { "2a04:4e40:1000:2000:3000:4000:5000:6000" }
+
+      it "know's it's not cloudflare" do
+        expect(subject).to_not be_a_cloudflare_ip
+      end
+    end
+  end
+
   context "GitHub Pages IPs" do
     context "apex domains" do
       context "pointed to Pages IP" do
@@ -469,6 +483,29 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       it "Knows it's not a Pages IP" do
         expect(subject).to_not be_pointed_to_github_pages_ip
+      end
+    end
+  end
+
+  context "GitHub Pages IPv6s" do
+    context "apex domains" do
+      context "pointed to Pages IPv6" do
+        let(:domain) { "myipv6.io" }
+        let(:ip6) { "2606:50C0:8000::153" }
+        before(:each) { allow(subject).to receive(:dns) { [aaaa_packet] } }
+
+        it "Knows it's a Pages IP" do
+          expect(subject).to be_pointed_to_github_pages_ip
+        end
+      end
+
+      context "not pointed to a pages IP" do
+        let(:domain) { "example.com" }
+        let(:ip6) { "::1" }
+
+        it "knows it's not a Pages IP" do
+          expect(subject).to_not be_pointed_to_github_pages_ip
+        end
       end
     end
   end
@@ -1018,6 +1055,60 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       context "with punycode encoded domain" do
         let(:domain) { "xn--dmain-0ta.example.com" }
+
+        it { is_expected.to be_https_eligible }
+
+        context "with bad CAA records" do
+          let(:caa_domain) { "digicert.com" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.not_to be_https_eligible }
+        end
+
+        context "with good CAA records" do
+          let(:caa_domain) { "letsencrypt.org" }
+          before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+          it { is_expected.to be_https_eligible }
+        end
+      end
+    end
+
+    context "AAAA records pointed to current IPs" do
+      let(:ip6) { "2606:50C0:8002::153" }
+      before(:each) { allow(subject).to receive(:dns) { [aaaa_packet] } }
+      before(:each) { allow(subject.send(:caa)).to receive(:query) { [aaaa_packet] } }
+
+      it { is_expected.to be_https_eligible }
+
+      context "with bad CAA records" do
+        let(:caa_domain) { "digicert.com" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with good CAA records" do
+        let(:caa_domain) { "letsencrypt.org" }
+        before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
+
+        it { is_expected.to be_https_eligible }
+      end
+
+      context "with good additional A record" do
+        let(:ip6) { "2606:50c0:8003::153" }
+
+        it { is_expected.to be_https_eligible }
+      end
+
+      context "with bad additional A record" do
+        let(:ip6) { "2606:50c0:8003::1111" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
+      context "with unicode encoded domain" do
+        let(:domain) { "dómain.example.com" }
 
         it { is_expected.to be_https_eligible }
 
