@@ -538,12 +538,12 @@ module GitHubPages
       def cdn_ip?(cdn)
         return unless dns?
 
-        a_records = dns.select do |answer|
+        address_records = dns.select do |answer|
           Dnsruby::Types::A == answer.type || Dnsruby::Types::AAAA == answer.type
         end
-        return false if !a_records || a_records.empty?
+        return false if !address_records || address_records.empty?
 
-        a_records.all? do |answer|
+        address_records.all? do |answer|
           cdn.controls_ip?(answer.address)
         end
       end
