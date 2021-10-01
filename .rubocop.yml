@@ -52,7 +52,7 @@ Style/ClassAndModuleChildren:
   Enabled: false # module X<\n>module Y is just as good as module X::Y.
 
 Layout/LineLength:
-  Max: 90
+  Max: 120
   Severity: warning
   Exclude:
     - github-pages-health-check.gemspec

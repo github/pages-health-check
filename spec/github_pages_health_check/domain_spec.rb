@@ -180,6 +180,25 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
+  context "A & AAAA recursive resolutions" do
+    let(:domain) { "domain.com" }
+    let(:cname) { "domain.github.io" }
+    before(:each) do
+      allow(subject).to receive(:dns) {
+        [
+          cname_packet,
+          Dnsruby::RR.create("#{cname}. 1000 IN A #{ip}"),
+          Dnsruby::RR.create("#{cname}. 1000 IN AAAA #{ip6}")
+        ]
+      }
+    end
+
+    it "does not get tricked by recursive resolution" do
+      expect(subject).to_not be_an_aaaa_record_present
+      expect(subject).to_not be_an_a_record_present
+    end
+  end
+
   context "CNAMEs" do
     before(:each) { allow(subject).to receive(:dns) { [cname_packet] } }
 

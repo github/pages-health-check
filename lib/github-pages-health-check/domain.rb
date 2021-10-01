@@ -89,7 +89,7 @@ module GitHubPages
 
       HASH_METHODS = %i[
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
-        fastly_ip? old_ip_address? a_record? aaaa_record? aaaa_record_present?
+        fastly_ip? old_ip_address? a_record? aaaa_record? a_record_present? aaaa_record_present?
         cname_record? mx_records_present? valid_domain? apex_domain?
         should_be_a_record? cname_to_github_user_domain?
         cname_to_pages_dot_github_dot_com? cname_to_fastly?
@@ -138,14 +138,13 @@ module GitHubPages
       def invalid_aaaa_record?
         return @invalid_aaaa_record if defined? @invalid_aaaa_record
 
-        @invalid_aaaa_record =
-          (valid_domain? && aaaa_record_present? && !should_be_a_record?)
+        @invalid_aaaa_record = (valid_domain? && aaaa_record_present? && !should_be_a_record?)
       end
 
       def invalid_a_record?
         return @invalid_a_record if defined? @invalid_a_record
 
-        @invalid_a_record = (valid_domain? && a_record? && !should_be_a_record?)
+        @invalid_a_record = (valid_domain? && a_record_present? && !should_be_a_record?)
       end
 
       def invalid_cname?
@@ -369,10 +368,18 @@ module GitHubPages
         @is_aaaa_record = Dnsruby::Types::AAAA == dns.first.type
       end
 
+      # Does this domain has an A record setup (not necessarily as the first record)?
+      def a_record_present?
+        return unless dns?
+
+        dns.any? { |answer| answer.type == Dnsruby::Types::A && answer.name.to_s == host }
+      end
+
+      # Does this domain has an AAAA record setup (not necessarily as the first record)?
       def aaaa_record_present?
         return unless dns?
 
-        dns.any? { |answer| answer.type == Dnsruby::Types::AAAA }
+        dns.any? { |answer| answer.type == Dnsruby::Types::AAAA && answer.name.to_s == host }
       end
 
       # Is this domain's first response a CNAME record?
