@@ -9,8 +9,8 @@ module GitHubPages
         def message
           <<-MSG
              Your site's DNS settings are using a custom subdomain, #{domain.host},
-             that's set up with an AAAA record. GitHub Pages currently does not support
-             IPv6.
+             that's not setup with the correct AAAA record. The AAAA record for your apex 
+             domain must point to the IP addresses for GitHub Pages.
           MSG
         end
       end
