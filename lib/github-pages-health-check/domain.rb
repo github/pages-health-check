@@ -246,7 +246,7 @@ module GitHubPages
       # Is the given domain a CNAME to pages.github.(io|com)
       # instead of being CNAME'd to the user's subdomain?
       #
-      # domain - the domain to check, generaly the target of a cname
+      # domain - the domain to check, generally the target of a cname
       def cname_to_pages_dot_github_dot_com?
         cname? && cname.pages_dot_github_dot_com?
       end
