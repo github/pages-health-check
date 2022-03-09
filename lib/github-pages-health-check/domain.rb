@@ -170,7 +170,7 @@ module GitHubPages
                                      :ignore_private => true)
       end
 
-      # Is this domain an apex domain, meaning a CNAME would be innapropriate
+      # Is this domain an apex domain, meaning a CNAME would be inappropriate
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
 
