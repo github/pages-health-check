@@ -59,7 +59,7 @@ RSpec.describe(GitHubPages::HealthCheck::CDN) do
       end
 
       it("controls? 200.27.128.55") do
-        expect(subject.controls_ip?(IPAddr.new("200.27.128.55"))).to be_falsey
+        expect(subject.controls_ip?(IPAddr.new("200.27.128.55"))).to be_falsy
       end
     end
 
