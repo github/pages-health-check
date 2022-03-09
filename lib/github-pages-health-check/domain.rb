@@ -160,7 +160,7 @@ module GitHubPages
       end
 
       # Is this a valid domain that PublicSuffix recognizes?
-      # Used as an escape hatch to prevent false positives on DNS checkes
+      # Used as an escape hatch to prevent false positives on DNS checks
       def valid_domain?
         return @valid if defined? @valid
 
