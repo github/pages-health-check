@@ -202,7 +202,7 @@ module GitHubPages
       end
 
       #
-      # Does the domain have assoicated NS records?
+      # Does the domain have associated NS records?
       #
       def dns_zone_ns?
         return @ns_records if defined?(@ns_records)
