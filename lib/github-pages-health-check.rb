@@ -51,7 +51,7 @@ module GitHubPages
       }
     }.freeze
 
-    # surpress warn-level feedback due to unsupported record types
+    # suppress warn-level feedback due to unsupported record types
     def self.without_warnings(&block)
       warn_level = $VERBOSE
       $VERBOSE = nil
