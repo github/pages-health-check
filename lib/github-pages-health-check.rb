@@ -41,16 +41,6 @@ module GitHubPages
     URL = "https://github.com/github/pages-health-check"
     USER_AGENT = "Mozilla/5.0 (compatible; #{HUMAN_NAME}/#{VERSION}; +#{URL})"
 
-    TYPHOEUS_OPTIONS = {
-      :followlocation => true,
-      :timeout => TIMEOUT,
-      :accept_encoding => "gzip",
-      :method => :head,
-      :headers => {
-        "User-Agent" => USER_AGENT
-      }
-    }.freeze
-
     # surpress warn-level feedback due to unsupported record types
     def self.without_warnings(&block)
       warn_level = $VERBOSE
@@ -62,6 +52,28 @@ module GitHubPages
 
     def self.check(repository_or_domain, access_token: nil)
       Site.new repository_or_domain, :access_token => access_token
+    end
+
+    # rubocop:disable Naming/AccessorMethodName (this is not an accessor method)
+    def self.set_proxy(proxy_url)
+      @typhoeus_options = typhoeus_options.merge(:proxy => proxy_url).freeze
+      nil
+    end
+    # rubocop:enable Naming/AccessorMethodName
+
+    def self.typhoeus_options
+      return @typhoeus_options if defined?(@typhoeus_options)
+
+      @typhoeus_options = {
+        :followlocation => true,
+        :timeout => TIMEOUT,
+        :accept_encoding => "gzip",
+        :method => :head,
+        :headers => {
+          "User-Agent" => USER_AGENT
+        },
+        :proxy => nil
+      }.freeze
     end
   end
 end
