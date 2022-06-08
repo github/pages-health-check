@@ -888,7 +888,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
   it "returns the Typhoeus options" do
     expected = Regexp.escape GitHubPages::HealthCheck::VERSION
-    header = GitHubPages::HealthCheck::TYPHOEUS_OPTIONS[:headers]["User-Agent"]
+    header = GitHubPages::HealthCheck::typhoeus_options[:headers]["User-Agent"]
     expect(header).to match(expected)
   end
 

@@ -482,12 +482,12 @@ module GitHubPages
       def response
         return @response if defined? @response
 
-        @response = Typhoeus.head(uri, TYPHOEUS_OPTIONS)
+        @response = Typhoeus.head(uri, GitHubPages::HealthCheck.typhoeus_options)
 
         # Workaround for webmock not playing nicely with Typhoeus redirects
         # See https://github.com/bblimke/webmock/issues/237
         if @response.mock? && @response.headers["Location"]
-          @response = Typhoeus.head(response.headers["Location"], TYPHOEUS_OPTIONS)
+          @response = Typhoeus.head(response.headers["Location"], GitHubPages::HealthCheck.typhoeus_options)
         end
 
         @response
@@ -495,13 +495,13 @@ module GitHubPages
 
       # The domain's response to HTTP requests, without following redirects
       def http_response
-        options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
+        options = GitHubPages::HealthCheck.typhoeus_options.merge(:followlocation => false)
         @http_response ||= Typhoeus.head(uri(:scheme => "http"), options)
       end
 
       # The domain's response to HTTPS requests, without following redirects
       def https_response
-        options = TYPHOEUS_OPTIONS.merge(:followlocation => false)
+        options = GitHubPages::HealthCheck.typhoeus_options.merge(:followlocation => false)
         @https_response ||= Typhoeus.head(uri(:scheme => "https"), options)
       end
 
