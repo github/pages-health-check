@@ -71,7 +71,8 @@ module GitHubPages
         :method => :head,
         :headers => {
           "User-Agent" => USER_AGENT
-        }
+        },
+        :proxy => nil
       }.freeze
     end
   end

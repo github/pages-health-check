@@ -107,6 +107,22 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
+  context "response" do
+    let(:proxy) { "http://proxy.org:5000" }
+    before do
+      GitHubPages::HealthCheck.set_proxy(proxy)
+    end
+    after do
+      GitHubPages::HealthCheck.set_proxy(nil)
+    end
+
+    it "uses a network proxy for outgoing requests" do
+      stub_request(:head, domain).to_return(:status => 200, :headers => {})
+      response = GitHubPages::HealthCheck::Domain.new(domain).send(:response)
+      expect(response.request.options).to include(:proxy => proxy)
+    end
+  end
+
   context "A records" do
     before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 

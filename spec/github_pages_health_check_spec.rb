@@ -16,7 +16,7 @@ RSpec.describe(GitHubPages::HealthCheck) do
   end
 
   it "sets a network proxy url" do
-    expect(GitHubPages::HealthCheck.typhoeus_options).to_not include(:proxy)
+    expect(GitHubPages::HealthCheck.typhoeus_options).to include(:proxy => nil)
     GitHubPages::HealthCheck.set_proxy("http://proxy.org")
     expect(GitHubPages::HealthCheck.typhoeus_options).to include(:proxy => "http://proxy.org")
   end
