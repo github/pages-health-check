@@ -54,10 +54,12 @@ module GitHubPages
       Site.new repository_or_domain, :access_token => access_token
     end
 
+    # rubocop:disable Naming/AccessorMethodName (this is not an accessor method)
     def self.set_proxy(proxy_url)
       @typhoeus_options = typhoeus_options.merge(:proxy => proxy_url).freeze
       nil
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     def self.typhoeus_options
       return @typhoeus_options if defined?(@typhoeus_options)
