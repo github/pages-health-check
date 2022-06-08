@@ -55,7 +55,7 @@ module GitHubPages
     end
 
     def self.set_proxy(proxy_url)
-      @typhoeus_options = @typhoeus_options.merge(:proxy => proxy_url).freeze
+      @typhoeus_options = typhoeus_options.merge(:proxy => proxy_url).freeze
       nil
     end
 
