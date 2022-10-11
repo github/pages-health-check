@@ -1042,6 +1042,12 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       it { is_expected.to be_https_eligible }
 
+      context "with underscore domain" do
+        let(:domain) { "foo_bar.com" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
+
       context "with bad CAA records" do
         let(:caa_domain) { "digicert.com" }
         before(:each) { allow(subject.send(:caa)).to receive(:query) { [caa_packet] } }
