@@ -450,7 +450,7 @@ module GitHubPages
         # Can't have any IP's which aren't GitHub's present.
         return false if non_github_pages_ip_present?
 
-        # Can't have underscores in the domain name
+        # Can't have underscores in the domain name (Let's Encrypt does not allow it)
         return false if host.include?("_")
 
         # Must be a CNAME or point to our IPs.
