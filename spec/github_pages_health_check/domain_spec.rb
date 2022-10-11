@@ -1044,7 +1044,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
       context "with underscore domain" do
         let(:domain) { "foo_bar.com" }
-        
+
         it { is_expected.not_to be_https_eligible }
       end
 
