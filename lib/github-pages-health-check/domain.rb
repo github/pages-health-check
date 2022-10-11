@@ -449,8 +449,11 @@ module GitHubPages
       def https_eligible?
         # Can't have any IP's which aren't GitHub's present.
         return false if non_github_pages_ip_present?
-        # Must be a CNAME or point to our IPs.
 
+        # Can't have underscores in the domain name
+        return false if host.include?("_")
+
+        # Must be a CNAME or point to our IPs.
         # Only check the one domain if a CNAME. Don't check the parent domain.
         return true if cname_to_github_user_domain?
 
