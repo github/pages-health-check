@@ -14,4 +14,10 @@ RSpec.describe(GitHubPages::HealthCheck) do
     expect(check.class).to eql(GitHubPages::HealthCheck::Site)
     expect(check.domain.host).to eql(domain)
   end
+
+  it "sets a network proxy url" do
+    expect(GitHubPages::HealthCheck.typhoeus_options).to include(:proxy => nil)
+    GitHubPages::HealthCheck.set_proxy("http://proxy.org")
+    expect(GitHubPages::HealthCheck.typhoeus_options).to include(:proxy => "http://proxy.org")
+  end
 end

@@ -107,6 +107,22 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
+  context "response" do
+    let(:proxy) { "http://proxy.org:5000" }
+    before do
+      GitHubPages::HealthCheck.set_proxy(proxy)
+    end
+    after do
+      GitHubPages::HealthCheck.set_proxy(nil)
+    end
+
+    it "uses a network proxy for outgoing requests" do
+      stub_request(:head, domain).to_return(:status => 200, :headers => {})
+      response = GitHubPages::HealthCheck::Domain.new(domain).send(:response)
+      expect(response.request.options).to include(:proxy => proxy)
+    end
+  end
+
   context "A records" do
     before(:each) { allow(subject).to receive(:dns) { [a_packet] } }
 
@@ -888,7 +904,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
   it "returns the Typhoeus options" do
     expected = Regexp.escape GitHubPages::HealthCheck::VERSION
-    header = GitHubPages::HealthCheck::TYPHOEUS_OPTIONS[:headers]["User-Agent"]
+    header = GitHubPages::HealthCheck.typhoeus_options[:headers]["User-Agent"]
     expect(header).to match(expected)
   end
 
@@ -1025,6 +1041,12 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       before(:each) { allow(subject.send(:caa)).to receive(:query) { [a_packet] } }
 
       it { is_expected.to be_https_eligible }
+
+      context "with underscore domain" do
+        let(:domain) { "foo_bar.com" }
+
+        it { is_expected.not_to be_https_eligible }
+      end
 
       context "with bad CAA records" do
         let(:caa_domain) { "digicert.com" }
