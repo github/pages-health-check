@@ -160,7 +160,7 @@ module GitHubPages
       end
 
       # Is this a valid domain that PublicSuffix recognizes?
-      # Used as an escape hatch to prevent false positives on DNS checkes
+      # Used as an escape hatch to prevent false positives on DNS checks
       def valid_domain?
         return @valid if defined? @valid
 
@@ -170,7 +170,7 @@ module GitHubPages
                                      :ignore_private => true)
       end
 
-      # Is this domain an apex domain, meaning a CNAME would be innapropriate
+      # Is this domain an apex domain, meaning a CNAME would be inappropriate
       def apex_domain?
         return @apex_domain if defined?(@apex_domain)
 
@@ -202,7 +202,7 @@ module GitHubPages
       end
 
       #
-      # Does the domain have assoicated NS records?
+      # Does the domain have associated NS records?
       #
       def dns_zone_ns?
         return @ns_records if defined?(@ns_records)
@@ -246,7 +246,7 @@ module GitHubPages
       # Is the given domain a CNAME to pages.github.(io|com)
       # instead of being CNAME'd to the user's subdomain?
       #
-      # domain - the domain to check, generaly the target of a cname
+      # domain - the domain to check, generally the target of a cname
       def cname_to_pages_dot_github_dot_com?
         cname? && cname.pages_dot_github_dot_com?
       end

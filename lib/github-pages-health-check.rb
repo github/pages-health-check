@@ -41,7 +41,7 @@ module GitHubPages
     URL = "https://github.com/github/pages-health-check"
     USER_AGENT = "Mozilla/5.0 (compatible; #{HUMAN_NAME}/#{VERSION}; +#{URL})"
 
-    # surpress warn-level feedback due to unsupported record types
+    # suppress warn-level feedback due to unsupported record types
     def self.without_warnings(&block)
       warn_level = $VERBOSE
       $VERBOSE = nil
