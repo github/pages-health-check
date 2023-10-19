@@ -2,7 +2,7 @@
 
 *Checks your GitHub Pages site for common DNS configuration issues*
 
-![Build Status](https://github.com/github/pages-health-check/actions/workflows/push-cibuild.yml/badge.svg)
+[![Build Status](https://github.com/github/pages-health-check/actions/workflows/push-cibuild.yml/badge.svg)](https://github.com/github/pages-health-check/actions/workflows/push-cibuild.yml)
 [![Gem Version](https://badge.fury.io/rb/github-pages-health-check.svg)](http://badge.fury.io/rb/github-pages-health-check)
 
 ## Installation
