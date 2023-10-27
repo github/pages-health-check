@@ -182,7 +182,8 @@ module GitHubPages
         # E.g. PublicSuffix.domain("techblog.netflix.com") # => "netflix.com"
         # It's aware of multi-step top-level domain names:
         # E.g. PublicSuffix.domain("blog.digital.gov.uk") # => "digital.gov.uk"
-        # For apex-level domain names, DNS providers do not support CNAME records.
+        # For apex-level domain names, we use public suffic gem to determine
+        # if the DNS comain support CNAME records.
         unicode_host = Addressable::IDNA.to_unicode(host)
         PublicSuffix.domain(unicode_host,
                             :default_rule => nil,
