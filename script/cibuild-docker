@@ -1,6 +1,6 @@
 #!/bin/bash
 
-: ${RUBY_VERSION:="2.7"}
+: ${RUBY_VERSION:="3.2"}
 docker build -t github-pages-health-check --build-arg RUBY_VERSION=$RUBY_VERSION .
 if [ -n "$DEBUG" ]; then
   # Run a shell.
