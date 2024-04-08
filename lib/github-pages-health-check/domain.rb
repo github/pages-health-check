@@ -240,7 +240,18 @@ module GitHubPages
 
       # Is the domain's first response a CNAME to a pages domain?
       def cname_to_github_user_domain?
-        cname? && !cname_to_pages_dot_github_dot_com? && cname.pages_domain?
+        # If the domain does not match check if the host value points to a pages
+        # domain.
+        #
+        # e.g 'www.domain.com' -> 'domain.com' -> 'Pages' is valid
+        if cname? && !cname_to_pages_dot_github_dot_com? && !cname.pages_domain?
+          # Check if the host does point to 'Pages'
+          if !cname.pages_domain?
+            return self.redundant(host)
+          end
+          # CNAME points to 'Pages' nothing left to do
+          return true
+        end
       end
 
       # Is the given domain a CNAME to pages.github.(io|com)
