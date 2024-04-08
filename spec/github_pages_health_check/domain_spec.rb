@@ -429,6 +429,22 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
           expect(subject).to be_a_cname_to_github_user_domain
         end
       end
+
+      focus
+      context "to domain that points to pages" do
+        let(:cname) { "octocat.com" }
+        before do
+          allow(subject).to receive(:dns) do
+            [
+              Dnsruby::RR.create("#{cname}. 1000 IN CNAME example.com"),
+              Dnsruby::RR.create("example.com 1000 IN A 192.168.0.1")
+            ]
+          end
+        end
+        
+        it "follows the CNAME all the way down" do
+        end
+      end
     end
   end
 
