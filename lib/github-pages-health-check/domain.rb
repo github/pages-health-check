@@ -238,21 +238,13 @@ module GitHubPages
           .any? { |a| !github_pages_ip?(a.address.to_s) }
       end
 
-      # Is the domain's first response a CNAME to a pages domain or a domain to pages?
+      # Is the domain's first response a CNAME to a pages domain?
       def cname_to_github_user_domain?
         # If the domain does not match check if the host value points to a pages
         # domain.
         #
         # e.g 'www.domain.com' -> 'domain.com' -> 'Pages' is valid
-        if cname? && !cname_to_pages_dot_github_dot_com?
-          # CNAME points to Pages
-          if cname.pages_domain?
-            return true
-          # CNAME points to a domain which might point to Pages
-          else
-            return Domain.redundant(host)
-          end
-        end
+        cname? && !cname_to_pages_dot_github_dot_com? && (cname.pages_domain? || Domain.redundant(host))
       end
 
       # Is the given domain a CNAME to pages.github.(io|com)
