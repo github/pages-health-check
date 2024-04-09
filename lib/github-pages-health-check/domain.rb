@@ -245,11 +245,13 @@ module GitHubPages
         #
         # e.g 'www.domain.com' -> 'domain.com' -> 'Pages' is valid
         if cname? && !cname_to_pages_dot_github_dot_com?
-          # Check if the host does point to 'Pages'
+          # CNAME points to Pages
           if cname.pages_domain?
             return true
+          # CNAME points to a domain which might point to Pages
+          else
+            return Domain.redundant(host)
           end
-          # CNAME points to 'Pages' nothing left to do
         end
       end
 
