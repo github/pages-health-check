@@ -258,7 +258,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
 
       it "knows it's a Pages IP at the end" do
-        binding.require 'pry'; binding.pry
+        expect(subject).to be_a_cname_to_domain_to_pages
       end
     end
 
