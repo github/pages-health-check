@@ -244,7 +244,8 @@ module GitHubPages
         # domain.
         #
         # e.g 'www.domain.com' -> 'domain.com' -> 'Pages' is valid
-        cname? && !cname_to_pages_dot_github_dot_com? && (cname.pages_domain? || Domain.redundant(host))
+        binding.pry
+        cname? && !cname_to_pages_dot_github_dot_com? && (cname.pages_domain?)
       end
 
       # Is the given domain a CNAME to pages.github.(io|com)

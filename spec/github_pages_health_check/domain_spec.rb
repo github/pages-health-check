@@ -240,6 +240,29 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "CNAME to Domain to Pages", focus: true do
+      let(:cname) { "www.fontawesome.it" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "185.199.108.153" }
+      before do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet,
+          ]
+        end
+      end
+
+      it "follows the CNAMEs all the way down" do
+        expect(subject.cname.host).to eq("fontawesome.it")
+      end
+
+      it "knows it's a Pages IP at the end" do
+        binding.require 'pry'; binding.pry
+      end
+    end
+
+
     context "broken CNAMEs" do
       before do
         allow(subject).to receive(:dns) do
