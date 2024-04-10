@@ -240,7 +240,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
-    context "CNAME to Domain to Pages", focus: true do
+    context "CNAME to Domain to Pages" do
       let(:cname) { "www.fontawesome.it" }
       let(:domain) { "fontawesome.it" }
       let(:ip) { "185.199.108.153" }
@@ -248,7 +248,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         allow(subject).to receive(:dns) do
           [
             Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
-            a_packet,
+            a_packet
           ]
         end
       end
