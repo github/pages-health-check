@@ -262,6 +262,24 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "Random CNAME to Domain that goes to Pages" do
+      let(:cname) { "monalisa" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "knows it's a Pages IP at the end" do
+        expect(subject).to be_a_cname_to_domain_to_pages
+      end
+    end
+
     context "CNAME to Domain that doesn't go to Pages" do
       let(:cname) { "www.fontawesome.it" }
       let(:domain) { "fontawesome.it" }
