@@ -262,7 +262,6 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
-
     context "broken CNAMEs" do
       before do
         allow(subject).to receive(:dns) do
