@@ -410,11 +410,14 @@ module GitHubPages
         cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
         return if cnames.empty?
 
-        # check to see if the CNAME starts with www and domain name is the same
-        @wwwcname ||= cnames.last.name.to_s.start_with?("www") &&
-          cnames.last.name.to_s.end_with?(cnames.last.domainname.to_s)
-
+        www_cname(cname.last)
         @cname ||= Domain.new(cnames.last.cname.to_s)
+      end
+
+      # Check if we have a 'www.' CNAME that matches the domain
+      def www_cname(cname)
+        @wwwcname || = cname.name.to_s.start_with("www.") &&
+          cname.name.to_s.end_with?(cname.domainname.to_s)
       end
 
       def mx_records_present?
