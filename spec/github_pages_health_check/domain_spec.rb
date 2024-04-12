@@ -275,7 +275,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         end
       end
 
-      it "knows it's a Pages IP at the end" do
+      it "CNAME does not start with www and no match to host" do
         expect(subject).to_not be_a_cname_to_domain_to_pages
       end
     end
