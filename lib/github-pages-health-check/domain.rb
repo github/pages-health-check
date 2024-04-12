@@ -410,7 +410,7 @@ module GitHubPages
         cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
         return if cnames.empty?
 
-        www_cname(cname.last)
+        www_cname(cnames.last)
         @cname ||= Domain.new(cnames.last.cname.to_s)
       end
 
