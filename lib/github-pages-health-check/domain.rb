@@ -416,7 +416,7 @@ module GitHubPages
 
       # Check if we have a 'www.' CNAME that matches the domain
       def www_cname(cname)
-        @wwwcname || = cname.name.to_s.start_with("www.") &&
+        @wwwcname ||= cname.name.to_s.start_with("www.") &&
           cname.name.to_s.end_with?(cname.domainname.to_s)
       end
 
