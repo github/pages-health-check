@@ -280,6 +280,42 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "CNAME with same host but no www" do
+      let(:cname) { "blog.fontawesome.it" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "CNAME does not start with www and no match to host" do
+        expect(subject).to_not be_a_cname_to_domain_to_pages
+      end
+    end
+
+    context "CNAME starts with www but different host" do
+      let(:cname) { "www.fontawesome.it" }
+      let(:domain) { "awesomefont.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "CNAME does not match to host" do
+        expect(subject).to_not be_a_cname_to_domain_to_pages
+      end
+    end
+
     context "CNAME to Domain that doesn't go to Pages" do
       let(:cname) { "www.fontawesome.it" }
       let(:domain) { "fontawesome.it" }
