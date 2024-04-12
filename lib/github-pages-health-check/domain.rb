@@ -411,7 +411,9 @@ module GitHubPages
         return if cnames.empty?
 
         # check to see if the CNAME starts with www and domain name is the same
-        @wwwcname ||= cnames.last.name.to_s.start_with?("www") && cnames.last.name.to_s.end_with?(cnames.last.domainname.to_s)
+        @wwwcname ||= cnames.last.name.to_s.start_with?("www") &&
+          cnames.last.name.to_s.end_with?(cnames.last.domainname.to_s)
+
         @cname ||= Domain.new(cnames.last.cname.to_s)
       end
 
