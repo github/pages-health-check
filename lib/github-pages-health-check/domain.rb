@@ -248,7 +248,7 @@ module GitHubPages
       def cname_to_domain_to_pages?
         a_record_to_pages = dns.select { |d| d.type == Dnsruby::Types::A && d.name.to_s == host }.first
 
-        return false unless a_record_to_pages && cname? && !cname_to_pages_dot_github_dot_com?
+        return false unless a_record_to_pages && cname? && !cname_to_pages_dot_github_dot_com? && @wwwcname
 
         CURRENT_IP_ADDRESSES.include?(a_record_to_pages.address.to_s.downcase)
       end
@@ -410,6 +410,8 @@ module GitHubPages
         cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
         return if cnames.empty?
 
+        # check to see if the CNAME starts with www
+        @wwwcname ||= cnames.last.name.to_s.start_with?("www")
         @cname ||= Domain.new(cnames.last.cname.to_s)
       end
 
