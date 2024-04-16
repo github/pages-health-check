@@ -91,7 +91,7 @@ module GitHubPages
         host uri nameservers dns_resolves? proxied? cloudflare_ip?
         fastly_ip? old_ip_address? a_record? aaaa_record? a_record_present? aaaa_record_present?
         cname_record? mx_records_present? valid_domain? apex_domain?
-        should_be_a_record? cname_to_github_user_domain?
+        should_be_a_record? cname_to_github_user_domain? cname_to_domain_to_pages?
         cname_to_pages_dot_github_dot_com? cname_to_fastly?
         pointed_to_github_pages_ip? non_github_pages_ip_present? pages_domain?
         served_by_pages? valid? reason valid_domain? https?
@@ -243,6 +243,16 @@ module GitHubPages
         cname? && !cname_to_pages_dot_github_dot_com? && cname.pages_domain?
       end
 
+      # Check if the CNAME points to a Domain that points to pages
+      # e.g. CNAME -> Domain -> Pages
+      def cname_to_domain_to_pages?
+        a_record_to_pages = dns.select { |d| d.type == Dnsruby::Types::A && d.name.to_s == host }.first
+
+        return false unless a_record_to_pages && cname? && !cname_to_pages_dot_github_dot_com? && @www_cname
+
+        CURRENT_IP_ADDRESSES.include?(a_record_to_pages.address.to_s.downcase)
+      end
+
       # Is the given domain a CNAME to pages.github.(io|com)
       # instead of being CNAME'd to the user's subdomain?
       #
@@ -304,6 +314,7 @@ module GitHubPages
         return true if cloudflare_ip?
         return false if pointed_to_github_pages_ip?
         return false if cname_to_github_user_domain?
+        return false if cname_to_domain_to_pages?
         return false if cname_to_pages_dot_github_dot_com?
         return false if cname_to_fastly? || fastly_ip?
 
@@ -399,7 +410,14 @@ module GitHubPages
         cnames = dns.take_while { |answer| answer.type == Dnsruby::Types::CNAME }
         return if cnames.empty?
 
+        www_cname(cnames.last)
         @cname ||= Domain.new(cnames.last.cname.to_s)
+      end
+
+      # Check if we have a 'www.' CNAME that matches the domain
+      def www_cname(cname)
+        @www_cname ||= cname.name.to_s.start_with?("www.") &&
+          cname.name.to_s.end_with?(cname.domainname.to_s)
       end
 
       def mx_records_present?
@@ -454,8 +472,7 @@ module GitHubPages
         return false if host.include?("_")
 
         # Must be a CNAME or point to our IPs.
-        # Only check the one domain if a CNAME. Don't check the parent domain.
-        return true if cname_to_github_user_domain?
+        return true if cname_to_github_user_domain? || cname_to_domain_to_pages?
 
         # Check CAA records for the full domain and its parent domain.
         pointed_to_github_pages_ip? && caa.lets_encrypt_allowed?
