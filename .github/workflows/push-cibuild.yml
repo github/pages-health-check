@@ -1,5 +1,7 @@
 on: push
 name: "GitHub Pages Health Check Tests"
+permissions:
+  contents: read
 jobs:
   build:
     name: "GitHub Pages Health Check Tests"
