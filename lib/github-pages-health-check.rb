@@ -66,6 +66,7 @@ module GitHubPages
 
       @typhoeus_options = {
         :followlocation => true,
+        :redir_protocols => [:http, :https], # don't allow non-http protocols on redirections
         :timeout => TIMEOUT,
         :accept_encoding => "gzip",
         :method => :head,
