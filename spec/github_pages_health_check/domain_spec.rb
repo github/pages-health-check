@@ -240,6 +240,100 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "CNAME to Domain to Pages" do
+      let(:cname) { "www.fontawesome.it" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "follows the CNAMEs all the way down" do
+        expect(subject.cname.host).to eq("fontawesome.it")
+      end
+
+      it "knows it's a Pages IP at the end" do
+        expect(subject).to be_a_cname_to_domain_to_pages
+      end
+    end
+
+    context "Random CNAME to Domain that goes to Pages" do
+      let(:cname) { "monalisa" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "CNAME does not start with www and no match to host" do
+        expect(subject).to_not be_a_cname_to_domain_to_pages
+      end
+    end
+
+    context "CNAME with same host but no www" do
+      let(:cname) { "blog.fontawesome.it" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "CNAME does not start with www and no match to host" do
+        expect(subject).to_not be_a_cname_to_domain_to_pages
+      end
+    end
+
+    context "CNAME starts with www but different host" do
+      let(:cname) { "www.fontawesome.it" }
+      let(:domain) { "awesomefont.it" }
+      let(:ip) { "185.199.108.153" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "CNAME does not match to host" do
+        expect(subject).to_not be_a_cname_to_domain_to_pages
+      end
+    end
+
+    context "CNAME to Domain that doesn't go to Pages" do
+      let(:cname) { "www.fontawesome.it" }
+      let(:domain) { "fontawesome.it" }
+      let(:ip) { "127.0.0.1" }
+      before(:each) do
+        allow(subject).to receive(:dns) do
+          [
+            Dnsruby::RR.create("#{cname}. 1000 IN CNAME #{domain}"),
+            a_packet
+          ]
+        end
+      end
+
+      it "knows it's not a Pages IP at the end" do
+        expect(subject).to_not be_a_cname_to_domain_to_pages
+      end
+    end
+
     context "broken CNAMEs" do
       before do
         allow(subject).to receive(:dns) do
