@@ -535,6 +535,14 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
+    context "not github domains" do
+      let(:domain) { "somethinggithub.com" }
+
+      it "knows if the domain is a github domain" do
+        expect(subject).to_not be_a_github_domain
+      end
+    end
+
     context "fastly domain" do
       let(:domain) { "github.map.fastly.net" }
 
