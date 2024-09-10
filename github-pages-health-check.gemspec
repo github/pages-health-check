@@ -19,6 +19,6 @@ Gem::Specification.new do |s|
   s.add_dependency("addressable", "~> 2.3")
   s.add_dependency("dnsruby", "~> 1.60")
   s.add_dependency("octokit", ">= 4", "< 10")
-  s.add_dependency("public_suffix", ">= 3.0", "< 6.0")
+  s.add_dependency("public_suffix", ">= 3.0", "< 7.0")
   s.add_dependency("typhoeus", "~> 1.3")
 end
