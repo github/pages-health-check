@@ -682,7 +682,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       )
 
       # Confirm port 9986 was NOT hit (it is the FTP one)
-      expect(File.exist?(log_file)).to be_truthy
+      sleep(0.1) until File.exist?(log_file)
       expect(File.read(log_file).strip).to eq("HIT 9988 HIT 9987")
     end
   end
