@@ -4,6 +4,8 @@ set -ex
 
 script/bootstrap
 
+echo "Using RUBY_VERSION=$RUBY_VERSION"
+
 script/test-redirections &
 script/test $@
 script/check-cdn-ips
