@@ -683,11 +683,9 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
           @out = out
         end
 
-        def port()
-          @port
-        end
+        attr_reader :port
 
-        def start()
+        def start
           loop do
             client = @server.accept
 
@@ -695,7 +693,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
             @out << "HIT #{@port}"
 
             # Continue with HTTP redirect
-            if @location != 'STOP'
+            if @location != "STOP"
               request = client.gets
               if request
                 response = <<~RESPONSE
@@ -708,6 +706,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
             client.close
           end
         end
+
+        def stop
+          @server.close
+        end
       end
 
       @servers = []
@@ -718,7 +720,11 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       end
     end
 
-    it "it does not follow anything other than http/https by default" do
+    after do
+      @servers.each(&:stop)
+    end
+
+    it "it does not follow anything other than http/https by default", :retry do
       Typhoeus.get(
         "http://localhost:#{@servers[1].port}",
         GitHubPages::HealthCheck.typhoeus_options
@@ -727,7 +733,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       expect(@out).to_not include("HIT #{@servers[0].port}")
     end
 
-    it "it follows ftp if requested (negative test)" do
+    it "it follows ftp if requested (negative test)", :retry do
       Typhoeus.get(
         "http://localhost:#{@servers[1].port}",
         GitHubPages::HealthCheck.typhoeus_options.merge(:redir_protocols => %i[http https ftp])
