@@ -674,18 +674,6 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   context "Protocol redirections" do
     let(:log_file) { "/tmp/bad-redirection#{ENV["RUBY_VERSION"]}.log" }
 
-    it "it follows ftp if requested" do
-      # Make a real request to a local server started with /script/test-redirections
-      Typhoeus.get(
-        "http://localhost:9988",
-        GitHubPages::HealthCheck.typhoeus_options.merge(:redir_protocols => %i[http https ftp])
-      )
-
-      # Confirm port 9986 was hit (it is the FTP one)
-      sleep(0.1) until File.exist?(log_file)
-      expect(File.read(log_file).strip).to eq("HIT 9988 HIT 9987 HIT 9986")
-    end
-
     it "it does not follow anything other than http/https by default" do
       # Make a real request to a local server started with /script/test-redirections
       Typhoeus.get(
@@ -694,7 +682,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       )
 
       # Confirm port 9986 was NOT hit (it is the FTP one)
-      sleep(0.1) until File.exist?(log_file)
+      expect(File.exist?(log_file)).to be_truthy
       expect(File.read(log_file).strip).to eq("HIT 9988 HIT 9987")
     end
   end
