@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+require 'socket'
+
+# Start a webserver on a given port, serving a 301 redirection to a specific location
+def start_server(port, location)
+  server = TCPServer.new(port)
+  puts "Server started on port #{port}"
+
+  loop do
+    client = server.accept
+
+    # Append a hit in the file
+    File.open('/tmp/bad-redirection.log', 'a') do |file|
+      file.print("HIT #{port} ")
+    end
+
+    # Stop
+    if location == 'STOP'
+      client.close
+      next
+    end
+
+    # Continue with HTTP redirect
+    request = client.gets
+    if request
+      response = <<~RESPONSE
+        HTTP/1.1 301 Moved Permanently
+        Location: #{location}
+
+      RESPONSE
+      client.print response
+    end
+    client.close
+  end
+end
+
+# Go!
+threads = []
+threads << Thread.new { start_server(9988, 'http://127.0.0.1:9987') } # HTTP 301
+threads << Thread.new { start_server(9987, 'ftp://127.0.0.1:9986') }  # HTTP 301
+threads << Thread.new { start_server(9986, 'STOP') }                  # TCP close
+threads.each(&:join)

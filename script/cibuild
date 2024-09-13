@@ -4,6 +4,7 @@ set -ex
 
 script/bootstrap
 
+script/test-redirections &
 script/test $@
 script/check-cdn-ips
 bundle exec script/check www.parkermoore.de | grep 'valid?: true'

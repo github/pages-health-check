@@ -5,7 +5,7 @@ require "webmock/rspec"
 require "pry-byebug"
 require_relative "../lib/github-pages-health-check"
 
-WebMock.disable_net_connect!
+WebMock.disable_net_connect!(:allow => "localhost")
 
 RSpec.configure do |config|
   config.raise_errors_for_deprecations!
