@@ -12,6 +12,7 @@ def start_server(port, location)
 
     # Append a hit in the file
     File.open("/tmp/bad-redirection#{ENV["RUBY_VERSION"]}.log", 'a') do |file|
+      file.sync = true # no bufferring
       file.print("HIT #{port} ")
     end
 

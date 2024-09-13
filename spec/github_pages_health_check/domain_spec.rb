@@ -666,7 +666,10 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   context "Protocol redirections" do
     let(:log_file) { "/tmp/bad-redirection#{ENV["RUBY_VERSION"]}.log" }
     before do
-      File.open(log_file, "w") # truncate log file
+      File.open(log_file, "w") do |file|
+        # Just truncate the file (without buffering to avoid flakiness)
+        file.sync = true
+      end
     end
 
     it "it follows ftp if requested" do
