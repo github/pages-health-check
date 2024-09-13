@@ -678,7 +678,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
         # Just truncate the file (without buffering to avoid flakiness)
         file.sync = true
       end
-      sleep(.5) # slow down just a little to limit flakiness too
+      sleep(0.5) # slow down just a little to limit flakiness too
     end
 
     it "it follows ftp if requested" do
