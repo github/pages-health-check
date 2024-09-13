@@ -663,14 +663,12 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
-  context "no protocol switch" do
+  context "Protocol redirections" do
     let(:log_file) { "/tmp/bad-redirection.log" }
-    before do
-      File.open(log_file, "w") # truncate log file after each test
-    end
 
     it "it follows ftp if requested" do
       # Make a real request to a local server started with /script/test-redirections
+      File.open(log_file, "w") # truncate log file
       Typhoeus.get(
         "http://localhost:9988",
         GitHubPages::HealthCheck.typhoeus_options.merge(:redir_protocols => %i[http https ftp])
@@ -682,6 +680,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
     it "it does not follow anything other than http/https by default" do
       # Make a real request to a local server started with /script/test-redirections
+      File.open(log_file, "w") # truncate log file
       Typhoeus.get(
         "http://localhost:9988",
         GitHubPages::HealthCheck.typhoeus_options
