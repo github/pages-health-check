@@ -283,7 +283,7 @@ module GitHubPages
 
       # Is this domain owned by GitHub?
       def github_domain?
-        !!host.downcase.end_with?("github.com")
+        host.downcase.eql?("github.com") || host.downcase.end_with?(".github.com")
       end
 
       # Is the host our Fastly CNAME?
