@@ -672,18 +672,68 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   end
 
   context "Protocol redirections" do
-    let(:log_file) { "/tmp/bad-redirection#{ENV["RUBY_VERSION"]}.log" }
+    before do
+      @out = []
+
+      class SmallServer
+        def initialize(location, out)
+          @server = TCPServer.new(0)
+          @port = @server.addr[1]
+          @location = location
+          @out = out
+        end
+
+        def port()
+          @port
+        end
+
+        def start()
+          loop do
+            client = @server.accept
+
+            # Log
+            @out << "HIT #{@port}"
+
+            # Continue with HTTP redirect
+            if @location != 'STOP'
+              request = client.gets
+              if request
+                response = <<~RESPONSE
+                  HTTP/1.1 301 Moved Permanently
+                  Location: #{@location}
+                RESPONSE
+                client.print response
+              end
+            end
+            client.close
+          end
+        end
+      end
+
+      @servers = []
+      @servers << SmallServer.new("STOP", @out)
+      @servers << SmallServer.new("ftp://localhost:#{@servers[0].port}/", @out)
+      @servers.each do |server|
+        Thread.new { server.start }
+      end
+    end
 
     it "it does not follow anything other than http/https by default" do
-      # Make a real request to a local server started with /script/test-redirections
       Typhoeus.get(
-        "http://localhost:9988",
+        "http://localhost:#{@servers[1].port}",
         GitHubPages::HealthCheck.typhoeus_options
       )
+      expect(@out).to include("HIT #{@servers[1].port}")
+      expect(@out).to_not include("HIT #{@servers[0].port}")
+    end
 
-      # Confirm port 9986 was NOT hit (it is the FTP one)
-      sleep(0.1) until File.exist?(log_file)
-      expect(File.read(log_file).strip).to eq("HIT 9988 HIT 9987")
+    it "it follows ftp if requested (negative test)" do
+      Typhoeus.get(
+        "http://localhost:#{@servers[1].port}",
+        GitHubPages::HealthCheck.typhoeus_options.merge(:redir_protocols => %i[http https ftp])
+      )
+      expect(@out).to include("HIT #{@servers[1].port}")
+      expect(@out).to include("HIT #{@servers[0].port}")
     end
   end
 
