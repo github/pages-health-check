@@ -3,6 +3,8 @@
 require "bundler/setup"
 require "webmock/rspec"
 require "pry-byebug"
+require "rspec/retry"
+
 require_relative "../lib/github-pages-health-check"
 
 WebMock.disable_net_connect!(:allow => "localhost")
