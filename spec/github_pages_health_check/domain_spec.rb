@@ -673,13 +673,6 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
 
   context "Protocol redirections" do
     let(:log_file) { "/tmp/bad-redirection#{ENV["RUBY_VERSION"]}.log" }
-    before do
-      File.open(log_file, "w") do |file|
-        # Just truncate the file (without buffering to avoid flakiness)
-        file.sync = true
-      end
-      sleep(0.5) # slow down just a little to limit flakiness too
-    end
 
     it "it follows ftp if requested" do
       # Make a real request to a local server started with /script/test-redirections
@@ -689,6 +682,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       )
 
       # Confirm port 9986 was hit (it is the FTP one)
+      sleep(0.1) until File.exist?(log_file)
       expect(File.read(log_file).strip).to eq("HIT 9988 HIT 9987 HIT 9986")
     end
 
@@ -700,6 +694,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       )
 
       # Confirm port 9986 was NOT hit (it is the FTP one)
+      sleep(0.1) until File.exist?(log_file)
       expect(File.read(log_file).strip).to eq("HIT 9988 HIT 9987")
     end
   end
