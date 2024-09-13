@@ -11,7 +11,7 @@ def start_server(port, location)
     client = server.accept
 
     # Append a hit in the file
-    File.open('/tmp/bad-redirection.log', 'a') do |file|
+    File.open("/tmp/bad-redirection#{ENV["RUBY_VERSION"]}.log", 'a') do |file|
       file.print("HIT #{port} ")
     end
 
