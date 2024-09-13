@@ -666,7 +666,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
   context "no protocol switch" do
     let(:log_file) { "/tmp/bad-redirection.log" }
     before do
-      File.open(log_file, "w")
+      File.open(log_file, "w") # truncate log file after each test
     end
 
     it "it follows ftp if requested" do
