@@ -671,6 +671,78 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
+  context "Protocol redirections" do
+    before do
+      @out = []
+
+      class SmallServer
+        def initialize(location, out)
+          @server = TCPServer.new(0)
+          @port = @server.addr[1]
+          @location = location
+          @out = out
+        end
+
+        attr_reader :port
+
+        def start
+          loop do
+            client = @server.accept
+
+            # Log
+            @out << "HIT #{@port}"
+
+            # Continue with HTTP redirect
+            if @location != "STOP"
+              request = client.gets
+              if request
+                response = <<~RESPONSE
+                  HTTP/1.1 301 Moved Permanently
+                  Location: #{@location}
+                RESPONSE
+                client.print response
+              end
+            end
+            client.close
+          end
+        end
+
+        def stop
+          @server.close
+        end
+      end
+
+      @servers = []
+      @servers << SmallServer.new("STOP", @out)
+      @servers << SmallServer.new("ftp://localhost:#{@servers[0].port}/", @out)
+      @servers.each do |server|
+        Thread.new { server.start }
+      end
+    end
+
+    after do
+      @servers.each(&:stop)
+    end
+
+    it "it does not follow anything other than http/https by default", :retry => 3 do
+      Typhoeus.get(
+        "http://localhost:#{@servers[1].port}",
+        GitHubPages::HealthCheck.typhoeus_options
+      )
+      expect(@out).to include("HIT #{@servers[1].port}")
+      expect(@out).to_not include("HIT #{@servers[0].port}")
+    end
+
+    it "it follows ftp if requested (negative test)", :retry => 3 do
+      Typhoeus.get(
+        "http://localhost:#{@servers[1].port}",
+        GitHubPages::HealthCheck.typhoeus_options.merge(:redir_protocols => %i[http https ftp])
+      )
+      expect(@out).to include("HIT #{@servers[1].port}")
+      expect(@out).to include("HIT #{@servers[0].port}")
+    end
+  end
+
   context "served by pages" do
     let(:domain) { "http://choosealicense.com" }
     let(:status) { 200 }

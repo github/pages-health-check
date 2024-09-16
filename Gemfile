@@ -8,6 +8,7 @@ group :development do
   gem "pry", "~> 0.10"
   gem "pry-byebug"
   gem "rspec", "~> 3.0"
+  gem "rspec-retry", "~> 0.6"
   gem "rubocop", "~> 0.52"
   gem "webmock", "~> 3.8"
 end
