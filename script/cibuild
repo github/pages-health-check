@@ -4,8 +4,6 @@ set -ex
 
 script/bootstrap
 
-echo "Using RUBY_VERSION=$RUBY_VERSION"
-
 script/test $@
 script/check-cdn-ips
 bundle exec script/check www.parkermoore.de | grep 'valid?: true'
