@@ -246,6 +246,7 @@ module GitHubPages
       # Check if the CNAME points to a Domain that points to pages
       # e.g. CNAME -> Domain -> Pages
       def cname_to_domain_to_pages?
+        return false unless dns?
         a_record_to_pages = dns.select { |d| d.type == Dnsruby::Types::A && d.name.to_s == host }.first
 
         return false unless a_record_to_pages && cname? && !cname_to_pages_dot_github_dot_com? && @www_cname
