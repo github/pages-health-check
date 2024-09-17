@@ -671,7 +671,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
     end
   end
 
-  context "Protocol redirections" do
+  context "Protocol redirections", :retry => 3, :retry_wait => 1 do
     before do
       @out = []
 
@@ -724,7 +724,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       @servers.each(&:stop)
     end
 
-    it "it does not follow anything other than http/https by default", :retry => 3 do
+    it "it does not follow anything other than http/https by default" do
       Typhoeus.get(
         "http://localhost:#{@servers[1].port}",
         GitHubPages::HealthCheck.typhoeus_options
@@ -733,7 +733,7 @@ RSpec.describe(GitHubPages::HealthCheck::Domain) do
       expect(@out).to_not include("HIT #{@servers[0].port}")
     end
 
-    it "it follows ftp if requested (negative test)", :retry => 3 do
+    it "it follows ftp if requested (negative test)" do
       Typhoeus.get(
         "http://localhost:#{@servers[1].port}",
         GitHubPages::HealthCheck.typhoeus_options.merge(:redir_protocols => %i[http https ftp])

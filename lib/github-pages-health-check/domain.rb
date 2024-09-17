@@ -245,6 +245,7 @@ module GitHubPages
 
       # Check if the CNAME points to a Domain that points to pages
       # e.g. CNAME -> Domain -> Pages
+      # rubocop:disable Metrics/AbcSize
       def cname_to_domain_to_pages?
         return false unless dns?
 
@@ -254,6 +255,7 @@ module GitHubPages
 
         CURRENT_IP_ADDRESSES.include?(a_record_to_pages.address.to_s.downcase)
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Is the given domain a CNAME to pages.github.(io|com)
       # instead of being CNAME'd to the user's subdomain?
