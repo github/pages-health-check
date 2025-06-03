@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.files                 = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   s.require_paths         = ["lib"]
 
-  s.add_dependency("addressable", "~> 2.3")
+  s.add_dependency("addressable", "~> 2.8.7")
   s.add_dependency("dnsruby", "~> 1.60")
   s.add_dependency("octokit", ">= 4", "< 10")
   s.add_dependency("public_suffix", ">= 3.0", "< 7.0")
