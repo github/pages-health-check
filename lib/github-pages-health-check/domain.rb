@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "securerandom"
+
 module GitHubPages
   module HealthCheck
     class Domain < Checkable
@@ -440,6 +442,40 @@ module GitHubPages
           # Typhoeus mangles the case of the header, compare insensitively
           response.headers.any? { |k, _v| k.downcase == "x-github-request-id" }
         end
+      end
+
+      def parent_domain
+        parsed = PublicSuffix.parse(host)
+        parent = host.split(".", 2).last
+        if parent == parsed.tld
+          return nil
+        end
+
+        parent
+      rescue PublicSuffix::DomainNotAllowed
+        nil
+      end
+
+      def maybe_wildcard?
+        return @maybe_wildcard if defined? @maybe_wildcard
+        return false unless dns_resolves?
+        return false unless parent_domain
+
+        sibling_domain = SecureRandom.alphanumeric(20) + "." + parent_domain
+
+        @maybe_wildcard = begin
+          wildcard_resolver = GitHubPages::HealthCheck::Resolver.new(sibling_domain, :nameservers => nameservers)
+
+          [Dnsruby::Types::A, Dnsruby::Types::AAAA].any? do |record_type|
+            wildcard_resolver.query(record_type).any? do |record|
+              record.respond_to?(:address) && github_pages_ip?(record.address)
+            end
+          end
+        end
+      end
+
+      def wildcard_warning
+        Errors::WildcardRecordError.new :domain => self, :parent_domain => parent_domain if maybe_wildcard?
       end
 
       def uri(overrides = {})
