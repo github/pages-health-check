@@ -48,7 +48,7 @@ module GitHubPages
         printer.simple_string
       end
 
-      def to_s_pretty
+      def to_s_pretty(*)
         printer.pretty_print
       end
       alias pretty_print to_s_pretty
