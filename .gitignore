@@ -5,3 +5,4 @@ vendor/gems
 /bin
 .env
 spec/examples.txt
+vendor/bundle
