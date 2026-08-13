@@ -51,8 +51,8 @@ RSpec.describe(GitHubPages::HealthCheck::Repository) do
   end
 
   builds = {
-    "error" => %w[build_error.json build_error_long_oid.json],
-    "success" => %w[build_success.json build_success_long_oid.json],
+    "error" => %w(build_error.json build_error_long_oid.json),
+    "success" => %w(build_success.json build_success_long_oid.json)
   }
 
   builds.each do |type, fixtures|
