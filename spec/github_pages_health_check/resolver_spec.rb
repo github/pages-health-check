@@ -9,7 +9,7 @@ RSpec.describe(GitHubPages::HealthCheck::Resolver) do
 
   context "default" do
     it "uses the default resolver" do
-      expect(described_class.default_resolver).to \
+      expect(subject.send(:recursor)).to \
         receive(:query).with(domain, Dnsruby::Types::A).and_call_original
       subject.query(Dnsruby::Types::A)
     end
@@ -21,7 +21,7 @@ RSpec.describe(GitHubPages::HealthCheck::Resolver) do
     it "uses an authoritative resolver" do
       expect(described_class.default_resolver).to \
         receive(:query).with(domain, Dnsruby::Types::NS).and_call_original
-      expect(subject.send(:resolver)).to \
+      expect(subject.send(:recursor)).to \
         receive(:query).with(domain, Dnsruby::Types::A).and_call_original
       subject.query(Dnsruby::Types::A)
     end
@@ -32,7 +32,7 @@ RSpec.describe(GitHubPages::HealthCheck::Resolver) do
 
     it "uses the custom resolver" do
       expect(subject.send(:resolver).config.nameserver).to eq(nameservers)
-      expect(subject.send(:resolver)).to \
+      expect(subject.send(:recursor)).to \
         receive(:query).with(domain, Dnsruby::Types::A).and_call_original
       subject.query(Dnsruby::Types::A)
     end
