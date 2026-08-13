@@ -50,57 +50,64 @@ RSpec.describe(GitHubPages::HealthCheck::Repository) do
     end
   end
 
-  %w(error success).each do |type|
-    context "a build that was a(n) #{type}" do
-      let(:access_token) { "1234" }
-      let(:fixture) { File.read(fixture_path("build_#{type}.json")) }
-      let(:url) { "https://api.github.com/repos/#{repo}/pages/builds/latest" }
+  builds = {
+    "error" => %w(build_error.json build_error_long_oid.json),
+    "success" => %w(build_success.json build_success_long_oid.json)
+  }
 
-      before do
-        stub_request(:get, url)
-          .to_return(:status => 200,
-                     :body => fixture,
-                     :headers => { "Content-Type" => "application/json" })
-      end
+  builds.each do |type, fixtures|
+    fixtures.each do |fixture_name|
+      context "a build that was a(n) #{type} using #{fixture_name}" do
+        let(:access_token) { "1234" }
+        let(:fixture) { File.read(fixture_path(fixture_name)) }
+        let(:expected_commit) { JSON.parse(fixture).fetch("commit") }
+        let(:url) { "https://api.github.com/repos/#{repo}/pages/builds/latest" }
 
-      if type == "error"
-        it "fails the check" do
-          build_error = GitHubPages::HealthCheck::Errors::BuildError
-          expect { subject.check! }.to raise_error(build_error)
+        before do
+          stub_request(:get, url)
+            .to_return(:status => 200,
+                       :body => fixture,
+                       :headers => { "Content-Type" => "application/json" })
         end
 
-        it "returns the build error" do
-          expect(subject.build_error).to eql("Some message")
+        if type == "error"
+          it "fails the check" do
+            build_error = GitHubPages::HealthCheck::Errors::BuildError
+            expect { subject.check! }.to raise_error(build_error)
+          end
+
+          it "returns the build error" do
+            expect(subject.build_error).to eql("Some message")
+          end
+
+          it "knows the site wasn't built" do
+            expect(subject.built?).to be_falsy
+          end
+        else
+          it "passes the check" do
+            expect(subject.check!).to be_truthy
+          end
+
+          it "returns no build error" do
+            expect(subject.build_error).to be_nil
+          end
+
+          it "knows the site was built" do
+            expect(subject.built?).to be_truthy
+          end
         end
 
-        it "knows the site wasn't built" do
-          expect(subject.built?).to be_falsy
-        end
-      else
-        it "passes the check" do
-          expect(subject.check!).to be_truthy
+        it "returns the commit OID" do
+          expect(subject.last_build["commit"]).to eql(expected_commit)
         end
 
-        it "returns no build error" do
-          expect(subject.build_error).to be_nil
+        it "knows the build duration" do
+          expect(subject.build_duration).to eql(2104)
         end
 
-        it "knows the site was built" do
-          expect(subject.built?).to be_truthy
+        it "knows when it was last built" do
+          expect(subject.last_built.to_s).to match(/2014-02-10/)
         end
-      end
-
-      it "returns the build info" do
-        expected = "351391cdcb88ffae71ec3028c91f375a8036a26b"
-        expect(subject.last_build["commit"]).to eql(expected)
-      end
-
-      it "knows the build duration" do
-        expect(subject.build_duration).to eql(2104)
-      end
-
-      it "knows when it was last built" do
-        expect(subject.last_built.to_s).to match(/2014-02-10/)
       end
     end
   end
