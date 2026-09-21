@@ -32,10 +32,14 @@ module GitHubPages
       end
 
       def query(type)
-        resolver.query(Addressable::IDNA.to_ascii(domain), type).answer
+        recursor.query(Addressable::IDNA.to_ascii(domain), type).answer
       end
 
       private
+
+      def recursor
+        @recursor ||= Dnsruby::Recursor.new(resolver)
+      end
 
       def resolver
         @resolver ||= case nameservers
