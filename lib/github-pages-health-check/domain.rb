@@ -437,7 +437,7 @@ module GitHubPages
         return unless dns_resolves?
 
         @served_by_pages = begin
-          return true if response.headers["Server"] == "GitHub.com"
+          return true if response.headers["Server"]&.downcase == "github.com"
 
           # Typhoeus mangles the case of the header, compare insensitively
           response.headers.any? { |k, _v| k.downcase == "x-github-request-id" }
@@ -601,7 +601,7 @@ module GitHubPages
         @scheme ||= github_domain? ? "https" : "http"
       end
 
-      # Does the domain resolve to a CDN-owned IP
+      # Does this domain resolve to a CDN-owned IP
       def cdn_ip?(cdn)
         return unless dns?
 
@@ -610,7 +610,7 @@ module GitHubPages
         end
         return false if !address_records || address_records.empty?
 
-        address_records.all? do |answer|
+        address_records.any? do |answer|
           cdn.controls_ip?(answer.address)
         end
       end
@@ -620,7 +620,9 @@ module GitHubPages
       end
 
       def github_pages_ip?(ip_addr)
-        CURRENT_IP_ADDRESSES_ALL.include?(ip_addr&.to_s&.downcase)
+        return false if ip_addr.nil?
+        normalized = IPAddr.new(ip_addr.to_s).downcase
+        CURRENT_IP_ADDRESSES_ALL.any? { |ip| IPAddr.new(ip).downcase == normalized }
       end
     end
   end
