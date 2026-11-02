@@ -67,7 +67,7 @@ module GitHubPages
       end
 
       def parent_host
-        host.split(".").drop(1).join(".")
+        host.downcase.split(".").drop(1).join(".")
       end
     end
   end

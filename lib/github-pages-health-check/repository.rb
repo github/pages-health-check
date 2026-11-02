@@ -42,7 +42,7 @@ module GitHubPages
       end
 
       def build_error
-        last_build.error["message"] unless built?
+        last_build&.error&["message"] unless built?
       end
       alias reason build_error
 
