@@ -24,6 +24,16 @@ module GitHubPages
         ranges.any? { |range| range.include?(address.to_s) }
       end
 
+      def cdn_controls_ip?(address)
+        # Use ranges.any? semantics: a domain is CDN-owned if ANY of its
+        # address records is a CDN IP, not only if ALL are CDN IPs.
+        # A mixed response (one CDN IP + one non-CDN IP) should still be
+        # treated as proxied by that CDN, matching the behaviour of the
+        # `old_ip_address?` and `non_github_pages_ip_present?` checks.
+        address_ranges = ranges
+        address_ranges.any? { |range| range.include?(address.to_s) }
+      end
+
       private
 
       # Internal: The IP address ranges that cloudflare controls.
